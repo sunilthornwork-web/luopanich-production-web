@@ -1,0 +1,1821 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Luopanich</title>
+  <style>
+    @font-face {
+      font-family:"Sarabun";
+      src:url("assets/fonts/sarabun/Sarabun-Regular.ttf") format("truetype");
+      font-weight:400;
+      font-style:normal;
+      font-display:swap;
+    }
+
+    @font-face {
+      font-family:"Sarabun";
+      src:url("assets/fonts/sarabun/Sarabun-Medium.ttf") format("truetype");
+      font-weight:500;
+      font-style:normal;
+      font-display:swap;
+    }
+
+    @font-face {
+      font-family:"Sarabun";
+      src:url("assets/fonts/sarabun/Sarabun-SemiBold.ttf") format("truetype");
+      font-weight:600;
+      font-style:normal;
+      font-display:swap;
+    }
+
+    @font-face {
+      font-family:"Sarabun";
+      src:url("assets/fonts/sarabun/Sarabun-Bold.ttf") format("truetype");
+      font-weight:700;
+      font-style:normal;
+      font-display:swap;
+    }
+
+    @font-face {
+      font-family:"Sarabun";
+      src:url("assets/fonts/sarabun/Sarabun-ExtraBold.ttf") format("truetype");
+      font-weight:800;
+      font-style:normal;
+      font-display:swap;
+    }
+
+    :root{
+      --bg:#0f1115;
+      --surface:#191d24;
+      --surface-2:#222834;
+      --text:#f5f5f7;
+      --text-soft:#b8c0cc;
+      --muted:#8d96a6;
+      --border:rgba(255,255,255,.12);
+      --primary:#0a84ff;
+      --primary-strong:#0067d6;
+      --danger:#ff453a;
+      --success:#34c759;
+      --warning:#ffd60a;
+      --shadow:0 18px 50px rgba(0,0,0,.34);
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      min-height:100vh;
+      overflow-x:hidden;
+      background:
+        radial-gradient(circle at 18% -10%, rgba(10,132,255,.20), transparent 34%),
+        radial-gradient(circle at 88% 6%, rgba(52,199,89,.12), transparent 28%),
+        linear-gradient(180deg, #151922 0%, var(--bg) 52%, #090b0f 100%);
+      color:var(--text);
+      font-family:"Sarabun",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    }
+
+    button,input,textarea,select{font:inherit}
+
+    .page{
+      width:min(1120px,100%);
+      margin:0 auto;
+      padding:18px 14px 120px;
+      overflow-x:hidden;
+    }
+
+    .hero{
+      position:sticky;
+      top:0;
+      z-index:5;
+      margin:-18px -14px 16px;
+      padding:18px 14px 16px;
+      background:rgba(15,17,21,.86);
+      border-bottom:1px solid var(--border);
+      backdrop-filter:blur(22px);
+    }
+
+    .hero-card{
+      width:min(1120px,100%);
+      margin:0 auto;
+      display:grid;
+      gap:12px;
+    }
+
+    .eyebrow{
+      color:var(--primary);
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+
+    h1{
+      margin:0;
+      font-size:25px;
+      line-height:1.15;
+      letter-spacing:-.02em;
+    }
+
+    .hero-copy{
+      max-width:720px;
+      color:var(--text-soft);
+      font-size:14px;
+      line-height:1.55;
+    }
+
+    .notice{
+      padding:10px 12px;
+      border-radius:16px;
+      border:1px solid rgba(255,214,10,.28);
+      background:rgba(255,214,10,.10);
+      color:#ffe48a;
+      font-size:13px;
+      line-height:1.45;
+    }
+
+    .partner-meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      color:var(--text-soft);
+      font-size:13px;
+    }
+
+    .partner-lang-row{
+      display:flex;
+      justify-content:flex-end;
+    }
+
+    .language-switch{
+      display:inline-flex;
+      align-items:center;
+      gap:2px;
+      padding:3px;
+      border:1px solid var(--border);
+      border-radius:999px;
+      background:rgba(255,255,255,.07);
+    }
+
+    .language-switch button{
+      border:0;
+      border-radius:999px;
+      padding:6px 10px;
+      background:transparent;
+      color:var(--text-soft);
+      cursor:pointer;
+      font-size:12px;
+      font-weight:800;
+    }
+
+    .language-switch button.active{
+      background:var(--primary);
+      color:#fff;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding:6px 10px;
+      background:rgba(255,255,255,.06);
+    }
+
+    .toolbar{
+      display:grid;
+      gap:10px;
+      grid-template-columns:1fr;
+      margin:16px 0;
+      padding:12px;
+      border:1px solid var(--border);
+      border-radius:20px;
+      background:rgba(25,29,36,.58);
+    }
+
+    input,textarea,select{
+      width:100%;
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:12px 13px;
+      background:rgba(255,255,255,.08);
+      color:var(--text);
+      outline:none;
+      min-width:0;
+      color-scheme:dark;
+    }
+
+    textarea{min-height:96px;resize:vertical}
+
+    input:focus,textarea:focus,select:focus{
+      border-color:rgba(10,132,255,.7);
+      box-shadow:0 0 0 3px rgba(10,132,255,.22);
+    }
+
+    select option{
+      background:var(--surface);
+      color:var(--text);
+    }
+
+    select option:checked{
+      background:var(--primary);
+      color:#fff;
+    }
+
+    .grid{
+      display:grid;
+      gap:12px;
+      min-width:0;
+    }
+
+    .product-card,.panel,.state-card{
+      border:1px solid var(--border);
+      border-radius:22px;
+      background:rgba(25,29,36,.86);
+      box-shadow:var(--shadow);
+    }
+
+    .product-card{
+      display:grid;
+      grid-template-columns:96px minmax(0,1fr);
+      gap:12px;
+      padding:12px;
+      max-width:100%;
+      overflow:hidden;
+    }
+
+    .thumb{
+      width:96px;
+      height:96px;
+      border-radius:18px;
+      background:var(--surface-2);
+      object-fit:contain;
+      border:1px solid var(--border);
+    }
+
+    .thumb-placeholder{
+      width:96px;
+      height:96px;
+      display:grid;
+      place-items:center;
+      color:var(--muted);
+      border-radius:18px;
+      background:var(--surface-2);
+      border:1px dashed var(--border);
+      font-size:13px;
+    }
+
+    .thumb,.thumb-placeholder,.product-card{
+      cursor:pointer;
+    }
+
+    .product-main{
+      min-width:0;
+      display:grid;
+      gap:7px;
+    }
+
+    .name{
+      margin:0;
+      font-size:16px;
+      font-weight:800;
+      line-height:1.3;
+      overflow-wrap:anywhere;
+    }
+
+    .meta{
+      color:var(--text-soft);
+      font-size:13px;
+      line-height:1.45;
+      overflow-wrap:anywhere;
+    }
+
+    .sku-line{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      align-items:center;
+    }
+
+    .sku-chip{
+      display:inline-flex;
+      max-width:100%;
+      padding:4px 8px;
+      border-radius:999px;
+      background:rgba(255,255,255,.08);
+      border:1px solid var(--border);
+      color:var(--text-soft);
+      font-size:12px;
+      font-weight:800;
+    }
+
+    .price{
+      font-size:18px;
+      font-weight:800;
+      color:#fff;
+    }
+
+    .variant-group-note{
+      color:var(--text-soft);
+      font-size:12px;
+      line-height:1.45;
+    }
+
+    .size-options{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      max-width:100%;
+    }
+
+    .size-chip{
+      display:inline-flex;
+      flex-direction:column;
+      align-items:flex-start;
+      gap:2px;
+      min-width:74px;
+      max-width:100%;
+      padding:9px 10px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.08);
+      color:var(--text);
+      font-weight:800;
+      cursor:pointer;
+      text-align:left;
+    }
+
+    .size-chip small{
+      color:var(--text-soft);
+      font-size:11px;
+      font-weight:800;
+    }
+
+    .size-chip.selected{
+      border-color:rgba(10,132,255,.82);
+      background:rgba(10,132,255,.18);
+      box-shadow:0 0 0 3px rgba(10,132,255,.16);
+    }
+
+    .size-chip:disabled{
+      opacity:.48;
+      cursor:not-allowed;
+      text-decoration:line-through;
+    }
+
+    .details{
+      color:var(--text-soft);
+      font-size:13px;
+      line-height:1.5;
+      white-space:pre-wrap;
+      overflow-wrap:anywhere;
+    }
+
+    .compare-images{
+      display:flex;
+      gap:8px;
+      margin-top:4px;
+      overflow-x:auto;
+      max-width:100%;
+      padding-bottom:2px;
+    }
+
+    .compare-images img{
+      width:64px;
+      height:64px;
+      flex:0 0 auto;
+      object-fit:contain;
+      border-radius:14px;
+      background:var(--surface-2);
+      border:1px solid var(--border);
+    }
+
+    .status{
+      display:inline-flex;
+      align-items:center;
+      margin-top:0;
+      padding:5px 9px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      color:var(--text-soft);
+      font-size:12px;
+      font-weight:800;
+    }
+
+    .status.ready,.status.ready_plus{color:#7ee787;background:rgba(52,199,89,.14)}
+    .status.shipping{color:#64b5ff;background:rgba(10,132,255,.14)}
+    .status.warehouse{color:#a9c3ff;background:rgba(90,140,255,.16)}
+    .status.out{color:#ff8a82;background:rgba(255,69,58,.14)}
+
+    .actions{
+      margin-top:4px;
+      display:flex;
+      gap:8px;
+    }
+
+    .btn{
+      border:0;
+      border-radius:14px;
+      padding:12px 14px;
+      font-weight:800;
+      cursor:pointer;
+      min-height:44px;
+    }
+
+    .btn-primary{
+      background:linear-gradient(180deg,var(--primary),var(--primary-strong));
+      color:#fff;
+    }
+
+    .btn-secondary{
+      color:var(--text);
+      background:rgba(255,255,255,.10);
+      border:1px solid var(--border);
+    }
+
+    .btn-danger{
+      color:#fff;
+      background:var(--danger);
+    }
+
+    .btn:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+    }
+
+    .layout{
+      display:grid;
+      gap:14px;
+      min-width:0;
+    }
+
+    .panel{
+      padding:14px;
+      max-width:100%;
+      overflow:hidden;
+    }
+
+    .panel h2{
+      margin:0 0 12px;
+      font-size:18px;
+    }
+
+    .interest-list{
+      display:grid;
+      gap:10px;
+    }
+
+    .interest-item{
+      display:grid;
+      grid-template-columns:64px minmax(0,1fr);
+      gap:10px;
+      padding:10px;
+      border-radius:16px;
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--border);
+      max-width:100%;
+      overflow:hidden;
+    }
+
+    .interest-thumb{
+      width:64px;
+      height:64px;
+      border-radius:14px;
+      object-fit:contain;
+      background:var(--surface-2);
+      border:1px solid var(--border);
+    }
+
+    .interest-thumb-placeholder{
+      width:64px;
+      height:64px;
+      display:grid;
+      place-items:center;
+      color:var(--muted);
+      border-radius:14px;
+      background:var(--surface-2);
+      border:1px dashed var(--border);
+      font-size:12px;
+    }
+
+    .interest-main{
+      min-width:0;
+      display:grid;
+      gap:8px;
+    }
+
+    .interest-head{
+      display:flex;
+      gap:8px;
+      justify-content:space-between;
+      align-items:flex-start;
+      min-width:0;
+    }
+
+    .interest-controls{
+      display:grid;
+      grid-template-columns:92px minmax(0,1fr);
+      gap:8px;
+    }
+
+    .field-label{
+      display:grid;
+      gap:6px;
+      color:var(--text-soft);
+      font-size:12px;
+      font-weight:800;
+    }
+
+    .form-stack{
+      display:grid;
+      gap:10px;
+      margin-top:10px;
+    }
+
+    .panel-note{
+      margin:10px 0;
+      padding:10px 12px;
+      border-radius:16px;
+      background:rgba(10,132,255,.10);
+      border:1px solid rgba(10,132,255,.24);
+      color:var(--text-soft);
+      font-size:13px;
+      line-height:1.45;
+    }
+
+    .interest-summary{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+      margin:12px 0;
+    }
+
+    .summary-tile{
+      padding:10px;
+      border-radius:16px;
+      background:rgba(255,255,255,.07);
+      border:1px solid var(--border);
+      min-width:0;
+    }
+
+    .summary-tile span{
+      display:block;
+      color:var(--muted);
+      font-size:12px;
+      margin-bottom:3px;
+    }
+
+    .summary-tile strong{
+      display:block;
+      color:var(--text);
+      font-size:17px;
+      overflow-wrap:anywhere;
+    }
+
+    .summary-bar{
+      position:fixed;
+      left:12px;
+      right:12px;
+      bottom:12px;
+      z-index:10;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      padding:12px;
+      border:1px solid var(--border);
+      border-radius:20px;
+      background:rgba(25,29,36,.94);
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(18px);
+    }
+
+    .summary-bar .btn{
+      flex:0 0 auto;
+      white-space:nowrap;
+    }
+
+    .state-card{
+      margin:36px auto;
+      max-width:520px;
+      padding:22px;
+      text-align:center;
+    }
+
+    .state-card h2{margin:0 0 8px}
+    .helper{color:var(--text-soft);line-height:1.55}
+    .hidden{display:none!important}
+
+    .detail-backdrop{
+      position:fixed;
+      inset:0;
+      z-index:30;
+      display:grid;
+      align-items:end;
+      background:rgba(0,0,0,.62);
+      padding:12px;
+    }
+
+    .detail-sheet{
+      width:min(720px,100%);
+      max-height:min(88vh,760px);
+      margin:0 auto;
+      overflow:auto;
+      border:1px solid var(--border);
+      border-radius:26px 26px 20px 20px;
+      background:rgba(25,29,36,.98);
+      box-shadow:0 24px 80px rgba(0,0,0,.48);
+    }
+
+    .detail-topbar{
+      position:sticky;
+      top:0;
+      z-index:2;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:12px;
+      background:rgba(25,29,36,.96);
+      border-bottom:1px solid var(--border);
+      backdrop-filter:blur(18px);
+    }
+
+    .detail-topbar strong{font-size:15px}
+    .detail-close{
+      width:40px;
+      height:40px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.08);
+      color:var(--text);
+      cursor:pointer;
+      font-size:20px;
+      font-weight:800;
+    }
+
+    .detail-body{
+      display:grid;
+      gap:14px;
+      padding:14px;
+    }
+
+    .detail-image{
+      width:100%;
+      max-height:320px;
+      object-fit:contain;
+      border:1px solid var(--border);
+      border-radius:22px;
+      background:var(--surface-2);
+    }
+
+    .detail-placeholder{
+      min-height:220px;
+      display:grid;
+      place-items:center;
+      color:var(--muted);
+      border:1px dashed var(--border);
+      border-radius:22px;
+      background:var(--surface-2);
+    }
+
+    .detail-meta-grid{
+      display:grid;
+      gap:8px;
+    }
+
+    .detail-note{
+      padding:10px 12px;
+      border:1px solid rgba(10,132,255,.24);
+      border-radius:16px;
+      background:rgba(10,132,255,.10);
+      color:var(--text-soft);
+      font-size:13px;
+      line-height:1.5;
+    }
+
+    @media (min-width:760px){
+      .page{padding:24px 18px 48px}
+      .hero{margin:-24px -18px 22px;padding:24px 18px 18px}
+      h1{font-size:30px}
+      .toolbar{grid-template-columns:1fr 220px}
+      .layout{grid-template-columns:minmax(0,1fr) 360px;align-items:start}
+      .product-card{grid-template-columns:112px 1fr}
+      .thumb,.thumb-placeholder{width:112px;height:112px}
+      .panel{position:sticky;top:116px}
+      .summary-bar{display:none}
+    }
+
+    @media (max-width:420px){
+      .product-card{grid-template-columns:86px minmax(0,1fr);gap:10px}
+      .thumb,.thumb-placeholder{width:86px;height:86px;border-radius:16px}
+      .name{font-size:15px}
+      .price{font-size:17px}
+      .interest-controls{grid-template-columns:1fr}
+      .interest-summary{grid-template-columns:1fr}
+      .summary-bar{left:8px;right:8px;bottom:8px}
+    }
+  </style>
+</head>
+<body>
+  <main id="app" class="page">
+    <section class="state-card">
+      <h2>Luopanich</h2>
+      <div class="helper"></div>
+    </section>
+  </main>
+
+  <script>
+    (function() {
+      const host = String(window.location.hostname || "").toLowerCase();
+      const protocol = String(window.location.protocol || "").toLowerCase();
+      const localHosts = ["", "localhost", "127.0.0.1", "::1"];
+      const configFile = protocol === "file:" || localHosts.indexOf(host) !== -1
+        ? "config.local.js"
+        : "config.production.js";
+      document.write('<script src="' + configFile + '"><\/script>');
+    }());
+  </script>
+  <script>
+    const LANG_KEY = "luopanich_lang";
+    const DEFAULT_LANG = "th";
+    const UI_TEXT = {
+      th: {
+        langThai: "ไทย",
+        langEn: "EN",
+        documentTitle: "แคตตาล็อกคู่ค้า Luopanich",
+        chooseLanguage: "เลือกภาษา",
+        configMissing: "ระบบยังไม่ได้ตั้งค่าการเชื่อมต่อ กรุณาติดต่อผู้ดูแลระบบ",
+        configHelp: "กรุณาตรวจสอบไฟล์ config",
+        loadingTitle: "กำลังโหลดแคตตาล็อก",
+        loadingDetail: "กรุณารอสักครู่",
+        invalidServerResponse: "รูปแบบข้อมูลจากเซิร์ฟเวอร์ไม่ถูกต้อง",
+        genericError: "เกิดข้อผิดพลาด",
+        requestFailed: "ไม่สามารถดำเนินการได้ กรุณาลองใหม่อีกครั้ง",
+        sessionExpired: "เซสชันหมดอายุ กรุณาเข้าสู่ระบบอีกครั้ง",
+        invalidLinkTitle: "ลิงก์นี้ไม่ถูกต้องหรือหมดอายุ",
+        invalidLinkDetail: "กรุณาติดต่อร้านเพื่อขอลิงก์ใหม่",
+        emptyProductsTitle: "ไม่มีสินค้าให้แสดง",
+        emptyProductsDetail: "ลองเปลี่ยนคำค้นหาหรือตัวกรอง",
+        catalogEyebrow: "แคตตาล็อกคู่ค้า Luopanich",
+        catalogTitle: "แคตตาล็อกส่วนตัวสำหรับคู่ค้า",
+        catalogHeroCopy: "เลือกสินค้าที่สนใจ แล้วส่งรายการให้ร้านตรวจสอบ",
+        catalogNotice: "รายการนี้ยังไม่ใช่คำสั่งซื้อจนกว่าร้านจะยืนยัน",
+        partner: "คู่ค้า",
+        expiresAt: "ใช้ได้ถึง",
+        toolbarAria: "ค้นหาและกรองสินค้า",
+        searchPlaceholder: "ค้นหาสินค้าด้วยชื่อหรือรหัสสินค้า",
+        allStatuses: "ทุกสถานะ",
+        statusReady: "พร้อมส่ง",
+        statusReadyPlus: "พร้อมส่ง + เพิ่มได้",
+        statusShipping: "ระหว่างจัดส่ง",
+        statusWarehouse: "โกดังไทย",
+        statusOut: "หมด",
+        productImageAlt: "สินค้า",
+        productImagePlaceholder: "รูป",
+        compareImageAlt: "รูปเปรียบเทียบ",
+        productCode: "รหัสสินค้า (SKU)",
+        productGroup: "กลุ่ม",
+        sizeUnit: "ไซส์",
+        selectSize: "เลือกไซส์",
+        selectSizeHelp: "เลือกไซส์ที่สนใจก่อนเพิ่มเข้ารายการ ระบบจะส่งรหัส SKU จริงของไซส์นั้นให้ร้าน",
+        selectedSize: "เลือกแล้ว",
+        selectSizeFirst: "กรุณาเลือกไซส์ก่อน",
+        selectSizeForSku: "เลือกไซส์เพื่อส่งรหัส SKU จริงของไซส์นั้นให้ร้าน",
+        remaining: "เหลือ",
+        addInterest: "เพิ่มในรายการสนใจ",
+        productDetails: "รายละเอียดสินค้า",
+        close: "ปิด",
+        interestedItems: "รายการที่สนใจ",
+        interestedEmpty: "ยังไม่มีสินค้าในรายการที่สนใจ เลือกสินค้าจากแคตตาล็อกเพื่อส่งให้ร้านตรวจสอบ",
+        interestedHelp: "รายการนี้เป็นการแจ้งความสนใจเท่านั้น ร้านจะตรวจสอบและติดต่อกลับเพื่อยืนยันก่อน",
+        itemCount: "จำนวนรายการ",
+        itemUnit: "รายการ",
+        estimatedTotal: "ยอดรวมโดยประมาณ",
+        requestContactHelp: "ร้านจะใช้ข้อมูลนี้เพื่อติดต่อกลับและยืนยันรายการ",
+        contactName: "ชื่อผู้ติดต่อ",
+        contactPhone: "เบอร์โทร",
+        contactEmail: "อีเมล",
+        message: "ข้อความเพิ่มเติม",
+        itemNote: "หมายเหตุสำหรับสินค้านี้",
+        quantity: "จำนวน",
+        note: "หมายเหตุ",
+        remove: "ลบ",
+        size: "ไซส์",
+        submitRequest: "ส่งรายการให้ร้าน",
+        submittingRequest: "กำลังส่ง...",
+        viewList: "ดูรายการ",
+        totalPrefix: "รวม",
+        requestSubmitFailed: "ส่งรายการไม่สำเร็จ",
+        requestSuccessTitle: "ส่งรายการให้ร้านเรียบร้อยแล้ว",
+        requestSuccessDetail: "ร้านจะตรวจสอบและติดต่อกลับเพื่อยืนยัน · เลขที่คำขอ {requestId} · {count} รายการ"
+      },
+      en: {
+        langThai: "ไทย",
+        langEn: "EN",
+        documentTitle: "Luopanich Partner Catalog",
+        chooseLanguage: "Choose language",
+        configMissing: "The system connection is not configured. Please contact the administrator.",
+        configHelp: "Please check the config file",
+        loadingTitle: "Loading catalog",
+        loadingDetail: "Please wait",
+        invalidServerResponse: "Invalid server response",
+        genericError: "Something went wrong",
+        requestFailed: "Unable to complete the request. Please try again.",
+        sessionExpired: "Your session has expired. Please sign in again.",
+        invalidLinkTitle: "This link is invalid or expired",
+        invalidLinkDetail: "Please contact the store for a new link",
+        emptyProductsTitle: "No products to show",
+        emptyProductsDetail: "Try changing the search or filter",
+        catalogEyebrow: "Luopanich Partner Catalog",
+        catalogTitle: "Private catalog for partners",
+        catalogHeroCopy: "Select products you are interested in, then send the list for store review.",
+        catalogNotice: "This list is not an order until the store confirms it.",
+        partner: "Partner",
+        expiresAt: "Valid until",
+        toolbarAria: "Search and filter products",
+        searchPlaceholder: "Search product name or SKU",
+        allStatuses: "All statuses",
+        statusReady: "Ready",
+        statusReadyPlus: "Ready + extra display",
+        statusShipping: "Shipping",
+        statusWarehouse: "Thai warehouse",
+        statusOut: "Out",
+        productImageAlt: "Product",
+        productImagePlaceholder: "Image",
+        compareImageAlt: "Comparison image",
+        productCode: "SKU",
+        productGroup: "Group",
+        sizeUnit: "sizes",
+        selectSize: "Select size",
+        selectSizeHelp: "Select a size before adding it to the list. The store will receive the actual SKU for that size.",
+        selectedSize: "Selected",
+        selectSizeFirst: "Please select a size first",
+        selectSizeForSku: "Select a size so the store receives the actual SKU for that size.",
+        remaining: "In stock",
+        addInterest: "Add to interested items",
+        productDetails: "Product details",
+        close: "Close",
+        interestedItems: "Interested items",
+        interestedEmpty: "No interested items yet. Select products from the catalog to send them to the store for review.",
+        interestedHelp: "This list only shows interest. The store will review and contact you to confirm.",
+        itemCount: "Items",
+        itemUnit: "items",
+        estimatedTotal: "Estimated total",
+        requestContactHelp: "The store will use this information to contact you and confirm the list.",
+        contactName: "Contact name",
+        contactPhone: "Phone",
+        contactEmail: "Email",
+        message: "Additional message",
+        itemNote: "Note for this product",
+        quantity: "Quantity",
+        note: "Note",
+        remove: "Remove",
+        size: "Size",
+        submitRequest: "Submit request",
+        submittingRequest: "Submitting...",
+        viewList: "View list",
+        totalPrefix: "Total",
+        requestSubmitFailed: "Could not submit the request",
+        requestSuccessTitle: "Request submitted to the store",
+        requestSuccessDetail: "The store will review and contact you to confirm · Request ID {requestId} · {count} items"
+      }
+    };
+
+    function getCurrentLang() {
+      try {
+        const savedLang = localStorage.getItem(LANG_KEY);
+        return savedLang === "en" || savedLang === "th" ? savedLang : DEFAULT_LANG;
+      } catch (err) {
+        console.warn("getCurrentLang: localStorage unavailable", err);
+        return DEFAULT_LANG;
+      }
+    }
+
+    function t(key, fallback = "") {
+      const lang = getCurrentLang();
+      return UI_TEXT[lang]?.[key] ?? UI_TEXT[DEFAULT_LANG]?.[key] ?? fallback;
+    }
+
+    function formatUiText(key, values = {}, fallback = "") {
+      return Object.entries(values).reduce(
+        (text, [name, value]) => text.replaceAll(`{${name}}`, String(value ?? "")),
+        t(key, fallback)
+      );
+    }
+
+    function getPublicDisplayError(fallbackKey = "requestFailed", fallback = "ไม่สามารถดำเนินการได้ กรุณาลองใหม่อีกครั้ง") {
+      return t(fallbackKey, fallback);
+    }
+
+    function syncLanguageMeta() {
+      document.documentElement.lang = getCurrentLang();
+      document.title = t("documentTitle", "แคตตาล็อกคู่ค้า Luopanich");
+    }
+
+    function renderLanguageSwitch() {
+      const lang = getCurrentLang();
+      return `
+        <div class="language-switch" role="group" aria-label="${t("chooseLanguage", "เลือกภาษา")}">
+          <button type="button" class="${lang === "th" ? "active" : ""}" onclick="setCurrentLang('th')">${t("langThai", "ไทย")}</button>
+          <button type="button" class="${lang === "en" ? "active" : ""}" onclick="setCurrentLang('en')">${t("langEn", "EN")}</button>
+        </div>
+      `;
+    }
+
+    function setCurrentLang(lang) {
+      captureContactDraft();
+      const safeLang = lang === "en" ? "en" : "th";
+      try {
+        localStorage.setItem(LANG_KEY, safeLang);
+      } catch (err) {
+        console.warn("setCurrentLang: localStorage unavailable", err);
+      }
+      syncLanguageMeta();
+      render();
+    }
+
+    syncLanguageMeta();
+
+    const API_URL = resolveLuopanichApiBaseUrl();
+
+    function resolveLuopanichApiBaseUrl() {
+      const config = window.LUOPANICH_CONFIG;
+      const allowedEnvironments = ["TEST", "PRODUCTION"];
+      const message = t("configMissing", "ระบบยังไม่ได้ตั้งค่าการเชื่อมต่อ กรุณาติดต่อผู้ดูแลระบบ");
+
+      if (!config || typeof config !== "object") {
+        return failLuopanichFrontendConfig(message);
+      }
+
+      const environment = String(config.ENVIRONMENT || "").trim().toUpperCase();
+      const expectedEnvironment = String(config.EXPECTED_ENVIRONMENT || "").trim().toUpperCase();
+      const apiBaseUrl = String(config.API_BASE_URL || "").trim();
+
+      if (!environment || !expectedEnvironment || !apiBaseUrl) {
+        return failLuopanichFrontendConfig(message);
+      }
+      if (!allowedEnvironments.includes(environment) || !allowedEnvironments.includes(expectedEnvironment)) {
+        return failLuopanichFrontendConfig(message);
+      }
+      if (environment !== expectedEnvironment) {
+        return failLuopanichFrontendConfig(message);
+      }
+      if (/YOUR_|PLACEHOLDER|example/i.test(apiBaseUrl)) {
+        return failLuopanichFrontendConfig(message);
+      }
+
+      let parsedUrl;
+      try {
+        parsedUrl = new URL(apiBaseUrl);
+      } catch (err) {
+        return failLuopanichFrontendConfig(message);
+      }
+      if (parsedUrl.protocol !== "https:" || !parsedUrl.pathname.endsWith("/exec")) {
+        return failLuopanichFrontendConfig(message);
+      }
+
+      return parsedUrl.toString();
+    }
+
+    function failLuopanichFrontendConfig(message) {
+      const safeMessage = String(message || t("configMissing", "ระบบยังไม่ได้ตั้งค่าการเชื่อมต่อ"));
+      const root = document.getElementById("app") || document.body;
+      if (root) {
+        root.innerHTML = `
+          <section class="state-card">
+            <h2>${esc(safeMessage)}</h2>
+            <div class="helper">${esc(t("configHelp", "กรุณาตรวจสอบไฟล์ config"))}</div>
+          </section>
+        `;
+      }
+      throw new Error("Luopanich frontend configuration invalid");
+    }
+
+    const state = {
+      partnerToken: new URLSearchParams(location.search).get("token") || "",
+      partner: null,
+      link: null,
+      products: [],
+      selectedItems: [],
+      variantSelections: {},
+      contactDraft: {
+        contactName: "",
+        contactPhone: "",
+        contactEmail: "",
+        message: ""
+      },
+      detailKey: "",
+      search: "",
+      status: "all",
+      loading: true,
+      error: "",
+      success: null,
+      submitError: "",
+      submitting: false
+    };
+
+    const app = document.getElementById("app");
+
+    function esc(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function escAttr(value) {
+      return esc(value).replace(/`/g, "&#96;");
+    }
+
+    function jsString(value) {
+      return JSON.stringify(String(value ?? ""));
+    }
+
+    function money(value) {
+      return (Number(value) || 0).toLocaleString("th-TH");
+    }
+
+    function formatDate(value) {
+      if (!value) return "-";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "-";
+      return date.toLocaleString(getCurrentLang() === "en" ? "en-US" : "th-TH", {
+        dateStyle: "medium",
+        timeStyle: "short"
+      });
+    }
+
+    async function fetchWithTimeout(url, options = {}, ms = 30000) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), ms);
+      try {
+        const res = await fetch(url, { ...options, signal: controller.signal });
+        const text = await res.text();
+        let json;
+        try {
+          json = JSON.parse(text);
+        } catch (err) {
+          throw new Error(t("invalidServerResponse", "รูปแบบข้อมูลจากเซิร์ฟเวอร์ไม่ถูกต้อง"));
+        }
+        if (!res.ok) {
+          throw new Error(json.error || `HTTP ${res.status}`);
+        }
+        return json;
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    async function postAction(params) {
+      const body = new URLSearchParams(params);
+      const json = await fetchWithTimeout(API_URL, {
+        method: "POST",
+        body
+      });
+      if (!json || json.success !== true) {
+        throw new Error(json?.error || json?.message || t("genericError", "เกิดข้อผิดพลาด"));
+      }
+      return json.data;
+    }
+
+    async function loadCatalog() {
+      if (!state.partnerToken) {
+        state.loading = false;
+        state.error = t("invalidLinkDetail", "กรุณาติดต่อร้านเพื่อขอลิงก์ใหม่");
+        render();
+        return;
+      }
+
+      try {
+        const data = await postAction({
+          action: "getPartnerCatalog",
+          partnerToken: state.partnerToken
+        });
+        state.partner = data.partner || {};
+        state.link = data.link || {};
+        state.products = Array.isArray(data.products) ? data.products : [];
+      } catch (err) {
+        console.warn("loadCatalog failed", err);
+        state.error = t("invalidLinkDetail", "กรุณาติดต่อร้านเพื่อขอลิงก์ใหม่");
+      } finally {
+        state.loading = false;
+        render();
+      }
+    }
+
+    function getStatusLabel(status) {
+      const statusKey = String(status || "").trim();
+      return {
+        ready: t("statusReady", "พร้อมส่ง"),
+        ready_plus: t("statusReadyPlus", "พร้อมส่ง + เพิ่มได้"),
+        shipping: t("statusShipping", "ระหว่างจัดส่ง"),
+        warehouse: t("statusWarehouse", "โกดังไทย"),
+        out: t("statusOut", "หมด")
+      }[statusKey] || t("statusReady", "พร้อมส่ง");
+    }
+
+    function isSizeVariantProduct(product) {
+      return Boolean(
+        product &&
+        product.parentProductId &&
+        product.displayName &&
+        String(product.variantType || "").trim().toLowerCase() === "size" &&
+        product.variantValue
+      );
+    }
+
+    function getVariantGroupKey(product) {
+      return [
+        "size",
+        String(product.parentProductId || "").trim(),
+        String(product.displayName || "").trim()
+      ].join("::");
+    }
+
+    function sortVariantsByOrder(variants) {
+      return [...variants].sort((a, b) => {
+        const orderA = Number(a.variantSortOrder);
+        const orderB = Number(b.variantSortOrder);
+        if (Number.isFinite(orderA) && Number.isFinite(orderB) && orderA !== orderB) return orderA - orderB;
+        if (Number.isFinite(orderA)) return -1;
+        if (Number.isFinite(orderB)) return 1;
+        return String(a.variantValue || a.productId || "").localeCompare(String(b.variantValue || b.productId || ""), "th");
+      });
+    }
+
+    function buildCatalogItems(products) {
+      const groups = new Map();
+      const singles = [];
+
+      products.forEach(product => {
+        if (!isSizeVariantProduct(product)) {
+          singles.push(product);
+          return;
+        }
+
+        const groupKey = getVariantGroupKey(product);
+        if (!groups.has(groupKey)) {
+          groups.set(groupKey, {
+            isVariantGroup: true,
+            groupKey,
+            parentProductId: product.parentProductId,
+            displayName: product.displayName,
+            variants: []
+          });
+        }
+        groups.get(groupKey).variants.push(product);
+      });
+
+      const grouped = [...groups.values()].map(group => ({
+        ...group,
+        variants: sortVariantsByOrder(group.variants)
+      }));
+
+      return [...grouped, ...singles];
+    }
+
+    function getCatalogItemText(item) {
+      if (item.isVariantGroup) {
+        return [
+          item.displayName,
+          item.parentProductId,
+          ...item.variants.flatMap(variant => [
+            variant.productId,
+            variant.name,
+            variant.variantValue
+          ])
+        ].join(" ").toLowerCase();
+      }
+      return `${item.productId || ""} ${item.name || ""} ${item.displayName || ""} ${item.parentProductId || ""} ${item.variantValue || ""}`.toLowerCase();
+    }
+
+    function catalogItemMatchesStatus(item) {
+      if (state.status === "all") return true;
+      if (item.isVariantGroup) {
+        return item.variants.some(variant => String(variant.status || "") === state.status);
+      }
+      return String(item.status || "") === state.status;
+    }
+
+    function getFilteredProducts() {
+      const search = state.search.trim().toLowerCase();
+      return buildCatalogItems(state.products).filter(item => {
+        const matchesSearch = !search || getCatalogItemText(item).includes(search);
+        const matchesStatus = catalogItemMatchesStatus(item);
+        return matchesSearch && matchesStatus;
+      });
+    }
+
+    function renderCatalogProductGrid() {
+      const products = getFilteredProducts();
+      return products.length
+        ? products.map(renderProduct).join("")
+        : `<section class="state-card"><h2>${esc(t("emptyProductsTitle", "ไม่มีสินค้าให้แสดง"))}</h2><div class="helper">${esc(t("emptyProductsDetail", "ลองเปลี่ยนคำค้นหาหรือตัวกรอง"))}</div></section>`;
+    }
+
+    function updateCatalogProductGrid() {
+      const grid = document.getElementById("catalogProductGrid");
+      if (!grid) {
+        render();
+        return;
+      }
+      grid.innerHTML = renderCatalogProductGrid();
+    }
+
+    function setCatalogSearch(value) {
+      state.search = String(value || "");
+      updateCatalogProductGrid();
+    }
+
+    function setCatalogStatus(value) {
+      state.status = String(value || "all");
+      updateCatalogProductGrid();
+    }
+
+    function getCatalogItemKey(item) {
+      return item?.isVariantGroup ? item.groupKey : String(item?.productId || "");
+    }
+
+    function findCatalogItemByKey(key) {
+      const target = String(key || "");
+      if (!target) return null;
+      return buildCatalogItems(state.products).find(item => getCatalogItemKey(item) === target) || null;
+    }
+
+    function openPartnerProductDetail(key, event) {
+      if (event) event.stopPropagation();
+      state.detailKey = String(key || "");
+      render();
+    }
+
+    function closePartnerProductDetail(event) {
+      if (event) event.stopPropagation();
+      state.detailKey = "";
+      render();
+    }
+
+    function selectPartnerDetailVariant(groupKey, productId, event) {
+      if (event) event.stopPropagation();
+      state.variantSelections[groupKey] = productId;
+      updatePartnerDetailSelection(groupKey, productId);
+    }
+
+    function renderPartnerDetailImage(image, altText) {
+      return image
+        ? `<img class="detail-image" src="${escAttr(image)}" alt="${escAttr(altText || t("productImageAlt", "สินค้า"))}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'detail-placeholder',textContent:'${escAttr(t("productImagePlaceholder", "รูป"))}'}))">`
+        : `<div class="detail-placeholder">${esc(t("productImagePlaceholder", "รูป"))}</div>`;
+    }
+
+    function normalizeImageUrlForCompare(value) {
+      return String(value || "").trim();
+    }
+
+    function updatePartnerDetailImage(imageSlot, nextImage, altText) {
+      if (!imageSlot) return;
+      const normalizedNext = normalizeImageUrlForCompare(nextImage);
+      const currentImage = imageSlot.querySelector(".detail-image");
+      const currentSrc = normalizeImageUrlForCompare(currentImage?.getAttribute("src"));
+
+      if (currentImage && normalizedNext) {
+        if (currentSrc !== normalizedNext) {
+          currentImage.src = normalizedNext;
+        }
+        currentImage.alt = altText || t("productImageAlt", "สินค้า");
+        return;
+      }
+
+      if (!currentImage && !normalizedNext && imageSlot.querySelector(".detail-placeholder")) {
+        return;
+      }
+
+      imageSlot.innerHTML = renderPartnerDetailImage(normalizedNext, altText);
+    }
+
+    function updatePartnerDetailSelection(groupKey, productId) {
+      const item = findCatalogItemByKey(groupKey);
+      const selectedVariant = item?.variants?.find(variant => variant.productId === productId);
+      if (!item || !selectedVariant) return;
+
+      document.querySelectorAll("[data-detail-size-product-id]").forEach(button => {
+        button.classList.toggle("selected", button.dataset.detailSizeProductId === productId);
+      });
+
+      const imageSlot = document.querySelector("[data-detail-image-slot]");
+      updatePartnerDetailImage(
+        imageSlot,
+        selectedVariant.image || item.variants.find(variant => variant.image)?.image || "",
+        item.displayName || selectedVariant.name || selectedVariant.productId
+      );
+
+      const skuEl = document.querySelector("[data-detail-sku]");
+      if (skuEl) skuEl.textContent = `${t("productCode", "รหัสสินค้า (SKU)")}: ${selectedVariant.productId || "-"}`;
+
+      const statusEl = document.querySelector("[data-detail-status]");
+      if (statusEl) {
+        statusEl.className = `status ${selectedVariant.status || ""}`;
+        statusEl.textContent = getStatusLabel(selectedVariant.status);
+      }
+    }
+
+    function getGroupPriceLabel(group) {
+      const prices = [...new Set(group.variants.map(variant => Number(variant.price) || 0))].sort((a, b) => a - b);
+      if (!prices.length) return "฿0";
+      if (prices.length === 1) return `฿${money(prices[0])}`;
+      return `฿${money(prices[0])} - ฿${money(prices[prices.length - 1])}`;
+    }
+
+    function isVariantUnavailable(product) {
+      const status = String(product.status || "").trim();
+      const hasStock = product.stock !== undefined && product.stock !== null && product.stock !== "";
+      return status === "out" || (hasStock && Number(product.stock) <= 0);
+    }
+
+    function getVariantSubLabel(product) {
+      const parts = [];
+      if (product.stock !== undefined && product.stock !== null && product.stock !== "") {
+        parts.push(`${t("remaining", "เหลือ")} ${money(product.stock)}`);
+      }
+      parts.push(getStatusLabel(product.status));
+      return parts.join(" · ");
+    }
+
+    function selectVariant(groupKey, productId) {
+      state.variantSelections[groupKey] = productId;
+      render();
+    }
+
+    function addVariantGroupInterest(groupKey) {
+      const productId = state.variantSelections[groupKey];
+      if (!productId) {
+        alert(t("selectSizeFirst", "กรุณาเลือกไซส์ก่อน"));
+        return;
+      }
+      addInterest(productId);
+    }
+
+    function addInterest(productId) {
+      const product = state.products.find(item => item.productId === productId);
+      if (!product) return;
+      const existing = state.selectedItems.find(item => item.productId === productId);
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        state.selectedItems.push({
+          productId,
+          name: product.name,
+          displayName: product.displayName || "",
+          parentProductId: product.parentProductId || "",
+          variantValue: product.variantValue || "",
+          image: product.image || "",
+          price: Number(product.price) || 0,
+          qty: 1,
+          partnerNote: ""
+        });
+      }
+      render();
+    }
+
+    function removeInterest(productId) {
+      state.selectedItems = state.selectedItems.filter(item => item.productId !== productId);
+      render();
+    }
+
+    function updateInterest(productId, field, value) {
+      const item = state.selectedItems.find(entry => entry.productId === productId);
+      if (!item) return;
+      if (field === "qty") {
+        const qty = Number(value);
+        item.qty = Number.isInteger(qty) && qty > 0 ? qty : 1;
+      } else if (field === "partnerNote") {
+        item.partnerNote = String(value || "");
+      }
+      renderSummaryOnly();
+    }
+
+    function getInterestItemImage(item) {
+      return item.image || state.products.find(product => product.productId === item.productId)?.image || "";
+    }
+
+    function getEstimatedTotal() {
+      return state.selectedItems.reduce(
+        (sum, item) => sum + (Number(item.price) || 0) * (Number(item.qty) || 0),
+        0
+      );
+    }
+
+    function renderProduct(product) {
+      if (product.isVariantGroup) {
+        return renderVariantGroup(product);
+      }
+
+      const compareImages = String(product.compareImages || "")
+        .split(",")
+        .map(value => value.trim())
+        .filter(Boolean)
+        .slice(0, 4);
+
+      return `
+        <article class="product-card" onclick="openPartnerProductDetail(${escAttr(jsString(product.productId))}, event)">
+          ${
+            product.image
+              ? `<img class="thumb" src="${escAttr(product.image)}" alt="${escAttr(product.name)}" onclick="openPartnerProductDetail(${escAttr(jsString(product.productId))}, event)" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'thumb-placeholder',textContent:'${escAttr(t("productImagePlaceholder", "รูป"))}'}))">`
+              : `<div class="thumb-placeholder" aria-hidden="true">${esc(t("productImagePlaceholder", "รูป"))}</div>`
+          }
+          <div class="product-main">
+            <h2 class="name">${esc(product.name || "-")}</h2>
+            <div class="sku-line">
+              <span class="sku-chip">${t("productCode", "รหัสสินค้า (SKU)")}: ${esc(product.productId || "-")}</span>
+              <span class="status ${escAttr(product.status || "")}">${esc(getStatusLabel(product.status))}</span>
+            </div>
+            <div class="price">฿${money(product.price)}</div>
+            ${product.detailsText ? `<div class="details">${esc(product.detailsText)}</div>` : ""}
+            ${
+              compareImages.length
+                ? `<div class="compare-images">${compareImages.map(url => `<img src="${escAttr(url)}" alt="${escAttr(t("compareImageAlt", "รูปเปรียบเทียบ"))}" onerror="this.remove()">`).join("")}</div>`
+                : ""
+            }
+            <div class="actions">
+              <button class="btn btn-primary" type="button" style="width:100%" onclick="event.stopPropagation(); addInterest(${escAttr(jsString(product.productId))})">
+                ${t("addInterest", "เพิ่มในรายการสนใจ")}
+              </button>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderVariantGroup(group) {
+      const image = group.variants.find(variant => variant.image)?.image || "";
+      const selectedProductId = state.variantSelections[group.groupKey] || "";
+      const selectedVariant = group.variants.find(variant => variant.productId === selectedProductId);
+      const detailsText = group.variants.find(variant => variant.detailsText)?.detailsText || "";
+      const compareImages = String(group.variants.find(variant => variant.compareImages)?.compareImages || "")
+        .split(",")
+        .map(value => value.trim())
+        .filter(Boolean)
+        .slice(0, 4);
+
+      return `
+        <article class="product-card" onclick="openPartnerProductDetail(${escAttr(jsString(group.groupKey))}, event)">
+          ${
+            image
+              ? `<img class="thumb" src="${escAttr(image)}" alt="${escAttr(group.displayName)}" onclick="openPartnerProductDetail(${escAttr(jsString(group.groupKey))}, event)" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'thumb-placeholder',textContent:'${escAttr(t("productImagePlaceholder", "รูป"))}'}))">`
+              : `<div class="thumb-placeholder" aria-hidden="true">${esc(t("productImagePlaceholder", "รูป"))}</div>`
+          }
+          <div class="product-main">
+            <h2 class="name">${esc(group.displayName || "-")}</h2>
+            <div class="sku-line">
+              <span class="sku-chip">${t("productGroup", "กลุ่ม")}: ${esc(group.parentProductId || "-")}</span>
+              <span class="sku-chip">${group.variants.length} ${t("sizeUnit", "ไซส์")}</span>
+            </div>
+            <div class="price">${esc(getGroupPriceLabel(group))}</div>
+            ${detailsText ? `<div class="details">${esc(detailsText)}</div>` : ""}
+            <div class="variant-group-note">${t("selectSizeHelp", "เลือกไซส์ที่สนใจก่อนเพิ่มเข้ารายการ ระบบจะส่งรหัส SKU จริงของไซส์นั้นให้ร้าน")}</div>
+            <div class="size-options" role="group" aria-label="${escAttr(t("selectSize", "เลือกไซส์"))}">
+              ${group.variants.map(variant => {
+                const selected = variant.productId === selectedProductId;
+                const disabled = isVariantUnavailable(variant);
+                return `
+                  <button class="size-chip ${selected ? "selected" : ""}" type="button"
+                    ${disabled ? "disabled" : ""}
+                    onclick="event.stopPropagation(); selectVariant(${escAttr(jsString(group.groupKey))},${escAttr(jsString(variant.productId))})">
+                    <span>${esc(variant.variantValue || variant.productId)}</span>
+                    <small>${esc(getVariantSubLabel(variant))}</small>
+                  </button>
+                `;
+              }).join("")}
+            </div>
+            ${
+              selectedVariant
+                ? `<div class="meta">${t("selectedSize", "เลือกแล้ว")}: ${esc(selectedVariant.variantValue || "-")} · ${t("productCode", "รหัสสินค้า (SKU)")}: ${esc(selectedVariant.productId || "-")}</div>`
+                : `<div class="meta">${t("selectSizeFirst", "กรุณาเลือกไซส์ก่อน")}</div>`
+            }
+            ${
+              compareImages.length
+                ? `<div class="compare-images">${compareImages.map(url => `<img src="${escAttr(url)}" alt="${escAttr(t("compareImageAlt", "รูปเปรียบเทียบ"))}" onerror="this.remove()">`).join("")}</div>`
+                : ""
+            }
+            <div class="actions">
+              <button class="btn btn-primary" type="button" style="width:100%" onclick="event.stopPropagation(); addVariantGroupInterest(${escAttr(jsString(group.groupKey))})">
+                ${t("addInterest", "เพิ่มในรายการสนใจ")}
+              </button>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderPartnerProductDetailSheet() {
+      const item = findCatalogItemByKey(state.detailKey);
+      if (!item) return "";
+
+      const isGroup = Boolean(item.isVariantGroup);
+      const selectedProductId = isGroup ? state.variantSelections[item.groupKey] || "" : item.productId;
+      const selectedVariant = isGroup
+        ? item.variants.find(variant => variant.productId === selectedProductId)
+        : item;
+      const displayProduct = selectedVariant || (isGroup ? item.variants[0] || {} : item);
+      const image = displayProduct.image || (isGroup ? item.variants.find(variant => variant.image)?.image : item.image) || "";
+      const name = isGroup ? item.displayName : item.name;
+      const priceLabel = isGroup ? getGroupPriceLabel(item) : `฿${money(item.price)}`;
+      const status = selectedVariant ? selectedVariant.status : displayProduct.status;
+      const skuLabel = selectedVariant?.productId || (!isGroup ? item.productId : "-");
+      const detailsText = displayProduct.detailsText || (!isGroup ? item.detailsText : "");
+
+      return `
+        <div class="detail-backdrop" onclick="closePartnerProductDetail(event)">
+          <section class="detail-sheet" role="dialog" aria-modal="true" aria-label="${escAttr(t("productDetails", "รายละเอียดสินค้า"))}" onclick="event.stopPropagation()">
+            <div class="detail-topbar">
+              <strong>${t("productDetails", "รายละเอียดสินค้า")}</strong>
+              <button class="detail-close" type="button" onclick="closePartnerProductDetail(event)" aria-label="${escAttr(t("close", "ปิด"))}">×</button>
+            </div>
+            <div class="detail-body">
+              <div data-detail-image-slot>
+                ${renderPartnerDetailImage(image, name || skuLabel || t("productImageAlt", "สินค้า"))}
+              </div>
+              <div>
+                <h2 class="name">${esc(name || "-")}</h2>
+                <div class="price">${esc(priceLabel)}</div>
+              </div>
+              <div class="detail-meta-grid">
+                ${isGroup ? `<div class="sku-line"><span class="sku-chip">${t("productGroup", "กลุ่ม")}: ${esc(item.parentProductId || "-")}</span></div>` : ""}
+                <div class="sku-line">
+                  <span class="sku-chip" data-detail-sku>${t("productCode", "รหัสสินค้า (SKU)")}: ${esc(skuLabel)}</span>
+                  <span class="status ${escAttr(status || "")}" data-detail-status>${esc(selectedVariant ? getStatusLabel(status) : t("selectSize", "เลือกไซส์"))}</span>
+                </div>
+                ${
+                  isGroup
+                    ? `<div class="detail-note">${t("selectSizeForSku", "เลือกไซส์เพื่อส่งรหัส SKU จริงของไซส์นั้นให้ร้าน")}</div>`
+                    : ""
+                }
+              </div>
+              ${
+                isGroup
+                  ? `<div class="size-options" role="group" aria-label="${escAttr(t("selectSize", "เลือกไซส์"))}">
+                      ${item.variants.map(variant => {
+                        const selected = variant.productId === selectedProductId;
+                        const disabled = isVariantUnavailable(variant);
+                        return `
+                          <button class="size-chip ${selected ? "selected" : ""}" type="button"
+                            ${disabled ? "disabled" : ""}
+                            data-detail-size-product-id="${escAttr(variant.productId)}"
+                            onclick="selectPartnerDetailVariant(${escAttr(jsString(item.groupKey))},${escAttr(jsString(variant.productId))}, event)">
+                            <span>${esc(variant.variantValue || variant.productId)}</span>
+                            <small>${esc(getVariantSubLabel(variant))}</small>
+                          </button>
+                        `;
+                      }).join("")}
+                    </div>`
+                  : ""
+              }
+              ${detailsText ? `<div class="details">${esc(detailsText)}</div>` : ""}
+              <button class="btn btn-primary" type="button"
+                onclick="event.stopPropagation(); ${isGroup ? `addVariantGroupInterest(${escAttr(jsString(item.groupKey))})` : `addInterest(${escAttr(jsString(item.productId))})`}">
+                ${t("addInterest", "เพิ่มในรายการสนใจ")}
+              </button>
+            </div>
+          </section>
+        </div>
+      `;
+    }
+
+    function renderInterestList() {
+      if (!state.selectedItems.length) {
+        return `<div class="panel-note">${t("interestedEmpty", "ยังไม่มีสินค้าในรายการที่สนใจ เลือกสินค้าจากแคตตาล็อกเพื่อส่งให้ร้านตรวจสอบ")}</div>`;
+      }
+
+      return `
+        <div class="interest-list">
+          ${state.selectedItems.map(item => {
+            const image = getInterestItemImage(item);
+            return `
+            <div class="interest-item">
+              ${
+                image
+                  ? `<img class="interest-thumb" src="${escAttr(image)}" alt="${escAttr(item.displayName || item.name || item.productId)}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'interest-thumb-placeholder',textContent:'${escAttr(t("productImagePlaceholder", "รูป"))}'}))">`
+                  : `<div class="interest-thumb-placeholder">${esc(t("productImagePlaceholder", "รูป"))}</div>`
+              }
+              <div class="interest-main">
+                <div class="interest-head">
+                  <div>
+                    <strong>${esc(item.displayName || item.name || item.productId)}</strong>
+                    <div class="meta">
+                      ${item.variantValue ? `${t("size", "ไซส์")}: ${esc(item.variantValue)} · ` : ""}${t("productCode", "รหัสสินค้า (SKU)")}: ${esc(item.productId)} · ฿${money(item.price)}
+                    </div>
+                  </div>
+                  <button class="btn btn-danger" type="button" onclick="removeInterest(${escAttr(jsString(item.productId))})">${t("remove", "ลบ")}</button>
+                </div>
+                <div class="interest-controls">
+                  <label class="field-label">
+                    ${t("quantity", "จำนวน")}
+                    <input type="number" min="1" step="1" value="${Number(item.qty) || 1}" aria-label="${escAttr(t("quantity", "จำนวน"))}"
+                      oninput="updateInterest(${escAttr(jsString(item.productId))},'qty',this.value)">
+                  </label>
+                  <label class="field-label">
+                    ${t("note", "หมายเหตุ")}
+                    <input value="${escAttr(item.partnerNote || "")}" placeholder="${escAttr(t("itemNote", "หมายเหตุสำหรับสินค้านี้"))}"
+                      oninput="updateInterest(${escAttr(jsString(item.productId))},'partnerNote',this.value)">
+                  </label>
+                </div>
+              </div>
+            </div>
+          `;
+          }).join("")}
+        </div>
+      `;
+    }
+
+    function renderSummaryOnly() {
+      const total = document.querySelectorAll("[data-estimated-total]");
+      total.forEach(el => {
+        el.textContent = `฿${money(getEstimatedTotal())}`;
+      });
+    }
+
+    function captureContactDraft() {
+      const form = app?.querySelector?.("form");
+      if (!form) return;
+      state.contactDraft.contactName = form.contactName?.value || state.contactDraft.contactName || "";
+      state.contactDraft.contactPhone = form.contactPhone?.value || state.contactDraft.contactPhone || "";
+      state.contactDraft.contactEmail = form.contactEmail?.value || state.contactDraft.contactEmail || "";
+      state.contactDraft.message = form.message?.value || state.contactDraft.message || "";
+    }
+
+    function updateContactDraft(field, value) {
+      if (!Object.prototype.hasOwnProperty.call(state.contactDraft, field)) return;
+      state.contactDraft[field] = String(value || "");
+    }
+
+    async function submitRequest(event) {
+      event.preventDefault();
+      if (state.submitting || !state.selectedItems.length) return;
+      state.submitError = "";
+
+      const form = event.currentTarget;
+      const items = state.selectedItems.map(item => ({
+        productId: item.productId,
+        qty: Number(item.qty) || 1,
+        partnerNote: item.partnerNote || ""
+      }));
+
+      state.submitting = true;
+      render();
+
+      try {
+        const data = await postAction({
+          action: "submitPartnerRequest",
+          partnerToken: state.partnerToken,
+          items: JSON.stringify(items),
+          contactName: form.contactName.value.trim(),
+          contactPhone: form.contactPhone.value.trim(),
+          contactEmail: form.contactEmail.value.trim(),
+          message: form.message.value.trim()
+        });
+        state.success = data;
+        state.selectedItems = [];
+      } catch (err) {
+        console.warn("submitPartnerRequest failed", err);
+        state.submitError = getPublicDisplayError("requestSubmitFailed", "ส่งรายการไม่สำเร็จ");
+      } finally {
+        state.submitting = false;
+        render();
+      }
+    }
+
+    function renderStateCard(title, detail) {
+      app.innerHTML = `
+        <section class="state-card">
+          <div class="partner-lang-row" style="margin-bottom:12px">${renderLanguageSwitch()}</div>
+          <h2>${esc(title)}</h2>
+          <div class="helper">${esc(detail || "")}</div>
+        </section>
+      `;
+    }
+
+    function render() {
+      syncLanguageMeta();
+
+      if (state.loading) {
+        renderStateCard(t("loadingTitle", "กำลังโหลดแคตตาล็อก"), t("loadingDetail", "กรุณารอสักครู่"));
+        return;
+      }
+
+      if (state.success) {
+        renderStateCard(
+          t("requestSuccessTitle", "ส่งรายการให้ร้านเรียบร้อยแล้ว"),
+          formatUiText(
+            "requestSuccessDetail",
+            { requestId: state.success.requestId || "-", count: state.success.itemCount || 0 },
+            "ร้านจะตรวจสอบและติดต่อกลับเพื่อยืนยัน · เลขที่คำขอ {requestId} · {count} รายการ"
+          )
+        );
+        return;
+      }
+
+      if (state.error) {
+        renderStateCard(t("invalidLinkTitle", "ลิงก์นี้ไม่ถูกต้องหรือหมดอายุ"), state.error || t("invalidLinkDetail", "กรุณาติดต่อร้านเพื่อขอลิงก์ใหม่"));
+        return;
+      }
+
+      app.innerHTML = `
+        <header class="hero">
+          <div class="hero-card">
+            <div class="partner-lang-row">${renderLanguageSwitch()}</div>
+            <div class="eyebrow">${t("catalogEyebrow", "แคตตาล็อกคู่ค้า Luopanich")}</div>
+            <h1>${t("catalogTitle", "แคตตาล็อกส่วนตัวสำหรับคู่ค้า")}</h1>
+            <div class="hero-copy">
+              ${t("catalogHeroCopy", "เลือกสินค้าที่สนใจ แล้วส่งรายการให้ร้านตรวจสอบ")}
+            </div>
+            <div class="notice">
+              ${t("catalogNotice", "รายการนี้ยังไม่ใช่คำสั่งซื้อจนกว่าร้านจะยืนยัน")}
+            </div>
+            <div class="partner-meta">
+              <span class="pill">${t("partner", "คู่ค้า")}: ${esc(state.partner?.partnerName || "-")}</span>
+              <span class="pill">${t("expiresAt", "ใช้ได้ถึง")}: ${esc(formatDate(state.link?.expiresAt))}</span>
+            </div>
+          </div>
+        </header>
+
+        <section class="toolbar" aria-label="${escAttr(t("toolbarAria", "ค้นหาและกรองสินค้า"))}">
+          <input value="${escAttr(state.search)}" placeholder="${escAttr(t("searchPlaceholder", "ค้นหาสินค้าด้วยชื่อหรือรหัสสินค้า"))}"
+            oninput="setCatalogSearch(this.value)">
+          <select onchange="setCatalogStatus(this.value)">
+            <option value="all" ${state.status === "all" ? "selected" : ""}>${t("allStatuses", "ทุกสถานะ")}</option>
+            <option value="ready" ${state.status === "ready" ? "selected" : ""}>${getStatusLabel("ready")}</option>
+            <option value="ready_plus" ${state.status === "ready_plus" ? "selected" : ""}>${getStatusLabel("ready_plus")}</option>
+            <option value="shipping" ${state.status === "shipping" ? "selected" : ""}>${getStatusLabel("shipping")}</option>
+            <option value="warehouse" ${state.status === "warehouse" ? "selected" : ""}>${getStatusLabel("warehouse")}</option>
+            <option value="out" ${state.status === "out" ? "selected" : ""}>${getStatusLabel("out")}</option>
+          </select>
+        </section>
+
+        <div class="layout">
+          <section id="catalogProductGrid" class="grid">
+            ${renderCatalogProductGrid()}
+          </section>
+
+          <aside class="panel" id="interestPanel">
+            <h2>${t("interestedItems", "รายการที่สนใจ")}</h2>
+            <div class="panel-note">
+              ${t("interestedHelp", "รายการนี้เป็นการแจ้งความสนใจเท่านั้น ร้านจะตรวจสอบและติดต่อกลับเพื่อยืนยันก่อน")}
+            </div>
+            ${renderInterestList()}
+            <div class="interest-summary">
+              <div class="summary-tile">
+                <span>${t("itemCount", "จำนวนรายการ")}</span>
+                <strong>${state.selectedItems.length} ${t("itemUnit", "รายการ")}</strong>
+              </div>
+              <div class="summary-tile">
+                <span>${t("estimatedTotal", "ยอดรวมโดยประมาณ")}</span>
+                <strong data-estimated-total>฿${money(getEstimatedTotal())}</strong>
+              </div>
+            </div>
+            <form onsubmit="submitRequest(event)">
+              ${state.submitError ? `<div class="helper" style="color:var(--danger);margin-bottom:10px">${esc(state.submitError)}</div>` : ""}
+              <div class="helper">${t("requestContactHelp", "ร้านจะใช้ข้อมูลนี้เพื่อติดต่อกลับและยืนยันรายการ")}</div>
+              <div class="form-stack">
+                <label class="field-label">
+                  ${t("contactName", "ชื่อผู้ติดต่อ")}
+                  <input name="contactName" value="${escAttr(state.contactDraft.contactName)}" placeholder="${escAttr(t("contactName", "ชื่อผู้ติดต่อ"))}" autocomplete="name" oninput="updateContactDraft('contactName', this.value)">
+                </label>
+                <label class="field-label">
+                  ${t("contactPhone", "เบอร์โทร")}
+                  <input name="contactPhone" value="${escAttr(state.contactDraft.contactPhone)}" placeholder="${escAttr(t("contactPhone", "เบอร์โทร"))}" autocomplete="tel" oninput="updateContactDraft('contactPhone', this.value)">
+                </label>
+                <label class="field-label">
+                  ${t("contactEmail", "อีเมล")}
+                  <input name="contactEmail" value="${escAttr(state.contactDraft.contactEmail)}" placeholder="${escAttr(t("contactEmail", "อีเมล"))}" autocomplete="email" oninput="updateContactDraft('contactEmail', this.value)">
+                </label>
+                <label class="field-label">
+                  ${t("message", "ข้อความเพิ่มเติม")}
+                  <textarea name="message" placeholder="${escAttr(t("message", "ข้อความเพิ่มเติม"))}" oninput="updateContactDraft('message', this.value)">${esc(state.contactDraft.message)}</textarea>
+                </label>
+              </div>
+              <button class="btn btn-primary" style="width:100%;margin-top:10px" type="submit"
+                ${state.submitting || !state.selectedItems.length ? "disabled" : ""}>
+                ${state.submitting ? t("submittingRequest", "กำลังส่ง...") : t("submitRequest", "ส่งรายการให้ร้าน")}
+              </button>
+            </form>
+          </aside>
+        </div>
+
+        <div class="summary-bar ${state.selectedItems.length ? "" : "hidden"}">
+          <div>
+            <strong>${state.selectedItems.length} ${t("itemUnit", "รายการ")}</strong>
+            <div class="meta">${t("totalPrefix", "รวม")} <span data-estimated-total>฿${money(getEstimatedTotal())}</span></div>
+          </div>
+          <a class="btn btn-primary" href="#interestPanel" style="text-decoration:none">${t("viewList", "ดูรายการ")}</a>
+        </div>
+        ${renderPartnerProductDetailSheet()}
+      `;
+    }
+
+    render();
+    loadCatalog();
+  </script>
+</body>
+</html>
