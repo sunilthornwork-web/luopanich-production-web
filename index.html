@@ -5591,6 +5591,7 @@ const state = {
 
   // 🔒 viewer submit guard (ใช้กับ createOrder)
   isSubmitting: false,
+  createRequestId: "",
 
   admin: {
     pendingDeliveryExpanded:{},
@@ -5934,6 +5935,9 @@ const UI_TEXT = {
     orderCreated: "สร้างใบสั่งซื้อเรียบร้อยแล้ว",
     downloadOrderHint: "กดปุ่มเพื่อดาวน์โหลดใบสั่งซื้อ",
     createOrderError: "เกิดข้อผิดพลาดในการสร้างใบสั่งซื้อ",
+    createOrderCheckingResult: "กำลังตรวจสอบผลลัพธ์คำสั่งซื้อ...",
+    createOrderUnconfirmed: "ไม่สามารถยืนยันผลการสร้างใบสั่งซื้อได้ กรุณาตรวจสอบเลข PO ก่อนส่งซ้ำ",
+    createOrderConflict: "คำขอสร้างออเดอร์นี้ไม่ตรงกับรายการเดิม กรุณาตรวจสอบออเดอร์ก่อนส่งใหม่",
     orderCreatedTitle: "สร้างใบสั่งซื้อสำเร็จ",
     orderId: "เลขที่ใบสั่งซื้อ",
     orderNumber: "เลขออเดอร์",
@@ -6950,6 +6954,9 @@ const UI_TEXT = {
     orderCreated: "Order created successfully",
     downloadOrderHint: "Tap the button to download the order",
     createOrderError: "Could not create order",
+    createOrderCheckingResult: "Checking order result...",
+    createOrderUnconfirmed: "Could not confirm whether the order was saved. Please check this PO before submitting again.",
+    createOrderConflict: "This create order request does not match the existing order. Please review before submitting again.",
     orderCreatedTitle: "Order created successfully",
     orderId: "Order ID",
     orderNumber: "Order ID",
@@ -8936,7 +8943,9 @@ async function fetchWithTimeout(input, init = {}, ms = 30000) {
 
   } catch (err) {
     if (err.name === "AbortError") {
-      throw new Error(t("connectionSlowRetry", "การเชื่อมต่อช้าเกินไป กรุณาลองใหม่อีกครั้ง"));
+      const timeoutError = new Error(t("connectionSlowRetry", "การเชื่อมต่อช้าเกินไป กรุณาลองใหม่อีกครั้ง"));
+      timeoutError.code = "REQUEST_TIMEOUT";
+      throw timeoutError;
     }
     throw err;
   } finally {
@@ -9377,7 +9386,28 @@ async function refreshProducts({ retry = true, throwOnError = false } = {}) {
   }
 }
 
-async function createOrder() {
+function generateCreateOrderRequestId() {
+  if (window.crypto && typeof window.crypto.randomUUID === "function") {
+    return window.crypto.randomUUID();
+  }
+  if (window.crypto && typeof window.crypto.getRandomValues === "function") {
+    const bytes = new Uint8Array(16);
+    window.crypto.getRandomValues(bytes);
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = Array.from(bytes, value => value.toString(16).padStart(2, "0"));
+    return [
+      hex.slice(0, 4).join(""),
+      hex.slice(4, 6).join(""),
+      hex.slice(6, 8).join(""),
+      hex.slice(8, 10).join(""),
+      hex.slice(10, 16).join("")
+    ].join("-");
+  }
+  throw new Error("CREATE_REQUEST_ID_UNAVAILABLE");
+}
+
+async function createOrder(createRequestId) {
   // 🔴 HARDENING: reload stock snapshot before submit
   const latestProducts = await fetchProducts();
 
@@ -9408,6 +9438,7 @@ async function createOrder() {
   form.append("items", JSON.stringify(state.cart));
   form.append("total", total);
   form.append("poNumber", String(state.poNumber || "").trim());
+  form.append("createRequestId", String(createRequestId || "").trim());
  
   // ใช้ fetchWithTimeout เพื่อป้องกัน request แขวน
   const res = await fetchWithTimeout(API_URL, {
@@ -9424,6 +9455,16 @@ async function createOrder() {
   }
 
   const json = await res.json();
+
+  if (json?.success === false || json?.error) {
+    const err = new Error(
+      json?.error === "IDEMPOTENCY_CONFLICT"
+        ? t("createOrderConflict", "คำขอสร้างออเดอร์นี้ไม่ตรงกับรายการเดิม กรุณาตรวจสอบออเดอร์ก่อนส่งใหม่")
+        : (json?.message || json?.error || "Create order failed")
+    );
+    err.code = json?.error || "CREATE_ORDER_FAILED";
+    throw err;
+  }
 
   // 🔴 FIX: validate response shape
   if (!json || json.success !== true || !json.data?.orderId) {
@@ -22246,7 +22287,20 @@ async function submitOrder(){
 
     // ================= STEP 2: CREATE ORDER =================
     updateLoadingText(t("creatingOrder", "กำลังสร้างใบสั่งซื้อ..."));
-    const res = await createOrder();
+    const cartSnapshot = JSON.parse(JSON.stringify(state.cart));
+    const createRequestId = state.createRequestId || generateCreateOrderRequestId();
+    state.createRequestId = createRequestId;
+    let res;
+    try {
+      res = await createOrder(createRequestId);
+    } catch (createErr) {
+      if (createErr?.code !== "REQUEST_TIMEOUT") {
+        state.createRequestId = "";
+        throw createErr;
+      }
+      updateLoadingText(t("createOrderCheckingResult", "กำลังตรวจสอบผลลัพธ์คำสั่งซื้อ..."));
+      res = await reconcileCreateOrderTimeoutByRequestId(createRequestId, poNumber, cartSnapshot);
+    }
 
     if (!res || res.success !== true || !res.data?.orderId) {
       throw new Error("Invalid order response");
@@ -22298,6 +22352,7 @@ async function submitOrder(){
     state.cart = [];
     clearCartStorage();
     state.poNumber = "";
+    state.createRequestId = "";
     if (typeof renderBadge === "function") renderBadge();
     // 🔴 CHANGED: เคลียร์ตะกร้าแล้วต้องซ่อน/รีเฟรช floating bar
     if (typeof renderFloatingBar === "function") renderFloatingBar();
@@ -29619,6 +29674,55 @@ async function checkDuplicatePo(poNumber) {
 
   return json.data || { duplicate: false, matches: [] };
 }
+
+async function checkCreateOrderRequestStatus(createRequestId, poNumber, items) {
+  const form = new URLSearchParams();
+  form.append("action", "checkCreateOrderRequestStatus");
+  form.append("createRequestId", String(createRequestId || "").trim());
+  form.append("poNumber", String(poNumber || "").trim());
+  form.append("items", JSON.stringify(items || []));
+
+  const res = await fetchWithTimeout(API_URL, {
+    method: "POST",
+    body: form
+  }, 8000);
+  const json = await res.json();
+
+  if (!json || json.success !== true) {
+    throw new Error(json?.message || json?.error || "Create order status lookup failed");
+  }
+
+  return json.data || { found: false, sameRequestMatch: false, reconciled: false };
+}
+
+async function reconcileCreateOrderTimeoutByRequestId(createRequestId, poNumber, items) {
+  let result;
+  try {
+    result = await checkCreateOrderRequestStatus(createRequestId, poNumber, items);
+  } catch (err) {
+    const uncertain = new Error(t("createOrderUnconfirmed", "ไม่สามารถยืนยันผลการสร้างใบสั่งซื้อได้ กรุณาตรวจสอบเลข PO ก่อนส่งซ้ำ"));
+    uncertain.code = "CREATE_ORDER_UNCONFIRMED";
+    throw uncertain;
+  }
+
+  if (result?.reconciled === true && result.orderId) {
+    return {
+      success: true,
+      data: {
+        orderId: result.orderId,
+        status: result.status || "PENDING",
+        items,
+        idempotent: true,
+        reconciled: true
+      }
+    };
+  }
+
+  const uncertain = new Error(t("createOrderUnconfirmed", "ไม่สามารถยืนยันผลการสร้างใบสั่งซื้อได้ กรุณาตรวจสอบเลข PO ก่อนส่งซ้ำ"));
+  uncertain.code = "CREATE_ORDER_UNCONFIRMED";
+  throw uncertain;
+}
+
 
 async function confirmDuplicatePoBeforeCreateOrder(poNumber) {
   let result;
