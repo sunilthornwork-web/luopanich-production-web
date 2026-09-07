@@ -5592,6 +5592,7 @@ const state = {
   // 🔒 viewer submit guard (ใช้กับ createOrder)
   isSubmitting: false,
   createRequestId: "",
+  forgotPassword: null,
 
   admin: {
     pendingDeliveryExpanded:{},
@@ -6350,6 +6351,14 @@ const UI_TEXT = {
     newPassword: "รหัสผ่านใหม่",
     confirmNewPassword: "ยืนยันรหัสผ่านใหม่",
     saveNewPassword: "บันทึกรหัสผ่านใหม่",
+    forgotPasswordTitle: "ตั้งรหัสผ่านใหม่",
+    forgotPasswordEmail: "อีเมลบัญชี",
+    requestResetCode: "ขอรหัสตั้งรหัสผ่านใหม่",
+    resetCode: "รหัสตั้งรหัสผ่านใหม่",
+    resetCodeSentGeneric: "หากข้อมูลบัญชีถูกต้อง ระบบจะส่งรหัสสำหรับตั้งรหัสผ่านใหม่",
+    resetPasswordSubmit: "ตั้งรหัสผ่านใหม่",
+    resetPasswordSuccess: "ตั้งรหัสผ่านใหม่สำเร็จ กรุณาเข้าสู่ระบบใหม่",
+    resetPasswordFailed: "รหัสตั้งรหัสผ่านใหม่ไม่ถูกต้องหรือหมดอายุ",
     tooManyLoginAttempts: "พยายามเข้าสู่ระบบบ่อยเกินไป กรุณารอสักครู่",
     loginFailed: "ไม่สามารถเข้าสู่ระบบได้",
     loadProductsFailed: "ไม่สามารถโหลดข้อมูลสินค้าได้",
@@ -7371,6 +7380,14 @@ const UI_TEXT = {
     newPassword: "New password",
     confirmNewPassword: "Confirm new password",
     saveNewPassword: "Save new password",
+    forgotPasswordTitle: "Reset password",
+    forgotPasswordEmail: "Account email",
+    requestResetCode: "Request reset code",
+    resetCode: "Reset code",
+    resetCodeSentGeneric: "If the account information is correct, a reset code will be sent.",
+    resetPasswordSubmit: "Reset password",
+    resetPasswordSuccess: "Password reset. Please log in again.",
+    resetPasswordFailed: "The reset code is invalid or expired.",
     tooManyLoginAttempts: "Too many login attempts. Please wait a moment",
     loginFailed: "Could not log in",
     loadProductsFailed: "Could not load product data",
@@ -9086,6 +9103,24 @@ function handleAdminLogout() {
   return adminLogoutPromise;
 }
 
+async function requestPasswordReset(username, email) {
+  const form = new URLSearchParams();
+  form.append("action", "requestPasswordReset");
+  form.append("username", String(username || "").trim());
+  form.append("email", String(email || "").trim());
+  return await postFormAction(form, { returnFailure: true });
+}
+
+async function consumePasswordReset(username, email, resetCode, newPassword, confirmPassword) {
+  const form = new URLSearchParams();
+  form.append("action", "consumePasswordReset");
+  form.append("username", String(username || "").trim());
+  form.append("email", String(email || "").trim());
+  form.append("resetCode", String(resetCode || "").trim());
+  form.append("newPassword", String(newPassword || ""));
+  form.append("confirmPassword", String(confirmPassword || ""));
+  return await postFormAction(form, { returnFailure: true });
+}
 const fetchProducts = async () => {
   const res = await fetchWithTimeout(
    `${API_URL}?action=products`,
@@ -12210,11 +12245,188 @@ function toggleAdminPasswordVisibility(inputId, btn) {
   }
 }
 
+function getDefaultForgotPasswordState() {
+  return {
+    isRequesting: false,
+    isConsuming: false,
+    requested: false,
+    username: "",
+    email: ""
+  };
+}
+
+function ensureForgotPasswordState() {
+  if (!state.forgotPassword) {
+    state.forgotPassword = getDefaultForgotPasswordState();
+  }
+  return state.forgotPassword;
+}
+
+function resetForgotPasswordState() {
+  state.forgotPassword = getDefaultForgotPasswordState();
+}
+
 function showAdminForgotPasswordPlaceholder() {
-  showToast(
-    t("adminForgotPasswordUnavailable", "ฟังก์ชันลืมรหัสผ่านยังไม่เปิดใช้งาน"),
-    "info"
-  );
+  resetForgotPasswordState();
+  renderAdminForgotPasswordSheet();
+}
+
+function renderAdminForgotPasswordSheet() {
+  const forgotState = ensureForgotPasswordState();
+  const username = escapeHtml(forgotState.username || "");
+  const email = escapeHtml(forgotState.email || "");
+  const phaseTwo = forgotState.requested === true;
+  adminLoginSheet.innerHTML = `
+    <div class="sheet-header">
+      <button type="button" class="sheet-close" aria-label="${t("closeAdminLogin", "ปิดหน้าเข้าสู่ระบบ")}" onclick="renderAdminLogin()">×</button>
+      <h3 id="adminLoginSheetTitle">${t("forgotPasswordTitle", "ตั้งรหัสผ่านใหม่")}</h3>
+    </div>
+
+    <div class="form-group">
+      <label for="forgotPasswordUsername">${t("username", "ชื่อผู้ใช้")}</label>
+      <input id="forgotPasswordUsername"
+        value="${username}"
+        autocomplete="username"
+        placeholder="${t("username", "ชื่อผู้ใช้")}" ${phaseTwo ? "readonly" : ""}>
+    </div>
+
+    <div class="form-group">
+      <label for="forgotPasswordEmail">${t("forgotPasswordEmail", "อีเมลบัญชี")}</label>
+      <input id="forgotPasswordEmail"
+        value="${email}"
+        autocomplete="email"
+        placeholder="${t("forgotPasswordEmail", "อีเมลบัญชี")}" ${phaseTwo ? "readonly" : ""}>
+    </div>
+
+    ${phaseTwo ? `
+      <div class="create-admin-result">
+        ${t("resetCodeSentGeneric", "หากข้อมูลบัญชีถูกต้อง ระบบจะส่งรหัสสำหรับตั้งรหัสผ่านใหม่")}
+      </div>
+      <div class="form-group">
+        <label for="forgotPasswordResetCode">${t("resetCode", "รหัสตั้งรหัสผ่านใหม่")}</label>
+        <input id="forgotPasswordResetCode" autocomplete="one-time-code" placeholder="${t("resetCode", "รหัสตั้งรหัสผ่านใหม่")}">
+      </div>
+      <div class="form-group">
+        <label for="forgotPasswordNewPassword">${t("newPassword", "รหัสผ่านใหม่")}</label>
+        <div class="admin-password-field">
+          <input id="forgotPasswordNewPassword" type="password" autocomplete="new-password" placeholder="${t("newPassword", "รหัสผ่านใหม่")}">
+          <button class="admin-password-toggle" type="button" onclick="toggleAdminPasswordVisibility('forgotPasswordNewPassword', this)" aria-label="${t("showPassword", "แสดงรหัสผ่าน")}">👁</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="forgotPasswordConfirmPassword">${t("confirmNewPassword", "ยืนยันรหัสผ่านใหม่")}</label>
+        <div class="admin-password-field">
+          <input id="forgotPasswordConfirmPassword" type="password" autocomplete="new-password" placeholder="${t("confirmNewPassword", "ยืนยันรหัสผ่านใหม่")}">
+          <button class="admin-password-toggle" type="button" onclick="toggleAdminPasswordVisibility('forgotPasswordConfirmPassword', this)" aria-label="${t("showPassword", "แสดงรหัสผ่าน")}">👁</button>
+        </div>
+      </div>
+    ` : ""}
+
+    <div class="sheet-action-footer">
+      ${phaseTwo ? `
+        <button class="btn btn-primary" id="consumePasswordResetBtn" onclick="handleConsumePasswordReset(this)">
+          ${t("resetPasswordSubmit", "ตั้งรหัสผ่านใหม่")}
+        </button>
+      ` : `
+        <button class="btn btn-primary" id="requestPasswordResetBtn" onclick="handleRequestPasswordReset(this)">
+          ${t("requestResetCode", "ขอรหัสตั้งรหัสผ่านใหม่")}
+        </button>
+      `}
+      <button class="btn btn-outline" type="button" onclick="renderAdminLogin()">
+        ${t("back", "กลับ")}
+      </button>
+    </div>
+  `;
+  state.ui.backdropLocked = false;
+  openOverlay(adminLoginSheet);
+}
+
+async function handleRequestPasswordReset(btn) {
+  const forgotState = ensureForgotPasswordState();
+  if (forgotState.isRequesting) return;
+  const username = String(document.getElementById("forgotPasswordUsername")?.value || "").trim();
+  const email = String(document.getElementById("forgotPasswordEmail")?.value || "").trim();
+  if (!username || !email) {
+    showToast(t("fillAllFields", "กรุณากรอกข้อมูลให้ครบ"), "warning");
+    return;
+  }
+  forgotState.isRequesting = true;
+  if (btn) btn.disabled = true;
+  try {
+    await requestPasswordReset(username, email);
+    forgotState.username = username;
+    forgotState.email = email;
+    forgotState.requested = true;
+    showToast(t("resetCodeSentGeneric", "หากข้อมูลบัญชีถูกต้อง ระบบจะส่งรหัสสำหรับตั้งรหัสผ่านใหม่"), "success");
+    renderAdminForgotPasswordSheet();
+  } catch (err) {
+    showToast(t("resetCodeSentGeneric", "หากข้อมูลบัญชีถูกต้อง ระบบจะส่งรหัสสำหรับตั้งรหัสผ่านใหม่"), "info");
+    forgotState.username = username;
+    forgotState.email = email;
+    forgotState.requested = true;
+    renderAdminForgotPasswordSheet();
+  } finally {
+    forgotState.isRequesting = false;
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function handleConsumePasswordReset(btn) {
+  const forgotState = ensureForgotPasswordState();
+  if (forgotState.isConsuming) return;
+  const username = String(document.getElementById("forgotPasswordUsername")?.value || forgotState.username || "").trim();
+  const email = String(document.getElementById("forgotPasswordEmail")?.value || forgotState.email || "").trim();
+  const resetCodeInput = document.getElementById("forgotPasswordResetCode");
+  const newPasswordInput = document.getElementById("forgotPasswordNewPassword");
+  const confirmPasswordInput = document.getElementById("forgotPasswordConfirmPassword");
+  const resetCode = String(resetCodeInput?.value || "").trim();
+  const newPassword = newPasswordInput?.value || "";
+  const confirmPassword = confirmPasswordInput?.value || "";
+
+  if (!username || !email || !resetCode || !newPassword || !confirmPassword) {
+    showToast(t("fillAllFields", "กรุณากรอกข้อมูลให้ครบ"), "warning");
+    return;
+  }
+  if (newPassword !== confirmPassword) {
+    showToast(t("passwordMismatch", "รหัสผ่านใหม่และการยืนยันรหัสผ่านไม่ตรงกัน"), "warning");
+    if (newPasswordInput) newPasswordInput.value = "";
+    if (confirmPasswordInput) confirmPasswordInput.value = "";
+    return;
+  }
+  if (newPassword.length < 8) {
+    showToast(t("passwordTooShort", "รหัสผ่านใหม่สั้นเกินไป"), "warning");
+    if (newPasswordInput) newPasswordInput.value = "";
+    if (confirmPasswordInput) confirmPasswordInput.value = "";
+    return;
+  }
+
+  forgotState.isConsuming = true;
+  if (btn) btn.disabled = true;
+  try {
+    const response = await consumePasswordReset(
+      username,
+      email,
+      resetCode,
+      newPassword,
+      confirmPassword
+    );
+    if (!response || response.success !== true) {
+      throw new Error(response?.message || response?.error || "RESET_FAILED");
+    }
+    if (resetCodeInput) resetCodeInput.value = "";
+    if (newPasswordInput) newPasswordInput.value = "";
+    if (confirmPasswordInput) confirmPasswordInput.value = "";
+    resetForgotPasswordState();
+    showToast(t("resetPasswordSuccess", "ตั้งรหัสผ่านใหม่สำเร็จ กรุณาเข้าสู่ระบบใหม่"), "success");
+    renderAdminLogin();
+  } catch (err) {
+    if (newPasswordInput) newPasswordInput.value = "";
+    if (confirmPasswordInput) confirmPasswordInput.value = "";
+    showToast(t("resetPasswordFailed", "รหัสตั้งรหัสผ่านใหม่ไม่ถูกต้องหรือหมดอายุ"), "error");
+  } finally {
+    forgotState.isConsuming = false;
+    if (btn) btn.disabled = false;
+  }
 }
 
 function startAdminApplicationFlow(btn) {
