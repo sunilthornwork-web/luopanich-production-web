@@ -10229,6 +10229,22 @@ function getVariantGroupPriceLabel(group) {
     : `฿${min.toLocaleString()} - ฿${max.toLocaleString()}`;
 }
 
+function formatProductCardPriceLabel(value) {
+  return `${Number(value || 0).toLocaleString("th-TH")}.-`;
+}
+
+function getVariantGroupProductCardPriceLabel(group) {
+  const prices = (group?.variants || [])
+    .map(variant => Number(variant.price))
+    .filter(price => Number.isFinite(price));
+  if (!prices.length) return formatProductCardPriceLabel(0);
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  return min === max
+    ? formatProductCardPriceLabel(min)
+    : `${formatProductCardPriceLabel(min)} - ${formatProductCardPriceLabel(max)}`;
+}
+
 function getVariantGroupTotalStock(group) {
   return (group?.variants || []).reduce((sum, variant) => sum + (Number(variant.stock) || 0), 0);
 }
@@ -10781,7 +10797,7 @@ function renderProducts(){
         <div class="info">
           <div class="name">${escapeHTML(p.displayName)}</div>
           <div class="sku">${t("productGroup", "กลุ่ม")}: ${escapeHTML(p.parentProductId)}</div>
-          <div class="price">${t("price", "ราคา")}: ${escapeHTML(getVariantGroupPriceLabel(p))}</div>
+          <div class="price">${t("price", "ราคา")}: ${escapeHTML(getVariantGroupProductCardPriceLabel(p))}</div>
           <div class="product-card-stock-line">
             <span>${t("totalStock", "สต็อกรวม")}</span>
             <strong>${formatDisplayQtyNumber(getVariantGroupTotalStock(p))}</strong>
@@ -10811,7 +10827,7 @@ function renderProducts(){
         <div class="name">${escapeHTML(p.name)}</div>
         <div class="sku">${t("productCode", "รหัส")}: ${escapeHTML(p.productId)}</div>
         ${renderAdminProductVariantMeta(p)}
-        <div class="price">${t("price", "ราคา")}: ฿${Number(p.price).toLocaleString()}</div>
+        <div class="price">${t("price", "ราคา")}: ${formatProductCardPriceLabel(p.price)}</div>
 
         <div class="product-card-stock-line">
           <span>${t("remainingStock", "คงเหลือ")}</span>
