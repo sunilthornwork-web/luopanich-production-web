@@ -230,52 +230,53 @@ body[data-theme="dark"] {
 }
 
 body[data-theme="cute"] {
-  --bg: #fff1f7;
-  --bg-soft: #fff5fa;
-  --surface: #fff9fc;
-  --surface-2: #f8e8f0;
-  --surface-3: #f4dce8;
-  --surface-glass: rgba(255,249,252,.94);
-  --header-bg: rgba(255,245,250,.86);
-  --header-bg-scrolled: rgba(255,245,250,.94);
-  --sheet-bg: rgba(255,249,252,.96);
-  --side-bg: rgba(255,249,252,.96);
-  --text: #514351;
-  --text-soft: #6d5b68;
-  --muted: #756675;
-  --border: #ebc8d8;
-  --border-strong: #dfa9c0;
-  --primary: #f28bb6;
-  --primary-strong: #ea6fa4;
+  --bg: #FFF7FA;
+  --bg-soft: #FFF0F5;
+  --surface: #FFFFFF;
+  --surface-2: #FFF0F5;
+  --surface-3: #FCE3ED;
+  --surface-glass: rgba(255,255,255,.94);
+  --header-bg: rgba(255,247,250,.88);
+  --header-bg-scrolled: rgba(255,247,250,.96);
+  --sheet-bg: rgba(255,255,255,.98);
+  --side-bg: rgba(255,255,255,.98);
+  --text: #3A2730;
+  --text-soft: #715662;
+  --muted: #947985;
+  --border: #EFB8CC;
+  --border-strong: #EFB8CC;
+  --primary: #D6336C;
+  --primary-strong: #B82559;
   --primary-text: #ffffff;
-  --secondary: #8ddaf0;
-  --secondary-strong: #5ccae6;
+  --secondary: #FFF0F5;
+  --secondary-strong: #FCE3ED;
   --success: #3f9f70;
   --warning: #b8741e;
   --danger: #cf3e67;
-  --focus-color: #5ccae6;
-  --focus-ring: 0 0 0 3px rgba(141, 218, 240, 0.35);
-  --placeholder: #806f7b;
-  --header-border: rgba(235,200,216,.72);
-  --header-border-strong: rgba(223,169,192,.78);
+  --focus-color: #D6336C;
+  --focus-ring: 0 0 0 3px rgba(214, 51, 108, 0.18);
+  --placeholder: #947985;
+  --product-price: #1268C4;
+  --header-border: rgba(239,184,204,.72);
+  --header-border-strong: rgba(239,184,204,.88);
   --inner-highlight: rgba(255,255,255,.82);
-  --shadow-card: 0 12px 30px rgba(218, 123, 164, .18);
-  --shadow-control: 0 8px 20px rgba(218, 123, 164, .14);
-  --shadow-image: 0 8px 18px rgba(218, 123, 164, .18);
-  --shadow-header: 0 8px 28px rgba(218, 123, 164, .16);
-  --shadow-header-scrolled: 0 14px 36px rgba(218, 123, 164, .20);
-  --shadow-card-pressed: 0 6px 18px rgba(218, 123, 164, .16);
-  --shadow-side: -6px 0 24px rgba(218, 123, 164, .18);
-  --shadow-floating: 0 12px 34px rgba(218, 123, 164, .18);
-  --shadow-fab: 0 12px 30px rgba(218, 123, 164, .20);
+  --shadow-card: 0 12px 30px rgba(214, 51, 108, .14);
+  --shadow-control: 0 8px 20px rgba(214, 51, 108, .12);
+  --shadow-image: 0 8px 18px rgba(214, 51, 108, .14);
+  --shadow-header: 0 8px 28px rgba(214, 51, 108, .12);
+  --shadow-header-scrolled: 0 14px 36px rgba(214, 51, 108, .16);
+  --shadow-card-pressed: 0 6px 18px rgba(214, 51, 108, .12);
+  --shadow-side: -6px 0 24px rgba(214, 51, 108, .14);
+  --shadow-floating: 0 12px 34px rgba(214, 51, 108, .14);
+  --shadow-fab: 0 12px 30px rgba(214, 51, 108, .16);
   --theme-color-scheme: light;
-  --status-ready-bg: rgba(123,207,163,.22);
-  --status-ready-text: #2f7d55;
-  --status-ready-border: rgba(63,159,112,.34);
-  --status-ready-dot: #3f9f70;
-  --status-ready-plus-bg: rgba(141,218,240,.26);
-  --status-ready-plus-text: #1d7488;
-  --status-ready-plus-border: rgba(92,202,230,.38);
+  --status-ready-bg: #E7F6EE;
+  --status-ready-text: #147A4B;
+  --status-ready-border: #9FD8B9;
+  --status-ready-dot: #147A4B;
+  --status-ready-plus-bg: rgba(18,104,196,.10);
+  --status-ready-plus-text: #1268C4;
+  --status-ready-plus-border: rgba(18,104,196,.24);
   --status-shipping-bg: rgba(141,218,240,.24);
   --status-shipping-text: #245f8f;
   --status-shipping-border: rgba(92,202,230,.35);
@@ -2599,6 +2600,13 @@ textarea:focus-visible {
   margin-top: 2px;
 }
 
+body[data-theme="cute"] .product-card .price {
+  background: none;
+  -webkit-text-fill-color: var(--product-price);
+  color: var(--product-price);
+  text-shadow: none;
+}
+
 .product-card-stock-line{
   display:flex;
   align-items:center;
@@ -3685,6 +3693,10 @@ textarea {
   animation: loading-fade-in var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
+body[data-theme="cute"] #loading-overlay {
+  background: rgba(58,39,48,0.18);
+}
+
 #loading-overlay.hidden {
   display: none !important;
 }
@@ -4215,6 +4227,10 @@ textarea {
   font-weight:800;
   line-height:1.1;
   white-space:nowrap;
+}
+
+body[data-theme="cute"] .product-info-price{
+  color: var(--product-price);
 }
 
 .product-info-row .status{
