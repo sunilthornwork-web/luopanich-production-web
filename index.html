@@ -555,21 +555,6 @@ header.scrolled:has(.admin-brand-title){
   min-height:58px;
 }
 
-header:has(.viewer-brand-title) + .home-controls.show{
-  top:68px;
-}
-
-header.scrolled:has(.viewer-brand-title) + .home-controls.show{
-  top:58px;
-}
-
-header:has(.admin-brand-title) + .home-controls.show{
-  top:68px;
-}
-
-header.scrolled:has(.admin-brand-title) + .home-controls.show{
-  top:58px;
-}
 
 .shop-title.viewer-brand-title{
   gap:7px;
@@ -724,7 +709,7 @@ body[data-theme="cute"] .viewer-header-actions .language-switch button + button:
 
 .home-controls.show{
   position:sticky;
-  top:96px;
+  top:var(--sticky-header-offset);
   z-index:48;
   display:grid;
   gap:10px;
@@ -736,7 +721,6 @@ body[data-theme="cute"] .viewer-header-actions .language-switch button + button:
 }
 
 header.scrolled + .home-controls.show{
-  top:64px;
   background:var(--header-bg-scrolled);
 }
 
@@ -781,7 +765,10 @@ header.scrolled + .home-controls.show{
 .home-filter-row{
   display:flex;
   align-items:center;
+  flex-wrap:nowrap;
   gap:8px;
+  width:100%;
+  max-width:100%;
   overflow-x:auto;
   overscroll-behavior-x:contain;
   scrollbar-width:none;
@@ -844,6 +831,9 @@ header.scrolled + .home-controls.show{
 
 .home-filter-block{
   position:relative;
+  min-width:0;
+  max-width:100%;
+  overflow:hidden;
 }
 
 .admin-home-controls .home-filter-row{
@@ -2606,6 +2596,8 @@ textarea:focus-visible {
 }
 
 .product-card .name {
+  min-width:0;
+  max-width:100%;
   font-weight: 700;
   font-size: 16.5px;
   line-height: 1.28;
@@ -2615,6 +2607,7 @@ textarea:focus-visible {
   -webkit-box-orient:vertical;
   overflow:hidden;
   overflow-wrap:anywhere;
+  word-break:break-word;
 }
 
 .product-card .sku {
@@ -4669,16 +4662,20 @@ border: 1px solid var(--border-strong);
 .bottom-nav-fab-icon{
   width:56px;
   height:56px;
+  box-sizing:border-box;
   border-radius:999px;
-  display:grid;
-  place-items:center;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   background:var(--primary);
   color:var(--primary-text);
   border:1px solid var(--border-strong);
   box-shadow:var(--shadow-fab);
+  font-family:Arial, sans-serif;
   font-size:34px;
   font-weight:900;
   line-height:1;
+  padding-bottom:2px;
 }
 
 .bottom-nav-fab-label{
@@ -8135,7 +8132,6 @@ function renderViewerHomeControls() {
   }
 
   const activeStatus = state.viewerFilter?.status || "all";
-  const advancedActive = !["all", "ready", "display_extra"].includes(activeStatus);
   host.setAttribute("aria-label", t("homeAriaLabel", "หน้าร้าน"));
   host.className = "home-controls show";
   host.classList.add("show");
@@ -8160,23 +8156,11 @@ function renderViewerHomeControls() {
         <button type="button" class="quick-filter-btn ${activeStatus === "all" ? "active" : ""}" onclick="selectFilter('all')">${t("allProducts", "ทั้งหมด")}</button>
         <button type="button" class="quick-filter-btn ${activeStatus === "ready" ? "active" : ""}" onclick="selectFilter('ready')">${getViewerStatusLabel("ready")}</button>
         <button type="button" class="quick-filter-btn ${activeStatus === "display_extra" ? "active" : ""}" onclick="selectFilter('display_extra')">${t("displayExtraQtyFilter", "บวกเพิ่มได้")}</button>
-        <button type="button"
-          class="advanced-filter-btn ${advancedActive ? "has-active-filter" : ""}"
-          onclick="toggleFilterDropdown(this)"
-          aria-label="${escAttr(t("filterStatus", "กรองสถานะ"))}"
-          aria-expanded="false"
-          aria-controls="filterDropdown">
-          <svg class="icon-sf" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M4 7h16"></path>
-            <path d="M7 12h10"></path>
-            <path d="M10 17h4"></path>
-          </svg>
-          ${t("advancedFilter", "ตัวกรอง")}
-        </button>
+        <button type="button" class="quick-filter-btn ${activeStatus === "shipping" ? "active" : ""}" onclick="selectFilter('shipping')">${getViewerStatusLabel("shipping")}</button>
+        <button type="button" class="quick-filter-btn ${activeStatus === "warehouse" ? "active" : ""}" onclick="selectFilter('warehouse')">${getViewerStatusLabel("warehouse")}</button>
+        <button type="button" class="quick-filter-btn ${activeStatus === "out" ? "active" : ""}" onclick="selectFilter('out')">${getViewerStatusLabel("out")}</button>
       </div>
-      ${renderViewerFilterDropdown(activeStatus)}
     </div>
-    <div id="viewerProductCount" class="home-product-count" aria-live="polite"></div>
   `;
 }
 
@@ -10648,13 +10632,19 @@ function renderProducts(){
 
   const startIndex = (safePage - 1) * pageSize;
   const pageItems = filteredProducts.slice(startIndex, startIndex + pageSize);
-  if (state.mode === "viewer") {
-    updateViewerProductCount(totalItems);
-  } else if (state.mode === "admin") {
+  if (state.mode === "admin") {
     updateAdminProductCount(totalItems);
   }
 
   app.innerHTML = "";
+  if (state.mode === "viewer") {
+    const productCount = document.createElement("div");
+    productCount.id = "viewerProductCount";
+    productCount.className = "home-product-count";
+    productCount.setAttribute("aria-live", "polite");
+    app.appendChild(productCount);
+    updateViewerProductCount(totalItems);
+  }
   let found = false;
 
   pageItems.forEach(p => {
@@ -10760,10 +10750,10 @@ function renderProducts(){
         ? t("noFilterResults", "ไม่มีสินค้าที่ตรงกับตัวกรอง")
         : t("noProductsToShow", "ยังไม่มีสินค้าให้แสดง");
 
-    app.innerHTML = renderEmptyStateLottie(emptyMessage, "", {
+    app.insertAdjacentHTML("beforeend", renderEmptyStateLottie(emptyMessage, "", {
       className: "product-empty-state",
       size: 118
-    });
+    }));
     return;   
   }
 
@@ -11494,6 +11484,33 @@ function renderConfirmSheet(){
 
 /* ================= HEADER RENDER (UPGRADED) ================= */
 
+let _stickyHeaderResizeObserver = null;
+let _stickyHeaderResizeBound = false;
+
+function syncStickyHeaderOffset(){
+  const header = document.getElementById("appHeader");
+  if (!header) return;
+  const height = Math.ceil(header.getBoundingClientRect().height || header.offsetHeight || 0);
+  if (height > 0) {
+    document.documentElement.style.setProperty("--sticky-header-offset", `${height}px`);
+  }
+}
+
+function bindStickyHeaderOffset(){
+  const header = document.getElementById("appHeader");
+  if (!header) return;
+  syncStickyHeaderOffset();
+  if (!_stickyHeaderResizeObserver && "ResizeObserver" in window) {
+    _stickyHeaderResizeObserver = new ResizeObserver(syncStickyHeaderOffset);
+    _stickyHeaderResizeObserver.observe(header);
+  }
+  if (!_stickyHeaderResizeBound) {
+    window.addEventListener("resize", syncStickyHeaderOffset, { passive: true });
+    window.addEventListener("orientationchange", syncStickyHeaderOffset, { passive: true });
+    _stickyHeaderResizeBound = true;
+  }
+}
+
 function renderHeader(){
   const h = document.getElementById("appHeader");
   if(!h) return;
@@ -11569,6 +11586,7 @@ function renderHeader(){
   `;
 }
 
+bindStickyHeaderOffset();
 renderViewerHomeControls();
 renderBottomNav();
 } // ✅ ปิด renderHeader()
@@ -30325,6 +30343,7 @@ if (header){
     } else {
       header.classList.remove("scrolled");
     }
+    syncStickyHeaderOffset();
   }
    
   /* ================= BACK TO TOP SHOW/HIDE ================= */
