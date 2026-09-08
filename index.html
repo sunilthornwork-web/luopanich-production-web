@@ -12278,7 +12278,6 @@ function renderAdminForgotPasswordSheet() {
   const phaseTwo = forgotState.requested === true;
   adminLoginSheet.innerHTML = `
     <div class="sheet-header">
-      <button type="button" class="sheet-close" aria-label="${t("closeAdminLogin", "ปิดหน้าเข้าสู่ระบบ")}" onclick="renderAdminLogin()">×</button>
       <h3 id="adminLoginSheetTitle">${t("forgotPasswordTitle", "ตั้งรหัสผ่านใหม่")}</h3>
     </div>
 
