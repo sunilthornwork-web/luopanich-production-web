@@ -4587,18 +4587,21 @@ border: 1px solid var(--border-strong);
 
 .bottom-nav{
   position:fixed;
-  left:0;
-  right:0;
-  bottom:0;
+  left:12px;
+  right:12px;
+  bottom:calc(8px + env(safe-area-inset-bottom));
   z-index:44;
-  min-height:calc(64px + env(safe-area-inset-bottom));
+  max-width:520px;
+  min-height:70px;
+  margin:0 auto;
   display:none;
-  grid-template-columns:minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns:repeat(3, minmax(0, 1fr));
   align-items:end;
-  gap:10px;
-  padding:8px 16px calc(8px + env(safe-area-inset-bottom));
+  gap:0;
+  padding:8px 12px 10px;
   background:var(--header-bg-scrolled);
-  border-top:1px solid var(--header-border-strong);
+  border:1px solid var(--header-border-strong);
+  border-radius:24px;
   backdrop-filter:blur(28px) saturate(180%);
   -webkit-backdrop-filter:blur(28px) saturate(180%);
   box-shadow:0 -18px 42px rgba(0,0,0,.24);
@@ -4614,46 +4617,53 @@ border: 1px solid var(--border-strong);
 
 .bottom-nav-btn{
   min-width:0;
-  min-height:48px;
-  border:1px solid var(--border);
-  border-radius:16px;
-  background:var(--surface-glass);
+  min-height:54px;
+  border:0;
+  border-radius:18px;
+  background:transparent;
   color:var(--text-soft);
   font-size:13px;
   font-weight:800;
   cursor:pointer;
   display:flex;
+  flex-direction:column;
   align-items:center;
   justify-content:center;
-  gap:8px;
-  box-shadow:var(--shadow-control);
+  gap:4px;
+  padding:6px 2px;
+  box-shadow:none;
 }
 
 .bottom-nav-btn.active{
-  color:var(--primary-text);
-  background:var(--primary);
-  border-color:rgba(255,255,255,.22);
+  color:var(--primary);
+  background:transparent;
+}
+
+.bottom-nav-btn:not(.bottom-nav-fab):active{
+  opacity:.82;
+  transform:translateY(1px);
 }
 
 .bottom-nav-btn .icon-sf{
-  width:18px;
-  height:18px;
+  width:20px;
+  height:20px;
 }
 
 .bottom-nav-fab{
-  min-height:64px;
+  min-height:74px;
   border:0;
   border-radius:0;
   background:transparent;
   color:var(--text);
   box-shadow:none;
   flex-direction:column;
-  gap:5px;
-  transform:translateY(-16px);
+  gap:4px;
+  padding:0 2px 1px;
+  transform:translateY(-18px);
 }
 
 .bottom-nav-fab:active{
-  transform:translateY(-14px) scale(.98);
+  transform:translateY(-16px) scale(.98);
 }
 
 .bottom-nav-fab-icon{
