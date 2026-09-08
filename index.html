@@ -8989,6 +8989,67 @@ const PRODUCT_LOAD_RETRY_DELAYS = [800, 1800];
 
 let activeProductRefreshPromise = null;
 let productRefreshRequestSeq = 0;
+const productsLatencyDiagnosticState = {
+  refreshProducts: 0,
+  productAttempts: 0
+};
+
+function shouldLogProductsLatencyDiagnostics() {
+  const config = window.LUOPANICH_CONFIG || {};
+  return String(config.ENVIRONMENT || "").trim().toUpperCase() === "TEST";
+}
+
+function classifyProductsFetchError(err) {
+  if (err && err.code === "REQUEST_TIMEOUT") return "REQUEST_TIMEOUT";
+  if (err && err.name === "AbortError") return "REQUEST_TIMEOUT";
+  if (err && /^HTTP\s+\d+:/i.test(String(err.message || ""))) return "HTTP_ERROR";
+  if (err && /โหลดสินค้าไม่สำเร็จ|load products|ไม่สามารถโหลดข้อมูลสินค้า/i.test(String(err.message || ""))) {
+    return "APPLICATION_ERROR";
+  }
+  return "NETWORK_OR_UNKNOWN_ERROR";
+}
+
+function logProductsLatencyDiagnostic(entry) {
+  if (!shouldLogProductsLatencyDiagnostics()) return;
+  const safe = entry || {};
+  console.info(
+    "[products-latency]",
+    `products attempt=${Number(safe.attempt || 0)} startMs=${Number(safe.requestStartMs || 0)} endMs=${Number(safe.requestEndMs || 0)} elapsedMs=${Number(safe.elapsedMs || 0)} result=${String(safe.result || "")}`
+  );
+}
+
+function logProductsRefreshLatencyDiagnostic() {
+  if (!shouldLogProductsLatencyDiagnostics()) return;
+  console.info(
+    "[products-latency]",
+    `refreshProducts count=${productsLatencyDiagnosticState.refreshProducts} attempts=${productsLatencyDiagnosticState.productAttempts}`
+  );
+}
+
+function shouldLogAdminPreloadLatencyDiagnostics() {
+  const config = window.LUOPANICH_CONFIG || {};
+  return String(config.ENVIRONMENT || "").trim().toUpperCase() === "TEST";
+}
+
+function classifyAdminPreloadError(err) {
+  if (err && err.code === "REQUEST_TIMEOUT") return "REQUEST_TIMEOUT";
+  if (err && err.name === "AbortError") return "REQUEST_TIMEOUT";
+  if (err && /^HTTP\s+\d+:/i.test(String(err.message || ""))) return "HTTP_ERROR";
+  if (err && /not authenticated|missing admin token|session expired|invalid token/i.test(String(err.message || ""))) {
+    return "AUTH_ERROR";
+  }
+  if (err && String(err.message || "").trim()) return "APPLICATION_ERROR";
+  return "NETWORK_OR_UNKNOWN_ERROR";
+}
+
+function logAdminPreloadLatencyDiagnostic(entry) {
+  if (!shouldLogAdminPreloadLatencyDiagnostics()) return;
+  const safe = entry || {};
+  console.info(
+    "[admin-preload-latency]",
+    `phase=${String(safe.phase || "")} attempt=${Number(safe.attempt || 0)} startMs=${Number(safe.startMs || 0)} endMs=${Number(safe.endMs || 0)} elapsedMs=${Number(safe.elapsedMs || 0)} result=${String(safe.result || "")}`
+  );
+}
 
 let adminLogoutPromise = null;
 
@@ -9041,50 +9102,93 @@ async function consumePasswordReset(username, email, resetCode, newPassword, con
   form.append("confirmPassword", String(confirmPassword || ""));
   return await postFormAction(form, { returnFailure: true });
 }
-const fetchProducts = async () => {
-  const res = await fetchWithTimeout(
-   `${API_URL}?action=products`,
-   {},
-   PRODUCT_FETCH_TIMEOUT_MS
- );
-  const json = await res.json();
+const fetchProducts = async ({ attempt = 1 } = {}) => {
+  const requestStartMs = Date.now();
+  const actualAttempt = Number(attempt) || 1;
+  productsLatencyDiagnosticState.productAttempts += 1;
+  try {
+    const res = await fetchWithTimeout(
+     `${API_URL}?action=products`,
+     {},
+     PRODUCT_FETCH_TIMEOUT_MS
+   );
+    const json = await res.json();
 
-  // 🔒 enforce standard response
-  if (!json || json.success !== true || !Array.isArray(json.data)) {
-    console.error("fetchProducts invalid response:", json);
-    throw new Error(
-      json?.error || json?.message || t("productLoadFailedRetry", "โหลดสินค้าไม่สำเร็จ กรุณากดโหลดใหม่อีกครั้ง")
-    );
+    // 🔒 enforce standard response
+    if (!json || json.success !== true || !Array.isArray(json.data)) {
+      console.error("fetchProducts invalid response:", json);
+      throw new Error(
+        json?.error || json?.message || t("productLoadFailedRetry", "โหลดสินค้าไม่สำเร็จ กรุณากดโหลดใหม่อีกครั้ง")
+      );
+    }
+
+    logProductsLatencyDiagnostic({
+      attempt: actualAttempt,
+      requestStartMs,
+      requestEndMs: Date.now(),
+      elapsedMs: Date.now() - requestStartMs,
+      result: "success"
+    });
+    return json.data;
+  } catch (err) {
+    logProductsLatencyDiagnostic({
+      attempt: actualAttempt,
+      requestStartMs,
+      requestEndMs: Date.now(),
+      elapsedMs: Date.now() - requestStartMs,
+      result: classifyProductsFetchError(err)
+    });
+    throw err;
   }
-
-  return json.data;
 };
 
-const fetchAdminProducts = async () => {
-  if (!state.admin?.token) {
-    throw new Error("Not authenticated");
+const fetchAdminProducts = async ({ attempt = 1 } = {}) => {
+  const requestStartMs = Date.now();
+  const actualAttempt = Number(attempt) || 1;
+  try {
+    if (!state.admin?.token) {
+      throw new Error("Not authenticated");
+    }
+
+    const form = new URLSearchParams();
+    form.append("action", "adminProducts");
+    form.append("token", state.admin.token);
+
+    const res = await fetchWithTimeout(
+      API_URL,
+      {
+        method: "POST",
+        body: form
+      },
+      15000
+    );
+
+    const json = await res.json();
+
+    if (!json || json.success !== true || !Array.isArray(json.data)) {
+      throw new Error(json?.error || t("loadProductsFailed", "ไม่สามารถโหลดข้อมูลสินค้าได้"));
+    }
+
+    logAdminPreloadLatencyDiagnostic({
+      phase: "adminProducts",
+      attempt: actualAttempt,
+      startMs: requestStartMs,
+      endMs: Date.now(),
+      elapsedMs: Date.now() - requestStartMs,
+      result: "success"
+    });
+    return json.data;
+  } catch (err) {
+    logAdminPreloadLatencyDiagnostic({
+      phase: "adminProducts",
+      attempt: actualAttempt,
+      startMs: requestStartMs,
+      endMs: Date.now(),
+      elapsedMs: Date.now() - requestStartMs,
+      result: classifyAdminPreloadError(err)
+    });
+    throw err;
   }
-
-  const form = new URLSearchParams();
-  form.append("action", "adminProducts");
-  form.append("token", state.admin.token);
-
-  const res = await fetchWithTimeout(
-    API_URL,
-    {
-      method: "POST",
-      body: form
-    },
-    15000
-  );
-
-  const json = await res.json();
- 
-  if (!json || json.success !== true || !Array.isArray(json.data)) {
-    throw new Error(json?.error || t("loadProductsFailed", "ไม่สามารถโหลดข้อมูลสินค้าได้"));
-  }
-
-  return json.data;
 };  
 
 async function fetchPendingDeliveries() {
@@ -9244,7 +9348,7 @@ async function fetchProductListWithRetry(fetcher, retryDelays = PRODUCT_LOAD_RET
 
   for (let attempt = 0; attempt <= retryDelays.length; attempt++) {
     try {
-      return await fetcher();
+      return await fetcher({ attempt: attempt + 1 });
     } catch (err) {
       lastError = err;
 
@@ -9267,6 +9371,8 @@ async function refreshProducts({ retry = true, throwOnError = false } = {}) {
   }
 
   const requestId = ++productRefreshRequestSeq;
+  productsLatencyDiagnosticState.refreshProducts += 1;
+  logProductsRefreshLatencyDiagnostic();
   activeProductRefreshPromise = (async () => {
   const app = document.getElementById("app");
   state.productLoad.status = "loading";
@@ -9675,16 +9781,37 @@ async function fetchStockLogs() {
 }
 
 async function fetchOrders(){
-  if (!state.admin.token) {
-    throw new Error("Not authenticated");
+  const requestStartMs = Date.now();
+  try {
+    if (!state.admin.token) {
+      throw new Error("Not authenticated");
+    }
+
+    const form = new URLSearchParams();
+    form.append("action", "orders");
+    form.append("token", state.admin.token);
+
+    const json = await postFormAction(form);
+    logAdminPreloadLatencyDiagnostic({
+      phase: "orders",
+      attempt: 1,
+      startMs: requestStartMs,
+      endMs: Date.now(),
+      elapsedMs: Date.now() - requestStartMs,
+      result: "success"
+    });
+    return json.data;
+  } catch (err) {
+    logAdminPreloadLatencyDiagnostic({
+      phase: "orders",
+      attempt: 1,
+      startMs: requestStartMs,
+      endMs: Date.now(),
+      elapsedMs: Date.now() - requestStartMs,
+      result: classifyAdminPreloadError(err)
+    });
+    throw err;
   }
-
-  const form = new URLSearchParams();
-  form.append("action", "orders");
-  form.append("token", state.admin.token);
-
-  const json = await postFormAction(form);
-  return json.data;
 }
   
 /* ================= STOCK CHECK ================= */
@@ -11803,25 +11930,89 @@ function openAdminEntry(){
 }
 
 async function enterAdmin(){
-  state.mode = "admin";
-  state.search = ""; // ✅ reset
-  state.pagination.page = 1;
-  state.viewerSearchOpen = false;
-
-  // 🔴 CHANGED: render โครงก่อน เพื่อให้ header/admin mode ถูกต้อง
-  renderHeader();
-
-  // 🔴 CHANGED: ล้าง selection เก่าจาก viewer/admin รอบก่อน
-  state.selectedProduct = null;
-
-  // 🔴 CHANGED: ต้องโหลด admin products ให้เสร็จก่อน
-  await refreshProducts();
-
+  const enterAdminStartMs = Date.now();
+  let enterAdminResult = "success";
   try {
-    const orders = await fetchOrders();
-    state.admin.orders = Array.isArray(orders) ? orders : [];
+    state.mode = "admin";
+    state.search = ""; // ✅ reset
+    state.pagination.page = 1;
+    state.viewerSearchOpen = false;
+
+    // 🔴 CHANGED: render โครงก่อน เพื่อให้ header/admin mode ถูกต้อง
+    renderHeader();
+
+    // 🔴 CHANGED: ล้าง selection เก่าจาก viewer/admin รอบก่อน
+    state.selectedProduct = null;
+
+    const productsStartMs = Date.now();
+    let productsError = null;
+    const productsPromise = refreshProducts()
+      .then(() => {
+        logAdminPreloadLatencyDiagnostic({
+          phase: "enterAdmin.refreshProducts",
+          attempt: 1,
+          startMs: productsStartMs,
+          endMs: Date.now(),
+          elapsedMs: Date.now() - productsStartMs,
+          result: "success"
+        });
+      })
+      .catch(err => {
+        enterAdminResult = classifyAdminPreloadError(err);
+        logAdminPreloadLatencyDiagnostic({
+          phase: "enterAdmin.refreshProducts",
+          attempt: 1,
+          startMs: productsStartMs,
+          endMs: Date.now(),
+          elapsedMs: Date.now() - productsStartMs,
+          result: enterAdminResult
+        });
+        productsError = err;
+      });
+
+    const ordersStartMs = Date.now();
+    const ordersPromise = fetchOrders()
+      .then(orders => {
+        state.admin.orders = Array.isArray(orders) ? orders : [];
+        logAdminPreloadLatencyDiagnostic({
+          phase: "enterAdmin.orders",
+          attempt: 1,
+          startMs: ordersStartMs,
+          endMs: Date.now(),
+          elapsedMs: Date.now() - ordersStartMs,
+          result: "success"
+        });
+      })
+      .catch(err => {
+        logAdminPreloadLatencyDiagnostic({
+          phase: "enterAdmin.orders",
+          attempt: 1,
+          startMs: ordersStartMs,
+          endMs: Date.now(),
+          elapsedMs: Date.now() - ordersStartMs,
+          result: classifyAdminPreloadError(err)
+        });
+        console.warn("enterAdmin: preload orders failed", err);
+      });
+
+    await Promise.all([productsPromise, ordersPromise]);
+    if (productsError) {
+      throw productsError;
+    }
   } catch (err) {
-    console.warn("enterAdmin: preload orders failed", err);
+    if (enterAdminResult === "success") {
+      enterAdminResult = classifyAdminPreloadError(err);
+    }
+    throw err;
+  } finally {
+    logAdminPreloadLatencyDiagnostic({
+      phase: "enterAdmin.total",
+      attempt: 1,
+      startMs: enterAdminStartMs,
+      endMs: Date.now(),
+      elapsedMs: Date.now() - enterAdminStartMs,
+      result: enterAdminResult
+    });
   }
 }
 
@@ -13264,6 +13455,9 @@ async function handleAdminLogin(btn){
   showLoading(t("adminLoginLoading", "กำลังเข้าสู่ระบบแอดมิน..."));
   // ================= UX END ===================
 
+  let adminLoginRequestStartMs = 0;
+  let adminLoginRequestLogged = false;
+
   try {
     // 🔐 CALL BACKEND LOGIN
     const form = new URLSearchParams();
@@ -13271,6 +13465,7 @@ async function handleAdminLogin(btn){
     form.append("username", username);
     form.append("password", password);
 
+    adminLoginRequestStartMs = Date.now();
     const res = await fetch(API_URL, {
       method: "POST",
       body: form
@@ -13279,8 +13474,27 @@ async function handleAdminLogin(btn){
     const json = await res.json();
 
     if (!json.success || !json.token) {
+      adminLoginRequestLogged = true;
+      logAdminPreloadLatencyDiagnostic({
+        phase: "adminLogin",
+        attempt: 1,
+        startMs: adminLoginRequestStartMs,
+        endMs: Date.now(),
+        elapsedMs: Date.now() - adminLoginRequestStartMs,
+        result: "APPLICATION_ERROR"
+      });
       throw new Error(json.error || json.message || "Login failed");
     }
+
+    adminLoginRequestLogged = true;
+    logAdminPreloadLatencyDiagnostic({
+      phase: "adminLogin",
+      attempt: 1,
+      startMs: adminLoginRequestStartMs,
+      endMs: Date.now(),
+      elapsedMs: Date.now() - adminLoginRequestStartMs,
+      result: "success"
+    });
 
     // ✅ SAVE SESSION (STATE)
     state.admin.loggedIn = true;
@@ -13302,6 +13516,16 @@ async function handleAdminLogin(btn){
     await repairMobileViewportAfterAdminLogin();
 
   } catch (err) {
+    if (adminLoginRequestStartMs && !adminLoginRequestLogged) {
+      logAdminPreloadLatencyDiagnostic({
+        phase: "adminLogin",
+        attempt: 1,
+        startMs: adminLoginRequestStartMs,
+        endMs: Date.now(),
+        elapsedMs: Date.now() - adminLoginRequestStartMs,
+        result: classifyAdminPreloadError(err)
+      });
+    }
     console.error(err);
     showToast(getWave2DisplayError(err, "loginFailed", "ไม่สามารถเข้าสู่ระบบได้"), "error");
 
