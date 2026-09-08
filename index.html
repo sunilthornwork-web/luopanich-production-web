@@ -9549,6 +9549,7 @@ function openOverlay(el){
 function closeOverlay(el){
   if (!el || !el.classList.contains("show")) return;
   if (el === adminLoginSheet && state.adminAuthConfirm) clearAdminAuthConfirmation();
+  if (el === confirmSheet && state.adminAuthConfirm) clearAdminAuthConfirmation();
 
   el.classList.remove("show");
   state.ui.overlayCount = Math.max(0, state.ui.overlayCount - 1);
@@ -12173,11 +12174,11 @@ function renderAdminLogin(){
     </div>
 
     <div class="admin-login-action-row" aria-label="${t("adminLoginActions", "ตัวเลือกบัญชีแอดมิน")}">
-      <button type="button" class="admin-login-link" onclick="showAdminRegisterConfirmation()">
+      <button type="button" class="admin-login-link" onclick="startAdminApplicationFlow(this)">
         ${t("applyAdminAccount", "สมัครบัญชีแอดมิน")}
       </button>
       <span class="admin-login-divider" aria-hidden="true"></span>
-      <button type="button" class="admin-login-link" onclick="showForgotPasswordConfirmation()">
+      <button type="button" class="admin-login-link" onclick="showAdminForgotPasswordPlaceholder()">
         ${t("forgotPassword", "ลืมรหัสผ่าน?")}
       </button>
     </div>
@@ -12204,38 +12205,49 @@ function renderAdminLogin(){
 }
 
 function getAdminAuthConfirmationCopy(type) {
-  if (type === "admin-register") {
+  if (type === "admin-application-submit") {
     return {
-      title: "สมัครบัญชีแอดมิน",
-      detail: "ต้องการดำเนินการสมัครบัญชีแอดมินหรือไม่?"
+      title: "ยืนยันการสมัครบัญชีแอดมิน",
+      detail: "ต้องการส่งคำขอสมัครบัญชีแอดมินหรือไม่?"
     };
   }
-  if (type === "forgot-password") {
+  if (type === "forgot-password-request") {
     return {
-      title: "ลืมรหัสผ่าน",
-      detail: "ต้องการดำเนินการตั้งรหัสผ่านใหม่หรือไม่?"
+      title: "ยืนยันการขอรหัสตั้งรหัสผ่านใหม่",
+      detail: "ต้องการขอรหัสสำหรับตั้งรหัสผ่านใหม่หรือไม่?"
+    };
+  }
+  if (type === "admin-application-approve") {
+    return {
+      title: "ยืนยันการอนุมัติ",
+      detail: t(
+        "confirmApproveAdminApplication",
+        "ยืนยันอนุมัติคำขอนี้?\nระบบจะสร้างบัญชีแอดมินและเปิดใช้งานทันที"
+      )
+    };
+  }
+  if (type === "admin-application-reject") {
+    return {
+      title: "ยืนยันการปฏิเสธ",
+      detail: t(
+        "confirmRejectAdminApplication",
+        "ยืนยันปฏิเสธคำขอนี้?\nคำขอนี้จะไม่สามารถนำกลับมาอนุมัติได้"
+      )
     };
   }
   return null;
 }
 
-function showAdminAuthConfirmation(type) {
-  if (state.adminAuthConfirm?.open) return;
+function showAdminAuthConfirmation(type, options = {}) {
+  if (state.adminAuthConfirm?.open || confirmSheet?.classList?.contains("show")) return;
   const copy = getAdminAuthConfirmationCopy(type);
   if (!copy) return;
   state.adminAuthConfirm = {
     open: true,
-    type
+    type,
+    applicationId: String(options.applicationId || "").trim()
   };
   renderAdminAuthConfirmationSheet();
-}
-
-function showAdminRegisterConfirmation() {
-  showAdminAuthConfirmation("admin-register");
-}
-
-function showForgotPasswordConfirmation() {
-  showAdminAuthConfirmation("forgot-password");
 }
 
 function clearAdminAuthConfirmation() {
@@ -12244,21 +12256,35 @@ function clearAdminAuthConfirmation() {
 
 function cancelAdminAuthConfirmation() {
   clearAdminAuthConfirmation();
-  renderAdminLogin();
+  state.ui.backdropLocked = false;
+  closeOverlay(confirmSheet);
+  syncOverlayBackdropState();
 }
 
 function confirmAdminAuthConfirmation() {
-  const type = state.adminAuthConfirm?.type || "";
+  const confirmState = state.adminAuthConfirm || {};
+  const type = confirmState.type || "";
+  const applicationId = confirmState.applicationId || "";
   clearAdminAuthConfirmation();
-  if (type === "admin-register") {
-    startAdminApplicationFlow();
+  state.ui.backdropLocked = false;
+  closeOverlay(confirmSheet);
+  syncOverlayBackdropState();
+  if (type === "admin-application-submit") {
+    submitAdminApplicationRequest(document.getElementById("adminApplicationSubmitBtn"), { confirmed: true });
     return;
   }
-  if (type === "forgot-password") {
-    showAdminForgotPasswordPlaceholder();
+  if (type === "forgot-password-request") {
+    handleRequestPasswordReset(document.getElementById("requestPasswordResetBtn"), { confirmed: true });
     return;
   }
-  renderAdminLogin();
+  if (type === "admin-application-approve") {
+    resolveAdminApplicationReviewDecision("approveAdminApplication", null, { confirmed: true, applicationId });
+    return;
+  }
+  if (type === "admin-application-reject") {
+    resolveAdminApplicationReviewDecision("rejectAdminApplication", null, { confirmed: true, applicationId });
+    return;
+  }
 }
 
 function renderAdminAuthConfirmationSheet() {
@@ -12268,13 +12294,13 @@ function renderAdminAuthConfirmationSheet() {
     renderAdminLogin();
     return;
   }
-  adminLoginSheet.innerHTML = `
+  confirmSheet.innerHTML = `
     <div class="sheet-header">
-      <h3 id="adminLoginSheetTitle">${escapeHtml(copy.title)}</h3>
+      <h3 id="confirmSheetTitle">${escapeHtml(copy.title)}</h3>
     </div>
 
     <div class="create-admin-result">
-      ${escapeHtml(copy.detail)}
+      ${escapeHtml(copy.detail).replace(/\n/g, "<br>")}
     </div>
 
     <div class="sheet-action-footer">
@@ -12286,8 +12312,8 @@ function renderAdminAuthConfirmationSheet() {
       </button>
     </div>
   `;
-  state.ui.backdropLocked = false;
-  openOverlay(adminLoginSheet);
+  state.ui.backdropLocked = true;
+  openOverlay(confirmSheet);
 }
 
 function getDefaultAdminApplicationState() {
@@ -12429,7 +12455,7 @@ function renderAdminForgotPasswordSheet() {
   openOverlay(adminLoginSheet);
 }
 
-async function handleRequestPasswordReset(btn) {
+async function handleRequestPasswordReset(btn, options = {}) {
   const forgotState = ensureForgotPasswordState();
   if (forgotState.isRequesting) return;
   const username = String(document.getElementById("forgotPasswordUsername")?.value || "").trim();
@@ -12438,9 +12464,14 @@ async function handleRequestPasswordReset(btn) {
     showToast(t("fillAllFields", "กรุณากรอกข้อมูลให้ครบ"), "warning");
     return;
   }
+  if (options.confirmed !== true) {
+    showAdminAuthConfirmation("forgot-password-request");
+    return;
+  }
   forgotState.isRequesting = true;
   if (btn) btn.disabled = true;
   try {
+    showLoading(t("requestResetCodeLoading", "กำลังขอรหัสตั้งรหัสผ่านใหม่..."));
     await requestPasswordReset(username, email);
     forgotState.username = username;
     forgotState.email = email;
@@ -12454,6 +12485,9 @@ async function handleRequestPasswordReset(btn) {
     forgotState.requested = true;
     renderAdminForgotPasswordSheet();
   } finally {
+    safeHideLoading();
+    state.ui.backdropLocked = false;
+    syncOverlayBackdropState();
     forgotState.isRequesting = false;
     if (btn) btn.disabled = false;
   }
@@ -12491,6 +12525,7 @@ async function handleConsumePasswordReset(btn) {
   forgotState.isConsuming = true;
   if (btn) btn.disabled = true;
   try {
+    showLoading(t("resetPasswordLoading", "กำลังตั้งรหัสผ่านใหม่..."));
     const response = await consumePasswordReset(
       username,
       email,
@@ -12512,6 +12547,9 @@ async function handleConsumePasswordReset(btn) {
     if (confirmPasswordInput) confirmPasswordInput.value = "";
     showToast(t("resetPasswordFailed", "รหัสตั้งรหัสผ่านใหม่ไม่ถูกต้องหรือหมดอายุ"), "error");
   } finally {
+    safeHideLoading();
+    state.ui.backdropLocked = false;
+    syncOverlayBackdropState();
     forgotState.isConsuming = false;
     if (btn) btn.disabled = false;
   }
@@ -12619,7 +12657,7 @@ function getAdminApplicationSubmitDisplayError(result, fallbackKey, fallbackText
   return known[reason] || t(fallbackKey, fallbackText);
 }
 
-async function submitAdminApplicationRequest(btn) {
+async function submitAdminApplicationRequest(btn, options = {}) {
   const applicationState = ensureAdminApplicationState();
   if (applicationState.isSubmitting) return;
 
@@ -12651,6 +12689,11 @@ async function submitAdminApplicationRequest(btn) {
     return;
   }
 
+  if (options.confirmed !== true) {
+    showAdminAuthConfirmation("admin-application-submit");
+    return;
+  }
+
   applicationState.isSubmitting = true;
   if (btn) {
     btn.disabled = true;
@@ -12658,6 +12701,7 @@ async function submitAdminApplicationRequest(btn) {
   }
 
   try {
+    showLoading(t("submittingAdminApplication", "กำลังส่งคำขอ..."));
     const form = new URLSearchParams();
     form.append("action", "submitAdminApplication");
     form.append("username", username);
@@ -12695,6 +12739,9 @@ async function submitAdminApplicationRequest(btn) {
     if (confirmInput) confirmInput.value = "";
     showToast(t("adminApplicationSubmitFailed", "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง"), "error");
   } finally {
+    safeHideLoading();
+    state.ui.backdropLocked = false;
+    syncOverlayBackdropState();
     applicationState.isSubmitting = false;
     if (btn) {
       btn.disabled = false;
@@ -13019,32 +13066,32 @@ async function openAdminApplicationReviewDetail(applicationId) {
   }
 }
 
-async function resolveAdminApplicationReviewDecision(action, btn) {
+async function resolveAdminApplicationReviewDecision(action, btn, options = {}) {
   if (!ensureAdminSessionForApplicationReview()) return;
   const reviewState = ensureAdminApplicationReviewState();
   if (reviewState.isSubmitting) return;
-  const applicationId = String(reviewState.selectedApplicationId || "").trim();
+  const applicationId = String(options.applicationId || reviewState.selectedApplicationId || "").trim();
   if (!applicationId) return;
 
   const isApprove = action === "approveAdminApplication";
-  const confirmed = window.confirm(
-    isApprove
-      ? t(
-          "confirmApproveAdminApplication",
-          "ยืนยันอนุมัติคำขอนี้?\nระบบจะสร้างบัญชีแอดมินและเปิดใช้งานทันที"
-        )
-      : t(
-          "confirmRejectAdminApplication",
-          "ยืนยันปฏิเสธคำขอนี้?\nคำขอนี้จะไม่สามารถนำกลับมาอนุมัติได้"
-        )
-  );
-  if (!confirmed) return;
+  if (options.confirmed !== true) {
+    showAdminAuthConfirmation(
+      isApprove ? "admin-application-approve" : "admin-application-reject",
+      { applicationId }
+    );
+    return;
+  }
 
   reviewState.isSubmitting = true;
   if (btn) btn.disabled = true;
   renderAdminApplicationReviewSheet();
 
   try {
+    showLoading(
+      isApprove
+        ? t("approvingAdminApplication", "กำลังอนุมัติคำขอสมัครแอดมิน...")
+        : t("rejectingAdminApplication", "กำลังปฏิเสธคำขอสมัครแอดมิน...")
+    );
     const result = await postAdminApplicationReviewAction(action, {
       applicationId
     });
@@ -13080,6 +13127,9 @@ async function resolveAdminApplicationReviewDecision(action, btn) {
   } catch (err) {
     showToast(t("adminApplicationReviewFailed", "ดำเนินการคำขอสมัครแอดมินไม่สำเร็จ"), "error");
   } finally {
+    safeHideLoading();
+    state.ui.backdropLocked = false;
+    syncOverlayBackdropState();
     reviewState.isSubmitting = false;
     if (btn) btn.disabled = false;
     renderAdminApplicationReviewSheet();
