@@ -1743,7 +1743,11 @@ button:disabled {
   align-self:flex-start;
 }
 
-#adminDashboardSheet .admin-sheet-topbar{
+#adminDashboardSheet .admin-sheet-topbar,
+#pendingDeliverySheet .admin-sheet-topbar,
+#adminDeliveryNoteSheet .admin-sheet-topbar,
+#adminBillingNoteSheet .admin-sheet-topbar,
+#adminStockSheet .admin-sheet-topbar{
   width:auto;
 }
 
@@ -15178,7 +15182,14 @@ async function openStockTimeline(force = false, options = {}) {
   closeOverlay(adminDashboardSheet);
 
   targetSheet.innerHTML = `
-    <h3 id="${stockTimelineTitleId}">${stockTimelineTitle}</h3>
+    <div class="admin-sheet-topbar">
+      <button class="btn btn-outline back-btn" type="button" onclick="${backAction}">
+        ${backLabel}
+      </button>
+      <h3 id="${stockTimelineTitleId}">
+        <span class="dashboard-title-main">${stockTimelineTitle}</span>
+      </h3>
+    </div>
     <div class="loading has-lottie">${renderLottieLoading(t("loading", "กำลังโหลด..."))}</div>
   `;
 
@@ -15328,13 +15339,14 @@ async function openStockTimeline(force = false, options = {}) {
 
     /* ================= RENDER ================= */
     targetSheet.innerHTML = `
-      <h3 id="${stockTimelineTitleId}">${stockTimelineTitle}</h3>
-
-      <button class="btn btn-outline"
-        style="width:100%;margin-bottom:12px"
-        onclick="${backAction}">
-        ${backLabel}
-      </button>
+      <div class="admin-sheet-topbar">
+        <button class="btn btn-outline back-btn" type="button" onclick="${backAction}">
+          ${backLabel}
+        </button>
+        <h3 id="${stockTimelineTitleId}">
+          <span class="dashboard-title-main">${stockTimelineTitle}</span>
+        </h3>
+      </div>
 
       ${
         timeline.length
@@ -15545,16 +15557,17 @@ async function openStockTimeline(force = false, options = {}) {
     console.error(err);
 
     targetSheet.innerHTML = `
-      <h3 id="${stockTimelineTitleId}">${stockTimelineTitle}</h3>
+      <div class="admin-sheet-topbar">
+        <button class="btn btn-outline back-btn" type="button" onclick="${backAction}">
+          ${backLabel}
+        </button>
+        <h3 id="${stockTimelineTitleId}">
+          <span class="dashboard-title-main">${stockTimelineTitle}</span>
+        </h3>
+      </div>
       <div style="text-align:center;color:#d93025;margin-top:32px">
         ${t("stockTimelineLoadError", "ไม่สามารถโหลดข้อมูลได้")}
       </div>
-
-      <button class="btn btn-outline"
-        style="width:100%;margin-top:16px"
-        onclick="${backAction}">
-        ${backLabel}
-      </button>
     `;
   }
 }
