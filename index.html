@@ -13797,7 +13797,8 @@ function renderAdminOrderPoSearch() {
   `;
 }
 
-const IOS_DATE_LAYOUT_DEBUG_BUILD = "ios-date-boxmodel-r2";
+const IOS_DATE_LAYOUT_DEBUG_BUILD = "ios-date-inline-boxmodel-r3";
+let adminDashboardLayoutDebugInlineBorderBoxEnabled = false;
 
 function isAdminDashboardLayoutDebugEnabled() {
   try {
@@ -13814,11 +13815,16 @@ function renderAdminDashboardLayoutDebugPanel() {
     <div id="adminDashboardLayoutDebugPanel" style="margin:12px 0;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2);color:var(--text);font-size:12px;line-height:1.4">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
         <strong>iOS Date Layout Debug</strong>
-        <button class="btn btn-outline" type="button" style="width:auto;min-height:36px;padding:6px 10px;font-size:12px" onclick="measureAdminDashboardLayoutDebug()">วัดใหม่</button>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+          <button class="btn btn-outline" type="button" style="width:auto;min-height:36px;padding:6px 10px;font-size:12px" onclick="applyAdminDashboardInlineBorderBoxExperiment()">ทดลอง border-box</button>
+          <button class="btn btn-outline" type="button" style="width:auto;min-height:36px;padding:6px 10px;font-size:12px" onclick="resetAdminDashboardInlineBorderBoxExperiment()">คืนค่า</button>
+          <button class="btn btn-outline" type="button" style="width:auto;min-height:36px;padding:6px 10px;font-size:12px" onclick="measureAdminDashboardLayoutDebug()">วัดใหม่</button>
+        </div>
       </div>
       <div style="margin-bottom:8px">
         <div><strong>BUILD:</strong> ${IOS_DATE_LAYOUT_DEBUG_BUILD}</div>
         <div><strong>EXPECTED DATE SOURCE:</strong> min-width: 0; box-sizing: border-box</div>
+        <div><strong>EXPERIMENT:</strong> INLINE_BORDER_BOX = <span id="adminDashboardInlineBorderBoxExperimentState">OFF</span></div>
       </div>
       <pre id="adminDashboardLayoutDebugOutput" style="margin:0;white-space:pre-wrap;word-break:break-word;font:12px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--text)">รอวัด...</pre>
     </div>
@@ -13867,6 +13873,9 @@ function getAdminDashboardLayoutDebugMetrics(element, includeType = false) {
 
   if (includeType) {
     metrics.type = element.type || "";
+    metrics.inlineStyle = {
+      boxSizing: element.style.boxSizing || ""
+    };
   }
 
   return metrics;
@@ -13888,9 +13897,48 @@ function formatAdminDashboardLayoutDebugMetrics(label, metrics) {
 
   if (metrics.type !== undefined) {
     lines.splice(1, 0, `  type=${metrics.type}`);
+    lines.splice(2, 0, `  inlineStyle.boxSizing=${metrics.inlineStyle?.boxSizing || ""}`);
   }
 
   return lines.join("\n");
+}
+
+function setAdminDashboardInlineBorderBoxExperimentState(isOn) {
+  adminDashboardLayoutDebugInlineBorderBoxEnabled = Boolean(isOn);
+  const stateEl = document.getElementById("adminDashboardInlineBorderBoxExperimentState");
+  if (stateEl) {
+    stateEl.textContent = adminDashboardLayoutDebugInlineBorderBoxEnabled ? "ON" : "OFF";
+  }
+}
+
+function remeasureAdminDashboardLayoutDebugAfterStyleChange() {
+  const dateFrom = document.getElementById("dashboardDateFrom");
+  const dateTo = document.getElementById("dashboardDateTo");
+  void dateFrom?.offsetWidth;
+  void dateTo?.offsetWidth;
+  measureAdminDashboardLayoutDebug();
+}
+
+function applyAdminDashboardInlineBorderBoxExperiment() {
+  if (!isAdminDashboardLayoutDebugEnabled()) return;
+
+  const dateFrom = document.getElementById("dashboardDateFrom");
+  const dateTo = document.getElementById("dashboardDateTo");
+  dateFrom?.style.setProperty("box-sizing", "border-box");
+  dateTo?.style.setProperty("box-sizing", "border-box");
+  setAdminDashboardInlineBorderBoxExperimentState(true);
+  remeasureAdminDashboardLayoutDebugAfterStyleChange();
+}
+
+function resetAdminDashboardInlineBorderBoxExperiment() {
+  if (!isAdminDashboardLayoutDebugEnabled()) return;
+
+  const dateFrom = document.getElementById("dashboardDateFrom");
+  const dateTo = document.getElementById("dashboardDateTo");
+  dateFrom?.style.removeProperty("box-sizing");
+  dateTo?.style.removeProperty("box-sizing");
+  setAdminDashboardInlineBorderBoxExperimentState(false);
+  remeasureAdminDashboardLayoutDebugAfterStyleChange();
 }
 
 function measureAdminDashboardLayoutDebug() {
