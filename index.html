@@ -1314,6 +1314,49 @@ header.scrolled + .home-controls.show{
     border:1px solid var(--border);
   }
 
+  .approved-order-card{
+    position:relative;
+  }
+
+  .approved-order-card.is-opening{
+    cursor:wait;
+    border-color:var(--primary);
+    box-shadow:var(--focus-ring), var(--shadow-card);
+  }
+
+  .admin-order-opening-feedback{
+    position:absolute;
+    right:12px;
+    bottom:12px;
+    display:none;
+    align-items:center;
+    gap:8px;
+    max-width:calc(100% - 24px);
+    padding:7px 10px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    background:var(--surface-2);
+    color:var(--text);
+    font-size:12px;
+    font-weight:800;
+    line-height:1.2;
+    box-shadow:var(--shadow-control);
+  }
+
+  .admin-order-opening-spinner{
+    width:13px;
+    height:13px;
+    border:2px solid var(--border);
+    border-top-color:var(--primary);
+    border-radius:50%;
+    flex:0 0 auto;
+    animation:spin .8s linear infinite;
+  }
+
+  .approved-order-card.is-opening .admin-order-opening-feedback{
+    display:inline-flex;
+  }
+
   .admin-card-meta{
     display:flex;
     flex-wrap:wrap;
@@ -5757,6 +5800,7 @@ const state = {
     expiredAt: null,
     orders: [],
     selectedOrder: null,
+    openingOrderId: "",
     dashboardMode: "SUMMARY",
     logs: [],
     filters: {
@@ -14331,9 +14375,11 @@ ${
             )
         )
         .map(o => `
-            <div class="card admin-card"
+            <div class="card admin-card approved-order-card ${isAdminOrderOpening(o.orderId) ? "is-opening" : ""}"
               role="button"
               tabindex="0"
+              data-approved-order-id="${escAttr(o.orderId || "")}"
+              aria-busy="${isAdminOrderOpening(o.orderId) ? "true" : "false"}"
               onclick="openAdminOrder(${toInlineJsStringLiteral(o.orderId)})"
               onkeydown="handleKeyboardActivation(event, this)">
               <div class="name" title="${escAttr(o.orderId || "")}">${esc(formatOrderIdForDisplay(o.orderId))}</div>
@@ -14347,6 +14393,10 @@ ${
               <div class="price">฿${Number(o.total || 0).toLocaleString("th-TH")}</div>
               <div class="stock">
                 ${t("date", "วันที่")}: ${esc(formatThaiDate(getOrderDateValue(o)))}
+              </div>
+              <div class="admin-order-opening-feedback" aria-hidden="true">
+                <span class="admin-order-opening-spinner"></span>
+                <span>${t("openingOrder", "กำลังเปิดออเดอร์...")}</span>
               </div>
             </div>
           `).join("")
@@ -14638,6 +14688,29 @@ function formatAdminPoSummaryMoney(value) {
   const amount = Number(value);
   if (!Number.isFinite(amount)) return "-";
   return `฿${amount.toLocaleString("th-TH")}`;
+}
+
+function isAdminOrderOpening(orderId) {
+  return String(state.admin.openingOrderId || "") === String(orderId || "");
+}
+
+function setApprovedOrderCardOpening(orderId, isOpening) {
+  const cleanOrderId = String(orderId || "").trim();
+  if (!cleanOrderId) return;
+
+  if (isOpening) {
+    state.admin.openingOrderId = cleanOrderId;
+  } else if (isAdminOrderOpening(cleanOrderId)) {
+    state.admin.openingOrderId = "";
+  }
+
+  const cards = document.querySelectorAll("[data-approved-order-id]");
+  cards.forEach(card => {
+    if (String(card.dataset.approvedOrderId || "") !== cleanOrderId) return;
+    const active = Boolean(isOpening);
+    card.classList.toggle("is-opening", active);
+    card.setAttribute("aria-busy", active ? "true" : "false");
+  });
 }
 
 function buildAdminPoSummaryText(order) {
@@ -15585,116 +15658,130 @@ async function openAdminOrder(orderId){
     return;
   }
 
+  const cleanOrderId = String(orderId || "").trim();
+
    // 🔒 A6 HARDEN: กัน orders ยังไม่พร้อม/ไม่ใช่ array (กัน throw → กัน UI leak)
   const orders = Array.isArray(state.admin.orders) ? state.admin.orders : [];
-  const order = orders.find(o => o.orderId === orderId);
+  const order = orders.find(o => o.orderId === cleanOrderId);
   if (!order) return;
 
-  state.admin.selectedOrder = order;
-
-  state.admin.pendingDeliveryOrder = order;
-
-  // ✅ FIX: items เป็น array อยู่แล้ว ไม่ต้อง parse
-  const items = Array.isArray(order.items)
-    ? order.items
-    : [];
-
-  const isPending = order.status === "PENDING";
   const normalizedOrderStatus = String(order.status || "").toUpperCase();
-  if (
-    normalizedOrderStatus === "APPROVED"
-  ) {
-    try {
-      state.admin.pendingDeliveries =
-        await fetchPendingDeliveries();
-    } catch (err) {
-      console.error("load pending deliveries for order detail failed:", err);
-      showToast(
-        t("pendingDeliveryLoadError", "ไม่สามารถโหลดข้อมูลค้างส่งได้"),
-        "error"
-      );
-      return;
+  const shouldShowOpeningFeedback = normalizedOrderStatus === "APPROVED";
+  if (shouldShowOpeningFeedback && isAdminOrderOpening(cleanOrderId)) return;
+
+  if (shouldShowOpeningFeedback) {
+    setApprovedOrderCardOpening(cleanOrderId, true);
+  }
+
+  try {
+    state.admin.selectedOrder = order;
+
+    state.admin.pendingDeliveryOrder = order;
+
+    // ✅ FIX: items เป็น array อยู่แล้ว ไม่ต้อง parse
+    const items = Array.isArray(order.items)
+      ? order.items
+      : [];
+
+    const isPending = order.status === "PENDING";
+    if (
+      normalizedOrderStatus === "APPROVED"
+    ) {
+      try {
+        state.admin.pendingDeliveries =
+          await fetchPendingDeliveries();
+      } catch (err) {
+        console.error("load pending deliveries for order detail failed:", err);
+        showToast(
+          t("pendingDeliveryLoadError", "ไม่สามารถโหลดข้อมูลค้างส่งได้"),
+          "error"
+        );
+        return;
+      }
+    }
+    const orderStatusClass = {
+      PENDING: "status-pending",
+      APPROVED: "status-approved",
+      REJECTED: "status-rejected"
+    }[normalizedOrderStatus] || "status-neutral";
+
+  adminOrderSheet.innerHTML = `
+    <button
+      class="sheet-close-btn"
+      onclick="closeAdminOrderSheet()">
+      ×
+    </button>
+
+    <h3 id="adminOrderSheetTitle" title="${escAttr(order.orderId || "")}">${esc(formatOrderIdForDisplay(order.orderId))}</h3>
+
+    ${renderAdminOrderSummary(order)}
+
+      <div class="admin-detail-section">
+        <div class="admin-detail-title">${t("itemList", "รายการสินค้า")}</div>
+        <div class="admin-item-list">
+      ${items.map(i => `
+        <div class="cart-item cart-with-thumb">
+     ${renderCartItemThumb(i)}
+     <div class="cart-content">
+       <div class="name">${esc(i.name)}</div>
+       <div class="cart-meta">SKU: ${esc(i.productId || "-")}</div>
+       <div class="cart-qty">${t("quantity", "จำนวน")} ${Number(i.qty) || 0}</div>
+       ${renderOrderItemFulfillmentMeta(order, i)}
+
+     </div>
+   <div class="price">
+     ฿${(Number(i.price) || 0) * (Number(i.qty) || 0)}
+   </div>
+        </div>
+      `).join("")}
+        </div>
+      </div>
+
+      <div class="cart-summary">
+        <div class="summary-row">
+          <span>${t("status", "สถานะ")}</span>
+          <span class="status-badge ${orderStatusClass}">
+            ${esc(getAdminOrderStatusLabel(order.status))}
+          </span>
+        </div>
+        <div class="summary-row">
+          <span>${t("totalItems", "จำนวนรายการ")}</span>
+          <strong>${items.length}</strong>
+        </div>
+        <div class="summary-row">
+          <span>${t("total", "ยอดรวม")}</span>
+          <strong>฿${Number(order.total) || 0}</strong>
+        </div>
+      </div>
+
+      ${
+        isPending
+          ? `
+            <div class="admin-action">
+              <button class="btn btn-success" onclick="handleApprove()">
+                ${t("approve", "อนุมัติ")}
+              </button>
+
+              <button class="btn btn-danger" onclick="handleReject()">
+                ${t("reject", "ปฏิเสธ")}
+              </button>
+            </div>
+          `
+          : ""
+      }
+    `;
+
+    // ❌ ห้ามปิดด้วย classList
+    closeOverlay(adminDashboardSheet);
+
+    // ✅ เปิดผ่าน Overlay Manager
+    openOverlay(adminOrderSheet);
+  } finally {
+    if (shouldShowOpeningFeedback) {
+      setApprovedOrderCardOpening(cleanOrderId, false);
     }
   }
-  const orderStatusClass = {
-    PENDING: "status-pending",
-    APPROVED: "status-approved",
-    REJECTED: "status-rejected"
-  }[normalizedOrderStatus] || "status-neutral";
-
-adminOrderSheet.innerHTML = `
-  <button
-    class="sheet-close-btn"
-    onclick="closeAdminOrderSheet()">
-    ×
-  </button>
-
-  <h3 id="adminOrderSheetTitle" title="${escAttr(order.orderId || "")}">${esc(formatOrderIdForDisplay(order.orderId))}</h3>
-
-  ${renderAdminOrderSummary(order)}
-
-    <div class="admin-detail-section">
-      <div class="admin-detail-title">${t("itemList", "รายการสินค้า")}</div>
-      <div class="admin-item-list">
-    ${items.map(i => `
-      <div class="cart-item cart-with-thumb">
-   ${renderCartItemThumb(i)}
-   <div class="cart-content">
-     <div class="name">${esc(i.name)}</div>
-     <div class="cart-meta">SKU: ${esc(i.productId || "-")}</div>
-     <div class="cart-qty">${t("quantity", "จำนวน")} ${Number(i.qty) || 0}</div>
-     ${renderOrderItemFulfillmentMeta(order, i)}
-
-   </div>
- <div class="price">
-   ฿${(Number(i.price) || 0) * (Number(i.qty) || 0)}
- </div>
-      </div>
-    `).join("")}
-      </div>
-    </div>
-
-    <div class="cart-summary">
-      <div class="summary-row">
-        <span>${t("status", "สถานะ")}</span>
-        <span class="status-badge ${orderStatusClass}">
-          ${esc(getAdminOrderStatusLabel(order.status))}
-        </span>
-      </div>
-      <div class="summary-row">
-        <span>${t("totalItems", "จำนวนรายการ")}</span>
-        <strong>${items.length}</strong>
-      </div>
-      <div class="summary-row">
-        <span>${t("total", "ยอดรวม")}</span>
-        <strong>฿${Number(order.total) || 0}</strong>
-      </div>
-    </div>
-
-    ${
-      isPending
-        ? `
-          <div class="admin-action">
-            <button class="btn btn-success" onclick="handleApprove()">
-              ${t("approve", "อนุมัติ")}
-            </button>
-
-            <button class="btn btn-danger" onclick="handleReject()">
-              ${t("reject", "ปฏิเสธ")}
-            </button>
-          </div>
-        `
-        : ""
-    }
-  `;
-
-  // ❌ ห้ามปิดด้วย classList
-  closeOverlay(adminDashboardSheet);
-
-  // ✅ เปิดผ่าน Overlay Manager
-  openOverlay(adminOrderSheet);
 }
-
 function closeAdminOrderSheet() {
 
   closeOverlay(adminOrderSheet);
