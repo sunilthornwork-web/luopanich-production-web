@@ -1870,18 +1870,40 @@ button:disabled {
   box-sizing:border-box;
 } 
 
-.dashboard-filter-wrap .form-group input[type="date"]{
-  min-width:0;
-  box-sizing:border-box;
+.dashboard-date-field-shell{
+  width:100%;
+  max-width:100%;
+  height:44px;
   min-height:44px;
-  padding:10px 12px;
   border:1px solid var(--border);
   border-radius:12px;
   background:var(--surface-2);
   color:var(--text);
+  box-sizing:border-box;
+  display:block;
+  overflow:hidden;
+}
+
+.dashboard-date-field-shell:focus-within{
+  border-color:var(--focus-color);
+  box-shadow:var(--focus-ring);
+}
+
+.dashboard-filter-wrap .form-group input[type="date"]{
+  min-width:0;
+  width:100%;
+  max-width:100%;
+  min-height:100%;
+  height:100%;
+  padding:10px 12px;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  color:var(--text);
   font-size:16px;
   line-height:1.2;
   box-shadow:none;
+  outline:none;
 }
 
 .admin-po-search-actions{
@@ -13956,6 +13978,8 @@ function measureAdminDashboardLayoutDebug() {
   const dateFromMetrics = getAdminDashboardLayoutDebugMetrics(dateFrom, true);
   const dateToMetrics = getAdminDashboardLayoutDebugMetrics(dateTo, true);
   const poMetrics = getAdminDashboardLayoutDebugMetrics(poSearch, true);
+  const dateFromShellMetrics = getAdminDashboardLayoutDebugMetrics(dateFrom?.closest(".dashboard-date-field-shell"));
+  const dateToShellMetrics = getAdminDashboardLayoutDebugMetrics(dateTo?.closest(".dashboard-date-field-shell"));
   const dateFromParentMetrics = getAdminDashboardLayoutDebugMetrics(dateFrom?.closest(".form-group"));
   const dateToParentMetrics = getAdminDashboardLayoutDebugMetrics(dateTo?.closest(".form-group"));
   const poParentMetrics = getAdminDashboardLayoutDebugMetrics(poSearch?.closest(".form-group"));
@@ -13970,6 +13994,10 @@ function measureAdminDashboardLayoutDebug() {
     dateToRightMinusPoRight: roundLayoutDebugValue((dateToMetrics?.rect.right ?? 0) - (poMetrics?.rect.right ?? 0)),
     dateFromWidthMinusPoWidth: roundLayoutDebugValue((dateFromMetrics?.rect.width ?? 0) - (poMetrics?.rect.width ?? 0)),
     dateToWidthMinusPoWidth: roundLayoutDebugValue((dateToMetrics?.rect.width ?? 0) - (poMetrics?.rect.width ?? 0)),
+    dateFromShellRightMinusPoRight: roundLayoutDebugValue((dateFromShellMetrics?.rect.right ?? 0) - (poMetrics?.rect.right ?? 0)),
+    dateToShellRightMinusPoRight: roundLayoutDebugValue((dateToShellMetrics?.rect.right ?? 0) - (poMetrics?.rect.right ?? 0)),
+    dateFromShellWidthMinusPoWidth: roundLayoutDebugValue((dateFromShellMetrics?.rect.width ?? 0) - (poMetrics?.rect.width ?? 0)),
+    dateToShellWidthMinusPoWidth: roundLayoutDebugValue((dateToShellMetrics?.rect.width ?? 0) - (poMetrics?.rect.width ?? 0)),
     dateFromParentWidthMinusPoParentWidth: roundLayoutDebugValue((dateFromParentMetrics?.rect.width ?? 0) - (poParentMetrics?.rect.width ?? 0)),
     dateToParentWidthMinusPoParentWidth: roundLayoutDebugValue((dateToParentMetrics?.rect.width ?? 0) - (poParentMetrics?.rect.width ?? 0)),
     dashboardScrollMinusClient: (dashboard?.scrollWidth ?? 0) - (dashboard?.clientWidth ?? 0),
@@ -13980,6 +14008,9 @@ function measureAdminDashboardLayoutDebug() {
     formatAdminDashboardLayoutDebugMetrics("DATE FROM", dateFromMetrics),
     formatAdminDashboardLayoutDebugMetrics("DATE TO", dateToMetrics),
     formatAdminDashboardLayoutDebugMetrics("PO SEARCH", poMetrics),
+    "SHELLS",
+    formatAdminDashboardLayoutDebugMetrics("  DATE FROM SHELL", dateFromShellMetrics),
+    formatAdminDashboardLayoutDebugMetrics("  DATE TO SHELL", dateToShellMetrics),
     "PARENTS",
     formatAdminDashboardLayoutDebugMetrics("  DATE FROM PARENT", dateFromParentMetrics),
     formatAdminDashboardLayoutDebugMetrics("  DATE TO PARENT", dateToParentMetrics),
@@ -13992,6 +14023,10 @@ function measureAdminDashboardLayoutDebug() {
     `  DateTo right - PO right=${diff.dateToRightMinusPoRight}`,
     `  DateFrom width - PO width=${diff.dateFromWidthMinusPoWidth}`,
     `  DateTo width - PO width=${diff.dateToWidthMinusPoWidth}`,
+    `  DateFrom shell right - PO right=${diff.dateFromShellRightMinusPoRight}`,
+    `  DateTo shell right - PO right=${diff.dateToShellRightMinusPoRight}`,
+    `  DateFrom shell width - PO width=${diff.dateFromShellWidthMinusPoWidth}`,
+    `  DateTo shell width - PO width=${diff.dateToShellWidthMinusPoWidth}`,
     `  DateFrom parent width - PO parent width=${diff.dateFromParentWidthMinusPoParentWidth}`,
     `  DateTo parent width - PO parent width=${diff.dateToParentWidthMinusPoParentWidth}`,
     `  dashboard scrollWidth - clientWidth=${diff.dashboardScrollMinusClient}`,
@@ -14176,12 +14211,16 @@ async function openAdminDashboard(mode = "SUMMARY", force = false) {
       <div class="dashboard-filter-wrap">
         <div class="form-group">
           <label>${t("fromDate", "ตั้งแต่วันที่")}</label>
-          <input id="dashboardDateFrom" type="date" value="${escAttr(from)}">
+          <div class="dashboard-date-field-shell">
+            <input id="dashboardDateFrom" type="date" value="${escAttr(from)}">
+          </div>
         </div>
 
         <div class="form-group">
           <label>${t("toDate", "ถึงวันที่")}</label>
-          <input id="dashboardDateTo" type="date" value="${escAttr(to)}">
+          <div class="dashboard-date-field-shell">
+            <input id="dashboardDateTo" type="date" value="${escAttr(to)}">
+          </div>
         </div>
 
         ${renderAdminOrderPoSearch()}
