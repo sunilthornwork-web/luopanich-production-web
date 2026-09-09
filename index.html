@@ -13796,6 +13796,165 @@ function renderAdminOrderPoSearch() {
   `;
 }
 
+function isAdminDashboardLayoutDebugEnabled() {
+  try {
+    return new URLSearchParams(window.location.search).get("layoutDebug") === "1";
+  } catch (_) {
+    return false;
+  }
+}
+
+function renderAdminDashboardLayoutDebugPanel() {
+  if (!isAdminDashboardLayoutDebugEnabled()) return "";
+
+  return `
+    <div id="adminDashboardLayoutDebugPanel" style="margin:12px 0;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2);color:var(--text);font-size:12px;line-height:1.4">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
+        <strong>iOS Date Layout Debug</strong>
+        <button class="btn btn-outline" type="button" style="width:auto;min-height:36px;padding:6px 10px;font-size:12px" onclick="measureAdminDashboardLayoutDebug()">วัดใหม่</button>
+      </div>
+      <pre id="adminDashboardLayoutDebugOutput" style="margin:0;white-space:pre-wrap;word-break:break-word;font:12px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--text)">รอวัด...</pre>
+    </div>
+  `;
+}
+
+function roundLayoutDebugValue(value) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? Math.round(numeric * 100) / 100 : null;
+}
+
+function getAdminDashboardLayoutDebugMetrics(element, includeType = false) {
+  if (!element) return null;
+
+  const rect = element.getBoundingClientRect();
+  const style = window.getComputedStyle(element);
+  const metrics = {
+    rect: {
+      left: roundLayoutDebugValue(rect.left),
+      right: roundLayoutDebugValue(rect.right),
+      top: roundLayoutDebugValue(rect.top),
+      bottom: roundLayoutDebugValue(rect.bottom),
+      width: roundLayoutDebugValue(rect.width),
+      height: roundLayoutDebugValue(rect.height)
+    },
+    dom: {
+      offsetWidth: element.offsetWidth,
+      clientWidth: element.clientWidth,
+      scrollWidth: element.scrollWidth
+    },
+    style: {
+      width: style.width,
+      minWidth: style.minWidth,
+      maxWidth: style.maxWidth,
+      boxSizing: style.boxSizing,
+      display: style.display,
+      paddingLeft: style.paddingLeft,
+      paddingRight: style.paddingRight,
+      borderLeftWidth: style.borderLeftWidth,
+      borderRightWidth: style.borderRightWidth,
+      marginLeft: style.marginLeft,
+      marginRight: style.marginRight,
+      overflowX: style.overflowX
+    }
+  };
+
+  if (includeType) {
+    metrics.type = element.type || "";
+  }
+
+  return metrics;
+}
+
+function formatAdminDashboardLayoutDebugMetrics(label, metrics) {
+  if (!metrics) return `${label}\n  missing`;
+
+  const lines = [
+    label,
+    `  left=${metrics.rect.left} right=${metrics.rect.right} top=${metrics.rect.top} bottom=${metrics.rect.bottom}`,
+    `  width=${metrics.rect.width} height=${metrics.rect.height}`,
+    `  offsetWidth=${metrics.dom.offsetWidth} clientWidth=${metrics.dom.clientWidth} scrollWidth=${metrics.dom.scrollWidth}`,
+    `  css width=${metrics.style.width} minWidth=${metrics.style.minWidth} maxWidth=${metrics.style.maxWidth}`,
+    `  boxSizing=${metrics.style.boxSizing} display=${metrics.style.display} overflowX=${metrics.style.overflowX}`,
+    `  paddingL/R=${metrics.style.paddingLeft}/${metrics.style.paddingRight} borderL/R=${metrics.style.borderLeftWidth}/${metrics.style.borderRightWidth}`,
+    `  marginL/R=${metrics.style.marginLeft}/${metrics.style.marginRight}`
+  ];
+
+  if (metrics.type !== undefined) {
+    lines.splice(1, 0, `  type=${metrics.type}`);
+  }
+
+  return lines.join("\n");
+}
+
+function measureAdminDashboardLayoutDebug() {
+  if (!isAdminDashboardLayoutDebugEnabled()) return;
+
+  const output = document.getElementById("adminDashboardLayoutDebugOutput");
+  if (!output) return;
+
+  const dateFrom = document.getElementById("dashboardDateFrom");
+  const dateTo = document.getElementById("dashboardDateTo");
+  const poSearch = document.getElementById("adminOrderPoSearch");
+  const dashboard = document.querySelector(".dashboard-filter-wrap");
+  const doc = document.documentElement;
+
+  const dateFromMetrics = getAdminDashboardLayoutDebugMetrics(dateFrom, true);
+  const dateToMetrics = getAdminDashboardLayoutDebugMetrics(dateTo, true);
+  const poMetrics = getAdminDashboardLayoutDebugMetrics(poSearch, true);
+  const dateFromParentMetrics = getAdminDashboardLayoutDebugMetrics(dateFrom?.closest(".form-group"));
+  const dateToParentMetrics = getAdminDashboardLayoutDebugMetrics(dateTo?.closest(".form-group"));
+  const poParentMetrics = getAdminDashboardLayoutDebugMetrics(poSearch?.closest(".form-group"));
+  const dashboardMetrics = getAdminDashboardLayoutDebugMetrics(dashboard);
+  const documentMetrics = {
+    clientWidth: doc.clientWidth,
+    scrollWidth: doc.scrollWidth
+  };
+
+  const diff = {
+    dateFromRightMinusPoRight: roundLayoutDebugValue((dateFromMetrics?.rect.right ?? 0) - (poMetrics?.rect.right ?? 0)),
+    dateToRightMinusPoRight: roundLayoutDebugValue((dateToMetrics?.rect.right ?? 0) - (poMetrics?.rect.right ?? 0)),
+    dateFromWidthMinusPoWidth: roundLayoutDebugValue((dateFromMetrics?.rect.width ?? 0) - (poMetrics?.rect.width ?? 0)),
+    dateToWidthMinusPoWidth: roundLayoutDebugValue((dateToMetrics?.rect.width ?? 0) - (poMetrics?.rect.width ?? 0)),
+    dateFromParentWidthMinusPoParentWidth: roundLayoutDebugValue((dateFromParentMetrics?.rect.width ?? 0) - (poParentMetrics?.rect.width ?? 0)),
+    dateToParentWidthMinusPoParentWidth: roundLayoutDebugValue((dateToParentMetrics?.rect.width ?? 0) - (poParentMetrics?.rect.width ?? 0)),
+    dashboardScrollMinusClient: (dashboard?.scrollWidth ?? 0) - (dashboard?.clientWidth ?? 0),
+    documentScrollMinusClient: doc.scrollWidth - doc.clientWidth
+  };
+
+  output.textContent = [
+    formatAdminDashboardLayoutDebugMetrics("DATE FROM", dateFromMetrics),
+    formatAdminDashboardLayoutDebugMetrics("DATE TO", dateToMetrics),
+    formatAdminDashboardLayoutDebugMetrics("PO SEARCH", poMetrics),
+    "PARENTS",
+    formatAdminDashboardLayoutDebugMetrics("  DATE FROM PARENT", dateFromParentMetrics),
+    formatAdminDashboardLayoutDebugMetrics("  DATE TO PARENT", dateToParentMetrics),
+    formatAdminDashboardLayoutDebugMetrics("  PO SEARCH PARENT", poParentMetrics),
+    "DASHBOARD",
+    formatAdminDashboardLayoutDebugMetrics("  .dashboard-filter-wrap", dashboardMetrics),
+    `DOCUMENT\n  clientWidth=${documentMetrics.clientWidth} scrollWidth=${documentMetrics.scrollWidth}`,
+    "DIFF",
+    `  DateFrom right - PO right=${diff.dateFromRightMinusPoRight}`,
+    `  DateTo right - PO right=${diff.dateToRightMinusPoRight}`,
+    `  DateFrom width - PO width=${diff.dateFromWidthMinusPoWidth}`,
+    `  DateTo width - PO width=${diff.dateToWidthMinusPoWidth}`,
+    `  DateFrom parent width - PO parent width=${diff.dateFromParentWidthMinusPoParentWidth}`,
+    `  DateTo parent width - PO parent width=${diff.dateToParentWidthMinusPoParentWidth}`,
+    `  dashboard scrollWidth - clientWidth=${diff.dashboardScrollMinusClient}`,
+    `  document scrollWidth - clientWidth=${diff.documentScrollMinusClient}`
+  ].join("\n\n");
+}
+
+function scheduleAdminDashboardLayoutDebugMeasurement() {
+  if (!isAdminDashboardLayoutDebugEnabled()) return;
+
+  const measure = () => setTimeout(measureAdminDashboardLayoutDebug, 0);
+  if (typeof requestAnimationFrame === "function") {
+    requestAnimationFrame(measure);
+    return;
+  }
+  measure();
+}
+
 function setAdminOrderPoQueryDraft(value) {
   state.admin.filters.poQueryDraft = value || "";
 }
@@ -13973,6 +14132,8 @@ async function openAdminDashboard(mode = "SUMMARY", force = false) {
         ${renderAdminOrderPoSearch()}
       </div>
 
+      ${renderAdminDashboardLayoutDebugPanel()}
+
       <div class="action-row">
         <button class="btn btn-primary" onclick="applyAdminDashboardRange()">
           ${t("showSummary", "ดูสรุป")}
@@ -14042,6 +14203,7 @@ ${
           `
       }
     `;
+    scheduleAdminDashboardLayoutDebugMeasurement();
   } catch (err) {
     console.error(err);
 
