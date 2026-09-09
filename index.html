@@ -1743,6 +1743,10 @@ button:disabled {
   align-self:flex-start;
 }
 
+#adminDashboardSheet .admin-sheet-topbar{
+  width:auto;
+}
+
 .sheet-topbar{
   position:sticky;
   top:-16px;
@@ -1870,7 +1874,8 @@ button:disabled {
   box-sizing:border-box;
 } 
 
-.dashboard-date-field-shell{
+.dashboard-date-picker{
+  position:relative;
   width:100%;
   max-width:100%;
   height:44px;
@@ -1880,28 +1885,43 @@ button:disabled {
   background:var(--surface-2);
   color:var(--text);
   box-sizing:border-box;
-  display:block;
+  display:flex;
+  align-items:center;
   overflow:hidden;
 }
 
-.dashboard-date-field-shell:focus-within{
+.dashboard-date-picker:focus-within{
   border-color:var(--focus-color);
   box-shadow:var(--focus-ring);
 }
 
-.dashboard-filter-wrap .form-group input[type="date"]{
-  min-width:0;
+.dashboard-date-display{
   width:100%;
-  max-width:100%;
-  min-height:100%;
-  height:100%;
+  min-width:0;
   padding:10px 12px;
-  border:0;
-  border-radius:0;
-  background:transparent;
   color:var(--text);
   font-size:16px;
   line-height:1.2;
+  pointer-events:none;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  box-sizing:border-box;
+}
+
+.dashboard-date-picker input[type="date"]{
+  position:absolute;
+  inset:0;
+  width:100%;
+  max-width:100%;
+  height:100%;
+  min-height:100%;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  color:transparent;
+  opacity:0;
   box-shadow:none;
   outline:none;
 }
@@ -13734,6 +13754,27 @@ function resetAdminDashboardRange() {
   openAdminDashboard("SUMMARY", true);
 }
 
+function formatDashboardDateDisplay(value) {
+  const raw = String(value || "").trim();
+  const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return "-";
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (!year || month < 1 || month > 12 || day < 1 || day > 31) return raw;
+
+  return `${day}/${month}/${year + 543}`;
+}
+
+function syncDashboardDateDisplay(input) {
+  const picker = input?.closest(".dashboard-date-picker");
+  const display = picker?.querySelector(".dashboard-date-display");
+  if (display) {
+    display.textContent = formatDashboardDateDisplay(input.value);
+  }
+}
+
 function getAdminOrderPoQuery() {
   return String(state.admin.filters?.poQuery || "").trim().toLowerCase();
 }
@@ -13978,6 +14019,8 @@ function measureAdminDashboardLayoutDebug() {
   const dateFromMetrics = getAdminDashboardLayoutDebugMetrics(dateFrom, true);
   const dateToMetrics = getAdminDashboardLayoutDebugMetrics(dateTo, true);
   const poMetrics = getAdminDashboardLayoutDebugMetrics(poSearch, true);
+  const dateFromPickerMetrics = getAdminDashboardLayoutDebugMetrics(dateFrom?.closest(".dashboard-date-picker"));
+  const dateToPickerMetrics = getAdminDashboardLayoutDebugMetrics(dateTo?.closest(".dashboard-date-picker"));
   const dateFromShellMetrics = getAdminDashboardLayoutDebugMetrics(dateFrom?.closest(".dashboard-date-field-shell"));
   const dateToShellMetrics = getAdminDashboardLayoutDebugMetrics(dateTo?.closest(".dashboard-date-field-shell"));
   const dateFromParentMetrics = getAdminDashboardLayoutDebugMetrics(dateFrom?.closest(".form-group"));
@@ -13994,6 +14037,10 @@ function measureAdminDashboardLayoutDebug() {
     dateToRightMinusPoRight: roundLayoutDebugValue((dateToMetrics?.rect.right ?? 0) - (poMetrics?.rect.right ?? 0)),
     dateFromWidthMinusPoWidth: roundLayoutDebugValue((dateFromMetrics?.rect.width ?? 0) - (poMetrics?.rect.width ?? 0)),
     dateToWidthMinusPoWidth: roundLayoutDebugValue((dateToMetrics?.rect.width ?? 0) - (poMetrics?.rect.width ?? 0)),
+    dateFromPickerRightMinusPoRight: roundLayoutDebugValue((dateFromPickerMetrics?.rect.right ?? 0) - (poMetrics?.rect.right ?? 0)),
+    dateToPickerRightMinusPoRight: roundLayoutDebugValue((dateToPickerMetrics?.rect.right ?? 0) - (poMetrics?.rect.right ?? 0)),
+    dateFromPickerWidthMinusPoWidth: roundLayoutDebugValue((dateFromPickerMetrics?.rect.width ?? 0) - (poMetrics?.rect.width ?? 0)),
+    dateToPickerWidthMinusPoWidth: roundLayoutDebugValue((dateToPickerMetrics?.rect.width ?? 0) - (poMetrics?.rect.width ?? 0)),
     dateFromShellRightMinusPoRight: roundLayoutDebugValue((dateFromShellMetrics?.rect.right ?? 0) - (poMetrics?.rect.right ?? 0)),
     dateToShellRightMinusPoRight: roundLayoutDebugValue((dateToShellMetrics?.rect.right ?? 0) - (poMetrics?.rect.right ?? 0)),
     dateFromShellWidthMinusPoWidth: roundLayoutDebugValue((dateFromShellMetrics?.rect.width ?? 0) - (poMetrics?.rect.width ?? 0)),
@@ -14008,6 +14055,9 @@ function measureAdminDashboardLayoutDebug() {
     formatAdminDashboardLayoutDebugMetrics("DATE FROM", dateFromMetrics),
     formatAdminDashboardLayoutDebugMetrics("DATE TO", dateToMetrics),
     formatAdminDashboardLayoutDebugMetrics("PO SEARCH", poMetrics),
+    "PICKERS",
+    formatAdminDashboardLayoutDebugMetrics("  DATE FROM PICKER", dateFromPickerMetrics),
+    formatAdminDashboardLayoutDebugMetrics("  DATE TO PICKER", dateToPickerMetrics),
     "SHELLS",
     formatAdminDashboardLayoutDebugMetrics("  DATE FROM SHELL", dateFromShellMetrics),
     formatAdminDashboardLayoutDebugMetrics("  DATE TO SHELL", dateToShellMetrics),
@@ -14023,6 +14073,10 @@ function measureAdminDashboardLayoutDebug() {
     `  DateTo right - PO right=${diff.dateToRightMinusPoRight}`,
     `  DateFrom width - PO width=${diff.dateFromWidthMinusPoWidth}`,
     `  DateTo width - PO width=${diff.dateToWidthMinusPoWidth}`,
+    `  DateFrom picker right - PO right=${diff.dateFromPickerRightMinusPoRight}`,
+    `  DateTo picker right - PO right=${diff.dateToPickerRightMinusPoRight}`,
+    `  DateFrom picker width - PO width=${diff.dateFromPickerWidthMinusPoWidth}`,
+    `  DateTo picker width - PO width=${diff.dateToPickerWidthMinusPoWidth}`,
     `  DateFrom shell right - PO right=${diff.dateFromShellRightMinusPoRight}`,
     `  DateTo shell right - PO right=${diff.dateToShellRightMinusPoRight}`,
     `  DateFrom shell width - PO width=${diff.dateFromShellWidthMinusPoWidth}`,
@@ -14210,16 +14264,18 @@ async function openAdminDashboard(mode = "SUMMARY", force = false) {
 
       <div class="dashboard-filter-wrap">
         <div class="form-group">
-          <label>${t("fromDate", "ตั้งแต่วันที่")}</label>
-          <div class="dashboard-date-field-shell">
-            <input id="dashboardDateFrom" type="date" value="${escAttr(from)}">
+          <label for="dashboardDateFrom">${t("fromDate", "ตั้งแต่วันที่")}</label>
+          <div class="dashboard-date-picker dashboard-date-field-shell">
+            <span class="dashboard-date-display" aria-hidden="true">${esc(formatDashboardDateDisplay(from))}</span>
+            <input id="dashboardDateFrom" type="date" value="${escAttr(from)}" onchange="syncDashboardDateDisplay(this)">
           </div>
         </div>
 
         <div class="form-group">
-          <label>${t("toDate", "ถึงวันที่")}</label>
-          <div class="dashboard-date-field-shell">
-            <input id="dashboardDateTo" type="date" value="${escAttr(to)}">
+          <label for="dashboardDateTo">${t("toDate", "ถึงวันที่")}</label>
+          <div class="dashboard-date-picker dashboard-date-field-shell">
+            <span class="dashboard-date-display" aria-hidden="true">${esc(formatDashboardDateDisplay(to))}</span>
+            <input id="dashboardDateTo" type="date" value="${escAttr(to)}" onchange="syncDashboardDateDisplay(this)">
           </div>
         </div>
 
