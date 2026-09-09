@@ -13797,6 +13797,8 @@ function renderAdminOrderPoSearch() {
   `;
 }
 
+const IOS_DATE_LAYOUT_DEBUG_BUILD = "ios-date-boxmodel-r2";
+
 function isAdminDashboardLayoutDebugEnabled() {
   try {
     return new URLSearchParams(window.location.search).get("layoutDebug") === "1";
@@ -13813,6 +13815,10 @@ function renderAdminDashboardLayoutDebugPanel() {
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
         <strong>iOS Date Layout Debug</strong>
         <button class="btn btn-outline" type="button" style="width:auto;min-height:36px;padding:6px 10px;font-size:12px" onclick="measureAdminDashboardLayoutDebug()">วัดใหม่</button>
+      </div>
+      <div style="margin-bottom:8px">
+        <div><strong>BUILD:</strong> ${IOS_DATE_LAYOUT_DEBUG_BUILD}</div>
+        <div><strong>EXPECTED DATE SOURCE:</strong> min-width: 0; box-sizing: border-box</div>
       </div>
       <pre id="adminDashboardLayoutDebugOutput" style="margin:0;white-space:pre-wrap;word-break:break-word;font:12px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--text)">รอวัด...</pre>
     </div>
