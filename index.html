@@ -603,6 +603,8 @@ header.scrolled:has(.admin-brand-title){
   margin-left:3px;
   padding:3px 8px;
   font-size:11px;
+  line-height:1.1;
+  white-space:nowrap;
 }
 
 .admin-header-actions{
@@ -836,10 +838,6 @@ header.scrolled + .home-controls.show{
   min-width:0;
   max-width:100%;
   overflow:hidden;
-}
-
-.admin-home-controls .home-filter-row{
-  padding-bottom:1px;
 }
 
 .admin-home .admin-product-card{
@@ -2673,12 +2671,24 @@ body[data-theme="cute"] .product-card .price {
 @media (max-width: 430px){
   header:has(.viewer-brand-title),
   header.scrolled:has(.viewer-brand-title),
-  .home-controls.show:not(.admin-home-controls),
-  header.scrolled + .home-controls.show:not(.admin-home-controls){
+  header:has(.admin-brand-title),
+  header.scrolled:has(.admin-brand-title),
+  .home-controls.show,
+  header.scrolled + .home-controls.show{
     background:var(--bg);
     box-shadow:none;
     backdrop-filter:none;
     -webkit-backdrop-filter:none;
+  }
+
+  .home-controls.show,
+  header.scrolled + .home-controls.show{
+    border-bottom:0;
+  }
+
+  .admin-title.admin-brand-title .badge{
+    padding:2px 6px;
+    font-size:10.5px;
   }
 
   #app.container:has(> .product-card){
@@ -8148,7 +8158,6 @@ function renderAdminHomeControls() {
         <button type="button" class="quick-filter-btn ${activeStatus === "out" ? "active" : ""}" onclick="selectFilter('out')">${getViewerStatusLabel("out")}</button>
       </div>
     </div>
-    <div id="adminProductCount" class="home-product-count admin-home-count" aria-live="polite"></div>
   `;
   return true;
 }
@@ -10792,9 +10801,6 @@ function renderProducts(){
 
   const startIndex = (safePage - 1) * pageSize;
   const pageItems = filteredProducts.slice(startIndex, startIndex + pageSize);
-  if (state.mode === "admin") {
-    updateAdminProductCount(totalItems);
-  }
 
   app.innerHTML = "";
   if (state.mode === "viewer") {
@@ -10804,6 +10810,14 @@ function renderProducts(){
     productCount.setAttribute("aria-live", "polite");
     app.appendChild(productCount);
     updateViewerProductCount(totalItems);
+  }
+  if (state.mode === "admin") {
+    const productCount = document.createElement("div");
+    productCount.id = "adminProductCount";
+    productCount.className = "home-product-count admin-home-count";
+    productCount.setAttribute("aria-live", "polite");
+    app.appendChild(productCount);
+    updateAdminProductCount(totalItems);
   }
   let found = false;
 
