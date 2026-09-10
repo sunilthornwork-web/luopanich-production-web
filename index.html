@@ -11368,7 +11368,10 @@ function renderProductSheet(){
 
     productSheet.innerHTML = `
       <div class="mobile-detail-topbar">
-        <button class="mobile-icon-btn" type="button" onclick="closeProduct()" aria-label="${t("close", "ปิด")}">‹</button>
+        <button class="app-back-btn" type="button" onclick="closeProduct()" aria-label="${t("back", "กลับ")}">
+          <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+          <span>${t("back", "กลับ")}</span>
+        </button>
         <h3 id="productSheetTitle" class="mobile-detail-title">${t("productDetails", "รายละเอียดสินค้า")}</h3>
         <div class="mobile-detail-actions">
           <button class="mobile-icon-btn" type="button" onclick="toggleProductDetailCopySection(event)" aria-label="${t("copyProductInfo", "คัดลอกข้อมูลสินค้า")}">⧉</button>
@@ -11469,7 +11472,10 @@ function renderProductSheet(){
 
   productSheet.innerHTML = `
     <div class="mobile-detail-topbar">
-      <button class="mobile-icon-btn" type="button" onclick="closeProduct()" aria-label="${t("close", "ปิด")}">‹</button>
+      <button class="app-back-btn" type="button" onclick="closeProduct()" aria-label="${t("back", "กลับ")}">
+        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+        <span>${t("back", "กลับ")}</span>
+      </button>
       <h3 id="productSheetTitle" class="mobile-detail-title">${t("productDetails", "รายละเอียดสินค้า")}</h3>
       <div class="mobile-detail-actions">
         <button class="mobile-icon-btn" type="button" onclick="toggleProductDetailCopySection(event)" aria-label="${t("copyProductInfo", "คัดลอกข้อมูลสินค้า")}">⧉</button>
@@ -13476,9 +13482,12 @@ function openChangePasswordSheet(){
 
   adminLoginSheet.innerHTML = `
     <div class="sheet-topbar">
-      <button class="btn btn-outline sheet-nav-btn"
+      <button class="app-back-btn" type="button"
         onclick="closeOverlay(adminLoginSheet)"
-        aria-label="${t("closeChangePassword", "ปิดหน้าเปลี่ยนรหัสผ่าน")}">×</button>
+        aria-label="${t("back", "กลับ")}">
+        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+        <span>${t("back", "กลับ")}</span>
+      </button>
       <h3 id="adminLoginSheetTitle">${t("changePassword", "เปลี่ยนรหัสผ่าน")}</h3>
       <div aria-hidden="true"></div>
     </div>
@@ -14312,9 +14321,12 @@ function renderAdminMenuInStockSheet() {
   adminStockSheet.innerHTML = `
     <div class="side-menu-topbar">
       <h3 id="adminStockSheetTitle">${t("mainMenu", "เมนูหลัก")}</h3>
-      <button class="btn btn-outline sheet-nav-btn"
+      <button class="app-back-btn" type="button"
         onclick="closeStockMenuSheetThen()"
-        aria-label="${t("closeMainMenu", "ปิดเมนูหลัก")}">×</button>
+        aria-label="${t("back", "กลับ")}">
+        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+        <span>${t("back", "กลับ")}</span>
+      </button>
     </div>
 
     <div class="menu-group">
@@ -22569,9 +22581,12 @@ function openMainMenu(triggerEl){
   mainMenuSheet.innerHTML = `
     <div class="side-menu-topbar">
       <h3 id="mainMenuSheetTitle">${t("mainMenu", "เมนูหลัก")}</h3>
-      <button class="btn btn-outline sheet-nav-btn"
+      <button class="app-back-btn" type="button"
         onclick="closeMainMenu()"
-        aria-label="${t("closeMainMenu", "ปิดเมนูหลัก")}">×</button>
+        aria-label="${t("back", "กลับ")}">
+        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+        <span>${t("back", "กลับ")}</span>
+      </button>
     </div>
 
     ${
@@ -22788,9 +22803,12 @@ function openAddProduct(force = false, options = {}){
   const safeDraftDetailsText = esc(draft.detailsText || "");
   adminAddProductSheet.innerHTML = `
     <div class="sheet-topbar">
-      <button class="btn btn-outline sheet-nav-btn"
+      <button class="app-back-btn" type="button"
         onclick="closeAddProduct()"
-        aria-label="${t("close", "ปิด")}">×</button>
+        aria-label="${t("back", "กลับ")}">
+        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+        <span>${t("back", "กลับ")}</span>
+      </button>
       <h3 id="adminAddProductSheetTitle">${t("addProduct", "เพิ่มสินค้าใหม่")}</h3>
       <div aria-hidden="true"></div>
     </div>
@@ -23450,9 +23468,12 @@ function openProductEdit(p, options = {}){
 
   adminProductEditSheet.innerHTML = `
     <div class="sheet-topbar">
-      <button class="btn btn-outline sheet-nav-btn"
+      <button class="app-back-btn" type="button"
         onclick="closeProductEdit()"
-        aria-label="${t("close", "ปิด")}">×</button>
+        aria-label="${t("back", "กลับ")}">
+        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+        <span>${t("back", "กลับ")}</span>
+      </button>
       <h3 id="adminProductEditSheetTitle">${t("editProduct", "แก้ไขข้อมูลสินค้า")}</h3>
       <div aria-hidden="true"></div>
     </div>
@@ -25306,9 +25327,12 @@ function renderVariantScanSheet() {
   const selectedSkuCount = selectedGroups.reduce((sum, group) => sum + group.items.length, 0);
   adminVariantScanSheet.innerHTML = `
     <div class="sheet-topbar">
-      <button class="btn btn-outline sheet-nav-btn"
+      <button class="app-back-btn" type="button"
         onclick="closeVariantScanSheet()"
-        aria-label="${t("variantScanCloseAria", "ปิดหน้าสแกนสินค้าเก่า")}">×</button>
+        aria-label="${t("back", "กลับ")}">
+        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+        <span>${t("back", "กลับ")}</span>
+      </button>
       <h3 id="adminVariantScanSheetTitle">${t("variantScanTitle", "สแกนสินค้าเก่าเป็นกลุ่มไซส์")}</h3>
       <div aria-hidden="true"></div>
     </div>
@@ -25963,9 +25987,12 @@ function renderBulkProductImportSheet() {
 
   adminBulkProductImportSheet.innerHTML = `
     <div class="sheet-topbar">
-      <button class="btn btn-outline sheet-nav-btn"
+      <button class="app-back-btn" type="button"
         onclick="closeBulkProductImportSheet()"
-        aria-label="${t("bulkImportCloseAria", "ปิดหน้าต่างนำเข้าสินค้า")}">×</button>
+        aria-label="${t("back", "กลับ")}">
+        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+        <span>${t("back", "กลับ")}</span>
+      </button>
       <h3 id="adminBulkProductImportSheetTitle">${t("bulkImportProducts", "นำเข้าสินค้าหลายรายการ")}</h3>
       <div aria-hidden="true"></div>
     </div>
@@ -27408,9 +27435,12 @@ function renderBulkProductUpdateSheet() {
 
   adminBulkProductUpdateSheet.innerHTML = `
     <div class="sheet-topbar">
-      <button class="btn btn-outline sheet-nav-btn"
+      <button class="app-back-btn" type="button"
         onclick="closeBulkProductUpdateSheet()"
-        aria-label="${t("bulkUpdateCloseAria", "ปิดหน้าต่างอัปเดตสินค้า")}">×</button>
+        aria-label="${t("back", "กลับ")}">
+        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+        <span>${t("back", "กลับ")}</span>
+      </button>
       <h3 id="adminBulkProductUpdateSheetTitle">${t("bulkUpdateProducts", "อัปเดตราคา/สถานะหลายรายการ")}</h3>
       <div aria-hidden="true"></div>
     </div>
@@ -28641,9 +28671,12 @@ function renderPartnerCatalogSheet() {
           <span>${t("back", "กลับ")}</span>
         </button>
       ` : `
-        <button class="btn btn-outline sheet-nav-btn"
+        <button class="app-back-btn" type="button"
           onclick="closePartnerCatalogSheet()"
-          aria-label="${t("close", "ปิด")}">×</button>
+          aria-label="${t("back", "กลับ")}">
+          <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+          <span>${t("back", "กลับ")}</span>
+        </button>
       `}
       <h3 id="adminPartnerCatalogSheetTitle">${partnerState.view === "linkDetail" ? t("partnerLinkDetails", "รายละเอียดลิงก์คู่ค้า") : t("partnerLinks", "ลิงก์คู่ค้า")}</h3>
       <div aria-hidden="true"></div>
