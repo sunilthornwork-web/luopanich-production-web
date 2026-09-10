@@ -11615,9 +11615,12 @@ function renderCartItemThumb(item) {
 function renderCart(){
   cartSheet.innerHTML=`
     <div class="mobile-detail-topbar">
-      <button class="mobile-icon-btn" type="button"
+      <button class="app-back-btn" type="button"
         onclick="closeCart()"
-        aria-label="${t("close", "ปิด")}">‹</button>
+        aria-label="${t("back", "กลับ")}">
+        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+        <span>${t("back", "กลับ")}</span>
+      </button>
       <h3 id="cartSheetTitle" class="mobile-detail-title">${t("cart", "ตะกร้า")}</h3>
       <div class="mobile-detail-actions" aria-hidden="true"></div>
     </div>
@@ -17008,9 +17011,12 @@ function renderBatchStockInSheet() {
 
   adminStockActionSheet.innerHTML = `
     <div class="sheet-topbar">
-      <button class="btn btn-outline sheet-nav-btn"
+      <button class="app-back-btn" type="button"
         onclick="closeOverlay(adminStockActionSheet)"
-        aria-label="${t("close", "ปิด")}">×</button>
+        aria-label="${t("back", "กลับ")}">
+        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+        <span>${t("back", "กลับ")}</span>
+      </button>
       <h3 id="adminStockActionSheetTitle">${t("receiveStock", "รับเข้าสินค้า")}</h3>
       <div aria-hidden="true"></div>
     </div>
@@ -17272,9 +17278,12 @@ function openStockAction(p){
 
   adminStockActionSheet.innerHTML = `
     <div class="sheet-topbar">
-      <button class="btn btn-outline sheet-nav-btn"
+      <button class="app-back-btn" type="button"
         onclick="closeOverlay(adminStockActionSheet)"
-        aria-label="${t("close", "ปิด")}">×</button>
+        aria-label="${t("back", "กลับ")}">
+        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+        <span>${t("back", "กลับ")}</span>
+      </button>
       <h3 id="adminStockActionSheetTitle">${t("stockManagement", "จัดการสต๊อก")}</h3>
       <div aria-hidden="true"></div>
     </div>
