@@ -1757,6 +1757,41 @@ button:disabled {
   box-shadow: var(--shadow-card-pressed);
 }
 
+.app-back-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  width:auto;
+  min-height:44px;
+  flex:0 0 auto;
+  padding:10px 14px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--surface-2);
+  color:var(--text);
+  font-size:15px;
+  font-weight:700;
+  line-height:1.1;
+  box-shadow:none;
+}
+
+.app-back-btn:focus-visible{
+  outline:none;
+  border-color:var(--focus-color);
+  box-shadow:var(--focus-ring);
+}
+
+.app-back-btn:active{
+  transform:scale(var(--tap-scale-primary));
+  filter:brightness(.96);
+}
+
+.app-back-btn-icon{
+  font-size:20px;
+  line-height:1;
+}
+
 .admin-sheet-topbar{
   position: sticky;
   top: -16px;
@@ -1778,11 +1813,7 @@ button:disabled {
   border-bottom:1px solid var(--border);
 }
 
-.admin-sheet-topbar .back-btn{
-  width:auto;
-  flex:0 0 auto;
-  padding:10px 14px;
-  min-height:44px;
+.admin-sheet-topbar .app-back-btn{
   align-self:flex-start;
 }
 
@@ -1988,7 +2019,7 @@ button:disabled {
     gap:12px;
   }
 
-  .admin-sheet-topbar .back-btn{
+  .admin-sheet-topbar .app-back-btn{
     padding:10px 12px;
     font-size:14px;
   }
@@ -12727,8 +12758,9 @@ function renderAdminForgotPasswordSheet() {
           ${t("requestResetCode", "ขอรหัสตั้งรหัสผ่านใหม่")}
         </button>
       `}
-      <button class="btn btn-outline" type="button" onclick="renderAdminLogin()">
-        ${t("back", "กลับ")}
+      <button class="app-back-btn" type="button" onclick="renderAdminLogin()">
+        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+        <span>${t("back", "กลับ")}</span>
       </button>
     </div>
   `;
@@ -13187,8 +13219,9 @@ function renderAdminApplicationReviewDetail() {
       <div class="empty-state">
         ${t("adminApplicationNotFound", "ไม่พบคำขอนี้")}
         <div style="margin-top:10px">
-          <button class="btn btn-outline" type="button" onclick="backToAdminApplicationReviewList()">
-            ${t("back", "กลับ")}
+          <button class="app-back-btn" type="button" onclick="backToAdminApplicationReviewList()">
+            <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+            <span>${t("back", "กลับ")}</span>
           </button>
         </div>
       </div>
@@ -13238,9 +13271,13 @@ function renderAdminApplicationReviewSheet() {
   const isDetail = !!String(reviewState.selectedApplicationId || "").trim();
   adminLoginSheet.innerHTML = `
     <div class="sheet-topbar">
-      <button class="btn btn-outline sheet-nav-btn"
+      <button class="app-back-btn"
+        type="button"
         onclick="${isDetail ? "backToAdminApplicationReviewList()" : "backToAdminMenuFromAdminApplicationReview()"}"
-        aria-label="${t("back", "กลับ")}">←</button>
+        aria-label="${t("back", "กลับ")}">
+        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+        <span>${t("back", "กลับ")}</span>
+      </button>
       <h3 id="adminLoginSheetTitle">${t("adminApplicationRequests", "คำขอสมัครแอดมิน")}</h3>
       <button class="btn btn-outline sheet-nav-btn"
         onclick="closeAdminApplicationReviewSheet()"
@@ -14019,9 +14056,10 @@ async function openAdminDashboard(mode = "SUMMARY", force = false) {
     if (mode === "PENDING") {
       adminDashboardSheet.innerHTML = `
         <div class="admin-sheet-topbar">
-          <button class="btn btn-outline back-btn"
+          <button class="app-back-btn" type="button"
             onclick="backToAdminMainMenu()">
-            ${t("backToMenu", "← กลับเมนู")}
+            <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+            <span>${t("back", "กลับ")}</span>
           </button>
           <h3 id="adminDashboardSheetTitle">${t("pendingOrders", "ออเดอร์รออนุมัติ")}</h3>
         </div>
@@ -14061,9 +14099,10 @@ async function openAdminDashboard(mode = "SUMMARY", force = false) {
 
     adminDashboardSheet.innerHTML = `
       <div class="admin-sheet-topbar">
-        <button class="btn btn-outline back-btn"
+        <button class="app-back-btn" type="button"
           onclick="backToAdminMainMenu()">
-          ${t("backToMenu", "← กลับเมนู")}
+          <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+          <span>${t("back", "กลับ")}</span>
         </button>
         <h3 id="adminDashboardSheetTitle">
           <span class="dashboard-title-main">${t("dashboard", "แดชบอร์ดแอดมิน")}</span>
@@ -14192,10 +14231,12 @@ ${
         ${t("retry", "ลองใหม่")}
       </button>
 
-      <button class="btn btn-outline"
-        style="width:100%;margin-top:8px"
+      <button class="app-back-btn"
+        style="margin-top:8px"
+        type="button"
         onclick="finishAdminAction({ refresh:false })">
-        ${t("back", "กลับ")}
+        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+        <span>${t("back", "กลับ")}</span>
       </button>
     `;
   }
@@ -15193,8 +15234,9 @@ async function openStockTimeline(force = false, options = {}) {
 
   targetSheet.innerHTML = `
     <div class="admin-sheet-topbar">
-      <button class="btn btn-outline back-btn" type="button" onclick="${backAction}">
-        ${backLabel}
+      <button class="app-back-btn" type="button" onclick="${backAction}">
+        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+        <span>${t("back", "กลับ")}</span>
       </button>
       <h3 id="${stockTimelineTitleId}">
         <span class="dashboard-title-main">${stockTimelineTitle}</span>
@@ -15350,8 +15392,9 @@ async function openStockTimeline(force = false, options = {}) {
     /* ================= RENDER ================= */
     targetSheet.innerHTML = `
       <div class="admin-sheet-topbar">
-        <button class="btn btn-outline back-btn" type="button" onclick="${backAction}">
-          ${backLabel}
+        <button class="app-back-btn" type="button" onclick="${backAction}">
+          <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+          <span>${t("back", "กลับ")}</span>
         </button>
         <h3 id="${stockTimelineTitleId}">
           <span class="dashboard-title-main">${stockTimelineTitle}</span>
@@ -15568,8 +15611,9 @@ async function openStockTimeline(force = false, options = {}) {
 
     targetSheet.innerHTML = `
       <div class="admin-sheet-topbar">
-        <button class="btn btn-outline back-btn" type="button" onclick="${backAction}">
-          ${backLabel}
+        <button class="app-back-btn" type="button" onclick="${backAction}">
+          <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+          <span>${t("back", "กลับ")}</span>
         </button>
         <h3 id="${stockTimelineTitleId}">
           <span class="dashboard-title-main">${stockTimelineTitle}</span>
@@ -16174,13 +16218,15 @@ createPendingDeliverySheet.innerHTML = `
     <div class="admin-sheet-topbar">
 
       <button
-        class="btn btn-outline"
+        class="app-back-btn"
+        type="button"
         onclick="
           closeOverlay(
             createPendingDeliverySheet
           )
         ">
-        ${t("back", "กลับ")}
+        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+        <span>${t("back", "กลับ")}</span>
       </button>
 
       <h3 id="createPendingDeliverySheetTitle">${t("createPendingDeliveryTitle", "เพิ่มรายการค้างส่ง")}</h3>
@@ -16985,8 +17031,9 @@ function renderBatchStockInSheet() {
       ${
         batchState.reviewOpen
           ? `
-            <button class="btn btn-outline" type="button" onclick="editBatchStockIn()">
-              ${t("back", "กลับ")}
+            <button class="app-back-btn" type="button" onclick="editBatchStockIn()">
+              <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+              <span>${t("back", "กลับ")}</span>
             </button>
             <button class="btn btn-success" type="button"
               ${canSubmit ? "" : "disabled"}
@@ -16998,8 +17045,9 @@ function renderBatchStockInSheet() {
             <button class="btn btn-primary" type="button" onclick="previewBatchStockIn()">
               ${t("reviewBeforeSave", "ตรวจสอบรายการก่อนบันทึก")}
             </button>
-            <button class="btn btn-outline" type="button" onclick="backToAdminMenuFromBatchStockIn()">
-              ${t("back", "กลับ")}
+            <button class="app-back-btn" type="button" onclick="backToAdminMenuFromBatchStockIn()">
+              <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+              <span>${t("back", "กลับ")}</span>
             </button>
           `
       }
@@ -18821,8 +18869,9 @@ function renderBillingNoteSheet() {
   const billingState = getBillingNoteState();
   adminBillingNoteSheet.innerHTML = `
     <div class="admin-sheet-topbar">
-      <button class="btn btn-outline back-btn" type="button" onclick="closeBillingNoteSheet()">
-        ${t("back", "กลับ")}
+      <button class="app-back-btn" type="button" onclick="closeBillingNoteSheet()">
+        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+        <span>${t("back", "กลับ")}</span>
       </button>
       <h3 id="adminBillingNoteSheetTitle">
         <span class="dashboard-title-main">${t("billingNote", "ใบวางบิล")}</span>
@@ -21455,8 +21504,9 @@ function renderDeliveryNoteSheet() {
   const noteState = getDeliveryNoteState();
   adminDeliveryNoteSheet.innerHTML = `
     <div class="admin-sheet-topbar">
-      <button class="btn btn-outline back-btn" type="button" onclick="closeDeliveryNoteSheet()">
-        ${t("back", "กลับ")}
+      <button class="app-back-btn" type="button" onclick="closeDeliveryNoteSheet()">
+        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+        <span>${t("back", "กลับ")}</span>
       </button>
       <h3 id="adminDeliveryNoteSheetTitle">
         <span class="dashboard-title-main">${t("deliveryNote", "ใบส่งของ")}</span>
@@ -21494,9 +21544,11 @@ function openPendingDeliverySheet() {
   pendingDeliverySheet.innerHTML = `
     <div class="admin-sheet-topbar">
       <button
-        class="btn btn-outline back-btn"
+        class="app-back-btn"
+        type="button"
         onclick="closePendingDeliverySheet()">
-        ${t("back", "กลับ")}
+        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+        <span>${t("back", "กลับ")}</span>
       </button>
 
       <h3 id="pendingDeliverySheetTitle">
@@ -24795,8 +24847,9 @@ function renderMultiSizeProductSheet() {
 
     ${isSaved ? `
       <div class="sheet-action-footer">
-        <button class="btn btn-primary" type="button" onclick="backToAdminMenuFromMultiSizeProduct()">
-          ${t("multiSizeBackAdmin", "กลับเมนูแอดมิน")}
+        <button class="app-back-btn" type="button" onclick="backToAdminMenuFromMultiSizeProduct()">
+          <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+          <span>${t("back", "กลับ")}</span>
         </button>
         <button class="btn btn-outline" type="button" onclick="startNewMultiSizeProductBatch()">
           ${t("multiSizeStartNew", "เพิ่มสินค้าแบบหลายไซส์ชุดใหม่")}
@@ -25302,8 +25355,9 @@ function renderVariantScanSheet() {
         ${selectedGroups.length && !state.admin.isSubmitting ? "" : "disabled"}>
         ${state.admin.isSubmitting ? t("saving", "กำลังบันทึก...") : t("variantScanApplyButton", "บันทึกข้อมูลกลุ่มไซส์ที่เลือก")}
       </button>
-      <button class="btn btn-outline" type="button" onclick="backToAdminMenuFromVariantScan()">
-        ${t("backAdminMenu", "กลับเมนูแอดมิน")}
+      <button class="app-back-btn" type="button" onclick="backToAdminMenuFromVariantScan()">
+        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+        <span>${t("back", "กลับ")}</span>
       </button>
       <button class="btn btn-outline" type="button" onclick="renderVariantScanSheet()">
         ${t("variantScanRescan", "สแกนใหม่")}
@@ -25844,8 +25898,9 @@ function renderBulkProductImportSuccessCard() {
       <strong>${t("bulkImportSuccess", "นำเข้าสินค้าสำเร็จ")}</strong>
       <div>${formatUiText("bulkImportSuccessCount", { count: imported }, "นำเข้าสำเร็จ {count} รายการ")}</div>
       <div class="bulk-import-success-actions">
-        <button class="btn btn-secondary" type="button" onclick="backToAdminMenuFromBulkImport()">
-          ${t("backAdminMenu", "กลับเมนูแอดมิน")}
+        <button class="app-back-btn" type="button" onclick="backToAdminMenuFromBulkImport()">
+          <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+          <span>${t("back", "กลับ")}</span>
         </button>
       </div>
     </div>
@@ -27078,8 +27133,9 @@ function renderBulkProductUpdateSuccessCard() {
       <strong>${t("bulkUpdateSuccess", "อัปเดตสินค้าสำเร็จ")}</strong>
       <div>${formatUiText("bulkUpdateSuccessCount", { count: updated }, "อัปเดตสำเร็จ {count} รายการ")}</div>
       <div class="bulk-import-success-actions">
-        <button class="btn btn-secondary" type="button" onclick="backToAdminMenuFromBulkProductUpdate()">
-          ${t("backAdminMenu", "กลับเมนูแอดมิน")}
+        <button class="app-back-btn" type="button" onclick="backToAdminMenuFromBulkProductUpdate()">
+          <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+          <span>${t("back", "กลับ")}</span>
         </button>
       </div>
     </div>
@@ -27728,8 +27784,9 @@ function renderPartnerDetailView() {
     return `
       <div class="card">
         <div class="empty-state">${t("partnerNotFound", "ไม่พบข้อมูลคู่ค้า")}</div>
-        <button class="btn btn-outline" type="button" onclick="backToPartnerList()">
-          ${t("back", "กลับ")}
+        <button class="app-back-btn" type="button" onclick="backToPartnerList()">
+          <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+          <span>${t("back", "กลับ")}</span>
         </button>
       </div>
     `;
@@ -27758,8 +27815,9 @@ function renderPartnerDetailView() {
         ${renderPartnerDetailRow(t("updatedBy", "ผู้อัปเดต"), partner.updatedBy)}
       </div>
       <div class="action-row" style="margin-top:12px">
-        <button class="btn btn-outline" type="button" onclick="backToPartnerList()">
-          ${t("back", "กลับ")}
+        <button class="app-back-btn" type="button" onclick="backToPartnerList()">
+          <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+          <span>${t("back", "กลับ")}</span>
         </button>
         <button class="btn btn-primary" type="button" onclick="openPartnerEdit()">
           ${t("editPartner", "แก้ไขคู่ค้า")}
@@ -27777,8 +27835,9 @@ function renderPartnerEditView() {
     return `
       <div class="card">
         <div class="empty-state">${t("partnerNotFound", "ไม่พบข้อมูลคู่ค้า")}</div>
-        <button class="btn btn-outline" type="button" onclick="backToPartnerList()">
-          ${t("back", "กลับ")}
+        <button class="app-back-btn" type="button" onclick="backToPartnerList()">
+          <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+          <span>${t("back", "กลับ")}</span>
         </button>
       </div>
     `;
@@ -27953,9 +28012,13 @@ function renderPartnerAdminSheet() {
       : t("partners", "คู่ค้า");
   adminPartnersSheet.innerHTML = `
     <div class="sheet-topbar">
-      <button class="btn btn-outline sheet-nav-btn"
+      <button class="app-back-btn"
+        type="button"
         onclick="${backAction}"
-        aria-label="${t("backToAdminMenu", "กลับเมนูแอดมิน")}">←</button>
+        aria-label="${t("back", "กลับ")}">
+        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+        <span>${t("back", "กลับ")}</span>
+      </button>
       <h3 id="adminPartnersSheetTitle">${title}</h3>
       <button class="btn btn-outline sheet-nav-btn"
         onclick="closePartnerAdminSheet()"
@@ -28544,8 +28607,9 @@ function renderPartnerCatalogSuccessCard() {
         <button class="btn btn-primary" type="button" onclick="copyPartnerCatalogLink()">
           ${t("copyLink", "คัดลอกลิงก์")}
         </button>
-        <button class="btn btn-outline" type="button" onclick="backToAdminMenuFromPartnerCatalog()">
-          ${t("backToAdminMenu", "กลับเมนูแอดมิน")}
+        <button class="app-back-btn" type="button" onclick="backToAdminMenuFromPartnerCatalog()">
+          <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+          <span>${t("back", "กลับ")}</span>
         </button>
       </div>
     </div>
@@ -28571,9 +28635,16 @@ function renderPartnerCatalogSheet() {
 
   adminPartnerCatalogSheet.innerHTML = `
     <div class="sheet-topbar">
-      <button class="btn btn-outline sheet-nav-btn"
-        onclick="${partnerState.view === "linkDetail" ? "backToPartnerLinkList()" : "closePartnerCatalogSheet()"}"
-        aria-label="${t("close", "ปิด")}">${partnerState.view === "linkDetail" ? "←" : "×"}</button>
+      ${partnerState.view === "linkDetail" ? `
+        <button class="app-back-btn" type="button" onclick="backToPartnerLinkList()" aria-label="${t("back", "กลับ")}">
+          <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+          <span>${t("back", "กลับ")}</span>
+        </button>
+      ` : `
+        <button class="btn btn-outline sheet-nav-btn"
+          onclick="closePartnerCatalogSheet()"
+          aria-label="${t("close", "ปิด")}">×</button>
+      `}
       <h3 id="adminPartnerCatalogSheetTitle">${partnerState.view === "linkDetail" ? t("partnerLinkDetails", "รายละเอียดลิงก์คู่ค้า") : t("partnerLinks", "ลิงก์คู่ค้า")}</h3>
       <div aria-hidden="true"></div>
     </div>
@@ -29145,7 +29216,10 @@ function renderPartnerLinkDetail() {
       <div class="empty-state">
         ${esc(partnerState.linkError)}
         <div style="margin-top:10px">
-          <button class="btn btn-outline" type="button" onclick="backToPartnerLinkList()">${t("backToPartnerLinks", "กลับรายการลิงก์")}</button>
+          <button class="app-back-btn" type="button" onclick="backToPartnerLinkList()">
+            <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+            <span>${t("back", "กลับ")}</span>
+          </button>
         </div>
       </div>
     `;
@@ -29194,11 +29268,13 @@ function renderPartnerLinksView() {
       ${t("managePartnerLinksHelp", "จัดการสถานะลิงก์คู่ค้าที่เคยสร้างไว้ ระบบไม่แสดง token จริงและไม่สามารถคัดลอกลิงก์เก่าซ้ำได้")}
     </div>
     <div class="bulk-product-picker-actions" style="margin-bottom:10px">
-      <button class="btn btn-outline" type="button" onclick="setPartnerCatalogView('create')">
-        ${t("backToCreateLink", "กลับหน้าสร้างลิงก์")}
+      <button class="app-back-btn" type="button" onclick="setPartnerCatalogView('create')">
+        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+        <span>${t("back", "กลับ")}</span>
       </button>
-      <button class="btn btn-outline" type="button" onclick="backToAdminMenuFromPartnerCatalog()">
-        ${t("backToAdminMenu", "กลับเมนูแอดมิน")}
+      <button class="app-back-btn" type="button" onclick="backToAdminMenuFromPartnerCatalog()">
+        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+        <span>${t("back", "กลับ")}</span>
       </button>
     </div>
     ${renderPartnerLinkFilters()}
@@ -29980,7 +30056,10 @@ function renderPartnerRequestDetail() {
       <div class="empty-state">
         ${esc(requestState.error)}
         <div style="margin-top:10px">
-          <button class="btn btn-outline" type="button" onclick="backToPartnerRequestList()">${t("backToPartnerRequests", "กลับรายการคำขอ")}</button>
+          <button class="app-back-btn" type="button" onclick="backToPartnerRequestList()">
+            <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+            <span>${t("back", "กลับ")}</span>
+          </button>
         </div>
       </div>
     `;
@@ -30028,9 +30107,13 @@ function renderPartnerRequestsSheet() {
 
   adminPartnerRequestsSheet.innerHTML = `
     <div class="sheet-topbar">
-      <button class="btn btn-outline sheet-nav-btn"
+      <button class="app-back-btn"
+        type="button"
         onclick="${isDetail ? "backToPartnerRequestList()" : "backToAdminMenuFromPartnerRequests()"}"
-        aria-label="${t("back", "กลับ")}">←</button>
+        aria-label="${t("back", "กลับ")}">
+        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+        <span>${t("back", "กลับ")}</span>
+      </button>
       <h3 id="adminPartnerRequestsSheetTitle">${isDetail ? t("partnerRequestDetails", "รายละเอียดคำขอคู่ค้า") : t("partnerRequests", "คำขอคู่ค้า")}</h3>
       <button class="btn btn-outline sheet-nav-btn"
         onclick="closePartnerRequestsSheet()"
