@@ -327,11 +327,20 @@ body[data-theme="cute"] {
 
 #vanta-bg {
   position: fixed;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: auto;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100lvh;
+  min-height: 100vh;
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
   background: var(--bg);
+  contain: layout paint size;
+  transform: translateZ(0);
 }
 
 body[data-theme="cute"] #vanta-bg {
@@ -2715,6 +2724,10 @@ textarea:focus-visible {
     box-shadow var(--dur-chrome) ease;
 }
 
+body[data-theme="dark"] .product-card {
+  background: rgba(28, 28, 30, .58);
+}
+
 @media (hover:hover){
   .product-card:hover{
 
@@ -2729,6 +2742,10 @@ textarea:focus-visible {
 
     background:
       var(--surface-glass);
+  }
+
+  body[data-theme="dark"] .product-card:hover{
+    background: rgba(28, 28, 30, .62);
   }
 }
 
