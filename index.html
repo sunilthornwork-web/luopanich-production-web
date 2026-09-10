@@ -14560,7 +14560,6 @@ function buildAdminPoPrintHtml(order) {
   const partnerName = String(order?.partnerNameSnapshot || order?.partnerId || "").trim();
   const partnerRequestId = String(order?.partnerRequestId || "").trim();
   const total = Number(order?.total) || 0;
-  const shopName = t("shopTitle", "ร้านค้า Luopanich");
   const printDateTime = new Date().toLocaleString("th-TH");
   const orderNote = String(order?.note || order?.adminNote || order?.message || "").trim();
   const poSummaryTitle = t("poSummaryTitle", "ใบสรุป PO");
@@ -14568,6 +14567,9 @@ function buildAdminPoPrintHtml(order) {
   const printedAtLabel = t("printedAt", "พิมพ์เมื่อ");
   const closePrintPageAlert = t("closePrintPageAlert", "กรุณาปิดหน้านี้เพื่อกลับสู่ระบบ");
   const displayOrderId = formatOrderIdForDisplay(order?.orderId);
+  const company = getBillingNoteCompanyInfo();
+  const logoUrl = getBillingNoteLogoUrl();
+  const totalLabel = t("total", "รวม");
   const itemRows = items.length
     ? items.map((item, index) => {
       const productId = String(item?.productId || "").trim() || "-";
@@ -14582,11 +14584,11 @@ function buildAdminPoPrintHtml(order) {
 
       return `
         <tr>
-          <td>${index + 1}</td>
-          <td class="thumb-col">${imageCell}</td>
+          <td class="center">${index + 1}</td>
+          <td class="center">${imageCell}</td>
           <td>${esc(productId)}</td>
           <td>${esc(name || "-")}</td>
-          <td class="num">${qty}</td>
+          <td class="num">${qty.toLocaleString("th-TH")}</td>
           <td class="num">฿${price.toLocaleString("th-TH")}</td>
           <td class="num">฿${lineTotal.toLocaleString("th-TH")}</td>
         </tr>
@@ -14602,109 +14604,241 @@ function buildAdminPoPrintHtml(order) {
       <title>${esc(poSummaryTitle)} ${esc(order?.poNumber || "-")}</title>
       <style>
         ${getSarabunFontFaceCss()}
-        @page { size: A4; margin: 14mm; }
+        @page { size: A4; margin: 10mm; }
         * { box-sizing:border-box; }
         body {
-          font-family: ${SARABUN_FONT_STACK};
-          color:#111827;
-          font-size:13px;
           margin:0;
+          color:#111827;
           background:#fff;
+          font-family:${SARABUN_FONT_STACK};
+          font-size:12.5px;
+          -webkit-print-color-adjust:exact;
+          print-color-adjust:exact;
         }
-        h1 { margin:3px 0 4px; font-size:26px; line-height:1.15; color:#111827; }
-        .muted { color:#6B7280; font-size:12px; }
-        .document { width:100%; }
+        .po-print-page {
+          width:186mm;
+          max-width:186mm;
+          min-height:260mm;
+          margin:0 auto;
+          padding:7mm 8mm 5mm;
+          background:#fff;
+          display:flex;
+          flex-direction:column;
+          overflow:visible;
+        }
+        .po-content-frame {
+          display:flex;
+          flex:1 1 auto;
+          flex-direction:column;
+          min-height:0;
+          width:100%;
+          max-width:100%;
+          overflow:visible;
+        }
         .doc-header {
           display:flex;
-          justify-content:space-between;
-          align-items:flex-start;
-          gap:18px;
-          padding-bottom:14px;
+          flex-direction:column;
+          gap:6px;
+          padding-bottom:8px;
           border-bottom:2px solid #111827;
-          margin-bottom:14px;
+          break-inside:avoid;
+          page-break-inside:avoid;
         }
-        .shop-name { font-size:15px; font-weight:800; letter-spacing:.01em; }
-        .doc-meta {
-          min-width:210px;
-          border:1px solid #D1D5DB;
-          border-radius:10px;
-          overflow:hidden;
+        .po-logo-row {
+          display:flex;
+          justify-content:center;
+          align-items:center;
+          min-height:140px;
         }
-        .doc-meta div {
+        .po-header-main {
           display:grid;
-          grid-template-columns:72px 1fr;
+          grid-template-columns:minmax(0, 1fr) auto;
+          align-items:start;
+          gap:16px;
+        }
+        .company {
+          display:flex;
+          align-items:flex-start;
+          min-width:0;
+        }
+        .po-logo {
+          width:136px;
+          height:136px;
+          object-fit:contain;
+          display:block;
+        }
+        .company-name-th { font-size:17px; font-weight:800; line-height:1.2; }
+        .company-name-en { font-size:12.5px; font-weight:800; margin-top:2px; letter-spacing:.02em; }
+        .company-small { color:#374151; line-height:1.38; margin-top:3px; }
+        .doc-title-block { text-align:right; min-width:132px; }
+        .doc-title {
+          font-size:25px;
+          line-height:1.05;
+          font-weight:800;
+          white-space:nowrap;
+          letter-spacing:.01em;
+        }
+        .print-time,
+        .doc-subtitle {
+          color:#6b7280;
+          font-size:11px;
+          margin-top:5px;
+        }
+        .po-info-row {
+          display:grid;
+          grid-template-columns:minmax(0, 1fr);
           gap:8px;
-          padding:7px 9px;
-          border-bottom:1px solid #E5E7EB;
+          margin:10px 0;
+          break-inside:avoid;
+          page-break-inside:avoid;
         }
-        .doc-meta div:last-child { border-bottom:0; }
-        .doc-meta strong { font-size:12px; color:#374151; }
-        .meta-grid {
+        .po-meta-card {
           display:grid;
-          grid-template-columns:repeat(2, minmax(0, 1fr));
-          gap:8px 14px;
-          margin:14px 0;
-          padding:12px;
-          border:1px solid #D1D5DB;
+          grid-template-columns:repeat(3, minmax(0, 1fr));
+          gap:6px 10px;
+          padding:8px 10px;
+          border:1px solid #e5e7eb;
           border-radius:10px;
+          background:#f9fafb;
+          min-height:100%;
         }
-        .meta-item { display:grid; grid-template-columns:120px 1fr; gap:8px; }
-        .meta-item strong { color:#374151; }
-        .section-title {
-          margin:16px 0 8px;
-          font-size:15px;
+        .po-meta-card div {
+          min-width:0;
+          display:flex;
+          flex-direction:column;
+          gap:1px;
+        }
+        .po-meta-card span {
+          color:#6b7280;
+          font-size:10.5px;
+          font-weight:700;
+        }
+        .po-meta-card strong {
+          min-width:0;
+          font-size:12px;
+          overflow-wrap:anywhere;
+        }
+        .po-page-body {
+          width:100%;
+          max-width:100%;
+          overflow:visible;
+        }
+        .po-section-label {
+          color:#374151;
+          font-size:11px;
           font-weight:800;
+          letter-spacing:.02em;
+          margin:0 0 5px;
         }
-        table { width:100%; border-collapse:collapse; table-layout:fixed; }
-        th, td { border:1px solid #D1D5DB; padding:7px; text-align:left; vertical-align:top; }
-        th { background:#F3F4F6; color:#111827; font-weight:800; }
-        th:nth-child(1) { width:30px; }
-        th:nth-child(2) { width:54px; }
-        th:nth-child(3) { width:88px; }
-        th:nth-child(5) { width:58px; }
-        th:nth-child(6),
-        th:nth-child(7) { width:82px; }
-        td { word-break:break-word; }
-        .thumb-col { width:48px; text-align:center; }
-        .po-print-thumb {
-          width:40px;
-          height:40px;
-          object-fit:cover;
-          border:1px solid #E5E7EB;
-          border-radius:8px;
-          background:#F9FAFB;
+        .po-print-table {
+          width:100%;
+          border-collapse:collapse;
+          table-layout:fixed;
         }
+        .col-index { width:30px; }
+        .col-image { width:50px; }
+        .col-sku { width:82px; }
+        .col-name { width:auto; }
+        .col-qty { width:50px; }
+        .col-price { width:78px; }
+        .col-total { width:82px; }
+        th, td {
+          border:1px solid #d9dde5;
+          padding:5px 6px;
+          vertical-align:middle;
+          word-break:break-word;
+          overflow-wrap:anywhere;
+        }
+        th {
+          background:#f3f4f6;
+          font-size:11.5px;
+          font-weight:800;
+          color:#111827;
+        }
+        tr {
+          break-inside:avoid;
+          page-break-inside:avoid;
+        }
+        thead { display:table-header-group; }
+        .center { text-align:center; }
         .num { text-align:right; white-space:nowrap; }
-        .total {
-          margin-top:12px;
-          padding:10px 12px;
-          text-align:right;
-          font-size:17px;
-          font-weight:800;
-          border:1px solid #111827;
-          border-radius:10px;
+        .po-print-thumb {
+          width:38px;
+          height:38px;
+          object-fit:cover;
+          display:block;
+          margin:0 auto;
+          border:1px solid #e5e7eb;
+          border-radius:7px;
+          background:#f9fafb;
+          break-inside:avoid;
+          page-break-inside:avoid;
         }
-        .empty { text-align:center; color:#6B7280; }
-        .note-box {
-          margin-top:14px;
-          padding:10px 12px;
-          border:1px solid #D1D5DB;
+        .po-final-block {
+          margin-top:auto;
+          display:flex;
+          flex-direction:column;
+          flex:1 1 auto;
+          padding-top:12px;
+          break-inside:avoid;
+          page-break-inside:avoid;
+        }
+        .po-final-summary-row {
+          display:grid;
+          grid-template-columns:minmax(0, 1fr) minmax(260px, 330px);
+          gap:18px;
+          align-items:start;
+          break-inside:avoid;
+          page-break-inside:avoid;
+        }
+        .po-note-card {
+          border:1px solid #d9dde5;
           border-radius:10px;
+          background:#fbfdff;
+          padding:7px 9px;
+          color:#111827;
+          line-height:1.36;
+          min-height:100%;
           white-space:pre-wrap;
         }
-        .signature-grid {
+        .po-note-card.is-empty {
+          border-color:transparent;
+          background:transparent;
+          padding:0;
+        }
+        .po-grand-total { text-align:right; }
+        .po-grand-total-row {
+          display:flex;
+          justify-content:space-between;
+          align-items:baseline;
+          gap:24px;
+          font-size:16px;
+          border-top:2px solid #111827;
+          border-bottom:1px solid #d1d5db;
+          padding:8px 0 6px;
+        }
+        .po-grand-total-row strong { font-size:18px; }
+        .po-signature-spacer {
+          flex:1 1 auto;
+          min-height:32px;
+        }
+        .signatures {
           display:grid;
-          grid-template-columns:repeat(3, 1fr);
-          gap:14px;
-          margin-top:34px;
+          grid-template-columns:repeat(3, minmax(0, 1fr));
+          gap:22px;
+          margin-top:0;
+          padding-top:18px;
           break-inside:avoid;
+          page-break-inside:avoid;
         }
-        .signature-box { text-align:center; color:#374151; }
-        .signature-line {
-          height:38px;
-          border-bottom:1px solid #111827;
-          margin-bottom:7px;
+        .signature-box {
+          min-height:62px;
+          border-top:1px solid #111827;
+          padding-top:8px;
+          text-align:center;
+          color:#374151;
         }
+        .empty { text-align:center; color:#6B7280; }
         .print-screen-toolbar {
           position:sticky;
           top:0;
@@ -14732,16 +14866,27 @@ function buildAdminPoPrintHtml(order) {
           color:#111827;
         }
         @media print {
-          body { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+          body { margin:0; }
           .print-screen-toolbar { display:none !important; }
-          .doc-header, .meta-grid, .note-box, .signature-grid { break-inside:avoid; }
+          .doc-header,
+          .po-meta-card,
+          .po-final-block,
+          .signatures,
+          .po-print-page,
+          .po-print-thumb {
+            break-inside:avoid;
+            page-break-inside:avoid;
+          }
         }
         @media screen and (max-width:640px) {
           .print-screen-toolbar { justify-content:stretch; }
           .print-screen-toolbar button { flex:1; }
-          .doc-header { display:block; }
-          .doc-meta { min-width:0; margin-top:12px; }
-          .meta-grid, .signature-grid { grid-template-columns:1fr; }
+          .po-print-page { width:100%; max-width:100%; padding:16px; }
+          .po-header-main,
+          .po-final-summary-row { grid-template-columns:1fr; }
+          .doc-title-block { text-align:left; }
+          .po-meta-card { grid-template-columns:1fr; }
+          .signatures { grid-template-columns:1fr; }
         }
       </style>
     </head>
@@ -14750,60 +14895,93 @@ function buildAdminPoPrintHtml(order) {
         <button type="button" onclick="closePrintPoPage()">${t("returnToSystem", "กลับระบบ")}</button>
         <button type="button" class="secondary" onclick="window.print()">${t("printAgain", "พิมพ์อีกครั้ง")}</button>
       </div>
-      <div class="document">
-        <div class="doc-header">
-          <div>
-            <div class="shop-name">${esc(shopName)}</div>
-            <h1>${esc(poSummaryTitle)}</h1>
-            <div class="muted">${esc(poPrintSubtitle)}</div>
-          </div>
-          <div class="doc-meta">
-            <div><strong>PO</strong><span>${esc(order?.poNumber || "-")}</span></div>
-            <div><strong>${t("orderNumber", "เลขออเดอร์")}</strong><span>${esc(displayOrderId)}</span></div>
-            <div><strong>${esc(printedAtLabel)}</strong><span>${esc(printDateTime)}</span></div>
-          </div>
-        </div>
+      <main class="po-print-page">
+        <div class="po-content-frame">
+          <header class="doc-header">
+            <div class="po-logo-row">
+              <img class="po-logo" src="${escAttr(logoUrl)}" alt="LUOPARICH" onerror="this.remove()">
+            </div>
+            <div class="po-header-main">
+              <div class="company">
+                <div>
+                  <div class="company-name-th">${esc(company.nameTh)}</div>
+                  <div class="company-name-en">${esc(company.nameEn)}</div>
+                  <div class="company-small">${esc(company.taxId)}</div>
+                  <div class="company-small">${esc(company.address)}</div>
+                </div>
+              </div>
+              <div class="doc-title-block">
+                <div class="doc-title">${esc(poSummaryTitle)}</div>
+                <div class="print-time">${esc(printedAtLabel)} ${esc(printDateTime)}</div>
+                <div class="doc-subtitle">${esc(poPrintSubtitle)}</div>
+              </div>
+            </div>
+          </header>
 
-        <div class="meta-grid">
-          <div class="meta-item"><strong>PO</strong><span>${esc(order?.poNumber || "-")}</span></div>
-          <div class="meta-item"><strong>${t("orderNumber", "เลขออเดอร์")}</strong><span>${esc(displayOrderId)}</span></div>
-          <div class="meta-item"><strong>${t("status", "สถานะ")}</strong><span>${esc(getAdminOrderStatusLabel(status) || "-")}</span></div>
-          <div class="meta-item"><strong>${t("source", "แหล่งที่มา")}</strong><span>${esc(getAdminOrderSourceLabel(order))}</span></div>
-          ${partnerName ? `<div class="meta-item"><strong>${t("partner", "คู่ค้า")}</strong><span>${esc(partnerName)}</span></div>` : ""}
-          ${partnerRequestId ? `<div class="meta-item"><strong>${t("partnerRequestId", "เลขคำขอคู่ค้า")}</strong><span>${esc(partnerRequestId)}</span></div>` : ""}
-          ${createdAt ? `<div class="meta-item"><strong>${t("createdAt", "สร้างเมื่อ")}</strong><span>${esc(formatThaiDate(createdAt))}</span></div>` : ""}
-          ${approvedAt ? `<div class="meta-item"><strong>${t("approvedAt", "อนุมัติเมื่อ")}</strong><span>${esc(formatThaiDate(approvedAt))}</span></div>` : ""}
-        </div>
+          <section class="po-info-row">
+            <div class="po-meta-card">
+              <div><span>PO</span><strong>${esc(order?.poNumber || "-")}</strong></div>
+              <div><span>${t("orderNumber", "เลขออเดอร์")}</span><strong>${esc(displayOrderId)}</strong></div>
+              <div><span>${t("status", "สถานะ")}</span><strong>${esc(getAdminOrderStatusLabel(status) || "-")}</strong></div>
+              <div><span>${t("source", "แหล่งที่มา")}</span><strong>${esc(getAdminOrderSourceLabel(order))}</strong></div>
+              ${partnerName ? `<div><span>${t("partner", "คู่ค้า")}</span><strong>${esc(partnerName)}</strong></div>` : ""}
+              ${partnerRequestId ? `<div><span>${t("partnerRequestId", "เลขคำขอคู่ค้า")}</span><strong>${esc(partnerRequestId)}</strong></div>` : ""}
+              ${createdAt ? `<div><span>${t("createdAt", "สร้างเมื่อ")}</span><strong>${esc(formatThaiDate(createdAt))}</strong></div>` : ""}
+              ${approvedAt ? `<div><span>${t("approvedAt", "อนุมัติเมื่อ")}</span><strong>${esc(formatThaiDate(approvedAt))}</strong></div>` : ""}
+            </div>
+          </section>
 
-        <div class="section-title">${t("itemList", "รายการสินค้า")}</div>
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>${t("imageLabel", "รูป")}</th>
-              <th>SKU</th>
-              <th>${t("productLabel", "สินค้า")}</th>
-              <th class="num">${t("quantity", "จำนวน")}</th>
-              <th class="num">${t("price", "ราคา")}</th>
-              <th class="num">${t("total", "รวม")}</th>
-            </tr>
-          </thead>
-          <tbody>${itemRows}</tbody>
-        </table>
+          <section class="po-page-body">
+            <div class="po-section-label">${t("itemList", "รายการสินค้า")}</div>
+            <table class="po-print-table">
+              <colgroup>
+                <col class="col-index">
+                <col class="col-image">
+                <col class="col-sku">
+                <col class="col-name">
+                <col class="col-qty">
+                <col class="col-price">
+                <col class="col-total">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th class="center">#</th>
+                  <th class="center">${t("imageLabel", "รูป")}</th>
+                  <th>SKU</th>
+                  <th>${t("productLabel", "สินค้า")}</th>
+                  <th class="num">${t("quantity", "จำนวน")}</th>
+                  <th class="num">${t("unitPrice", "ราคาต่อหน่วย")}</th>
+                  <th class="num">${esc(totalLabel)}</th>
+                </tr>
+              </thead>
+              <tbody>${itemRows}</tbody>
+            </table>
+          </section>
 
-        <div class="total">${t("total", "รวม")}: ฿${total.toLocaleString("th-TH")}</div>
-        ${orderNote ? `
-          <div class="note-box">
-            <strong>${t("note", "หมายเหตุ")}</strong><br>
-            ${esc(orderNote)}
-          </div>
-        ` : ""}
-        <div class="signature-grid">
-          <div class="signature-box"><div class="signature-line"></div>${t("preparedBy", "ผู้จัดทำ")}</div>
-          <div class="signature-box"><div class="signature-line"></div>${t("checkedBy", "ผู้ตรวจสอบ")}</div>
-          <div class="signature-box"><div class="signature-line"></div>${t("receiverPacker", "ผู้รับสินค้า / ผู้แพ็กของ")}</div>
+          <section class="po-final-block">
+            <div class="po-final-summary-row">
+              ${orderNote ? `
+                <section class="po-note-card">
+                  <div class="po-section-label">${t("note", "หมายเหตุ")}</div>
+                  ${esc(orderNote)}
+                </section>
+              ` : `<div class="po-note-card is-empty" aria-hidden="true"></div>`}
+              <div class="po-grand-total">
+                <div class="po-grand-total-row">
+                  <span>${esc(totalLabel)}</span>
+                  <strong>฿${total.toLocaleString("th-TH")}</strong>
+                </div>
+              </div>
+            </div>
+            <div class="po-signature-spacer" aria-hidden="true"></div>
+            <section class="signatures">
+              <div class="signature-box">${t("preparedBy", "ผู้จัดทำ")}</div>
+              <div class="signature-box">${t("checkedBy", "ผู้ตรวจสอบ")}</div>
+              <div class="signature-box">${t("receiverPacker", "ผู้รับสินค้า / ผู้แพ็กของ")}</div>
+            </section>
+          </section>
         </div>
-      </div>
+      </main>
       <script>
         function closePrintPoPage() {
           try {
@@ -14839,7 +15017,6 @@ function buildAdminPoPrintHtml(order) {
     </html>
   `;
 }
-
 function printAdminPoOrder(orderId) {
   const cleanOrderId = String(orderId || "").trim();
   const orders = Array.isArray(state.admin.orders) ? state.admin.orders : [];
