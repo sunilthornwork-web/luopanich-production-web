@@ -7,6 +7,8 @@
  <meta name="theme-color" content="#0f0f12">
  <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
  <script type="module" src="https://unpkg.com/@dotlottie/player-component@2.7.12/dist/dotlottie-player.mjs"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+ <script src="https://cdn.jsdelivr.net/npm/vanta@0.5.24/dist/vanta.waves.min.js"></script>
  <title>ร้านค้า Luopanich</title>
 
 <!-- ================= UI STYLE ================= -->
@@ -322,6 +324,24 @@ body[data-theme="cute"] {
    min-height: 100dvh;
    height: auto;
   }
+
+#vanta-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+body[data-theme="cute"] #vanta-bg {
+  display: none;
+}
+
+#app {
+  position: relative;
+  z-index: 1;
+}
   
   header{
   padding:
@@ -5444,6 +5464,8 @@ textarea.input{
 </head>
 <body>
 
+<div id="vanta-bg" aria-hidden="true"></div>
+
 <!-- 🔴 HEADER (Mode-Based Controlled) -->
 <header id="appHeader"></header>
 
@@ -8396,6 +8418,69 @@ function renderBottomNav() {
   `;
 }
 
+let vantaWavesInstance = null;
+
+function destroyVantaWavesBackground() {
+  if (!vantaWavesInstance) return;
+  try {
+    vantaWavesInstance.destroy();
+  } catch (err) {
+    // Keep the app usable if the prototype background cleanup fails.
+  }
+  vantaWavesInstance = null;
+}
+
+function initVantaWavesBackground() {
+  if (vantaWavesInstance) return;
+  if (getCurrentTheme() !== "dark") return;
+  if (isReducedMotion()) return;
+  if (!window.THREE || !window.VANTA || typeof window.VANTA.WAVES !== "function") return;
+
+  const target = document.getElementById("vanta-bg");
+  if (!target) return;
+
+  try {
+    vantaWavesInstance = window.VANTA.WAVES({
+      el: target,
+      THREE: window.THREE,
+      mouseControls: false,
+      touchControls: false,
+      gyroControls: false,
+      minHeight: 200,
+      minWidth: 200,
+      scale: 1,
+      scaleMobile: 0.75,
+      color: 0x1c2636,
+      backgroundColor: 0x0f0f12,
+      shininess: 18,
+      waveHeight: 10,
+      waveSpeed: 0.35,
+      zoom: 0.92
+    });
+  } catch (err) {
+    vantaWavesInstance = null;
+  }
+}
+
+function syncVantaWavesForTheme() {
+  if (getCurrentTheme() === "dark" && !isReducedMotion()) {
+    initVantaWavesBackground();
+    return;
+  }
+  destroyVantaWavesBackground();
+}
+
+function bindVantaWavesMotionPreference() {
+  if (!window.matchMedia) return;
+  const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const handleMotionChange = () => syncVantaWavesForTheme();
+  if (typeof motionQuery.addEventListener === "function") {
+    motionQuery.addEventListener("change", handleMotionChange);
+  } else if (typeof motionQuery.addListener === "function") {
+    motionQuery.addListener(handleMotionChange);
+  }
+}
+
 function getCurrentTheme() {
   const theme = document.body?.dataset?.theme;
   return theme === "cute" ? "cute" : "dark";
@@ -8412,6 +8497,7 @@ function setTheme(theme) {
   } catch (err) {
     console.warn("setTheme: localStorage unavailable", err);
   }
+  syncVantaWavesForTheme();
 }
 
 function initTheme() {
@@ -8432,6 +8518,7 @@ function toggleTheme() {
 }
 
 initTheme();
+bindVantaWavesMotionPreference();
 
 const MOTION = Object.freeze({
   CARD_ENTRANCE_LIMIT: 24,
