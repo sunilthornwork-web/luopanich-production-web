@@ -13908,245 +13908,6 @@ function renderAdminOrderPoSearch() {
   `;
 }
 
-const IOS_DATE_LAYOUT_DEBUG_BUILD = "ios-date-inline-boxmodel-r3";
-let adminDashboardLayoutDebugInlineBorderBoxEnabled = false;
-
-function isAdminDashboardLayoutDebugEnabled() {
-  try {
-    return new URLSearchParams(window.location.search).get("layoutDebug") === "1";
-  } catch (_) {
-    return false;
-  }
-}
-
-function renderAdminDashboardLayoutDebugPanel() {
-  if (!isAdminDashboardLayoutDebugEnabled()) return "";
-
-  return `
-    <div id="adminDashboardLayoutDebugPanel" style="margin:12px 0;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2);color:var(--text);font-size:12px;line-height:1.4">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
-        <strong>iOS Date Layout Debug</strong>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
-          <button class="btn btn-outline" type="button" style="width:auto;min-height:36px;padding:6px 10px;font-size:12px" onclick="applyAdminDashboardInlineBorderBoxExperiment()">ทดลอง border-box</button>
-          <button class="btn btn-outline" type="button" style="width:auto;min-height:36px;padding:6px 10px;font-size:12px" onclick="resetAdminDashboardInlineBorderBoxExperiment()">คืนค่า</button>
-          <button class="btn btn-outline" type="button" style="width:auto;min-height:36px;padding:6px 10px;font-size:12px" onclick="measureAdminDashboardLayoutDebug()">วัดใหม่</button>
-        </div>
-      </div>
-      <div style="margin-bottom:8px">
-        <div><strong>BUILD:</strong> ${IOS_DATE_LAYOUT_DEBUG_BUILD}</div>
-        <div><strong>EXPECTED DATE SOURCE:</strong> min-width: 0; box-sizing: border-box</div>
-        <div><strong>EXPERIMENT:</strong> INLINE_BORDER_BOX = <span id="adminDashboardInlineBorderBoxExperimentState">OFF</span></div>
-      </div>
-      <pre id="adminDashboardLayoutDebugOutput" style="margin:0;white-space:pre-wrap;word-break:break-word;font:12px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--text)">รอวัด...</pre>
-    </div>
-  `;
-}
-
-function roundLayoutDebugValue(value) {
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? Math.round(numeric * 100) / 100 : null;
-}
-
-function getAdminDashboardLayoutDebugMetrics(element, includeType = false) {
-  if (!element) return null;
-
-  const rect = element.getBoundingClientRect();
-  const style = window.getComputedStyle(element);
-  const metrics = {
-    rect: {
-      left: roundLayoutDebugValue(rect.left),
-      right: roundLayoutDebugValue(rect.right),
-      top: roundLayoutDebugValue(rect.top),
-      bottom: roundLayoutDebugValue(rect.bottom),
-      width: roundLayoutDebugValue(rect.width),
-      height: roundLayoutDebugValue(rect.height)
-    },
-    dom: {
-      offsetWidth: element.offsetWidth,
-      clientWidth: element.clientWidth,
-      scrollWidth: element.scrollWidth
-    },
-    style: {
-      width: style.width,
-      minWidth: style.minWidth,
-      maxWidth: style.maxWidth,
-      boxSizing: style.boxSizing,
-      display: style.display,
-      paddingLeft: style.paddingLeft,
-      paddingRight: style.paddingRight,
-      borderLeftWidth: style.borderLeftWidth,
-      borderRightWidth: style.borderRightWidth,
-      marginLeft: style.marginLeft,
-      marginRight: style.marginRight,
-      overflowX: style.overflowX
-    }
-  };
-
-  if (includeType) {
-    metrics.type = element.type || "";
-    metrics.inlineStyle = {
-      boxSizing: element.style.boxSizing || ""
-    };
-  }
-
-  return metrics;
-}
-
-function formatAdminDashboardLayoutDebugMetrics(label, metrics) {
-  if (!metrics) return `${label}\n  missing`;
-
-  const lines = [
-    label,
-    `  left=${metrics.rect.left} right=${metrics.rect.right} top=${metrics.rect.top} bottom=${metrics.rect.bottom}`,
-    `  width=${metrics.rect.width} height=${metrics.rect.height}`,
-    `  offsetWidth=${metrics.dom.offsetWidth} clientWidth=${metrics.dom.clientWidth} scrollWidth=${metrics.dom.scrollWidth}`,
-    `  css width=${metrics.style.width} minWidth=${metrics.style.minWidth} maxWidth=${metrics.style.maxWidth}`,
-    `  boxSizing=${metrics.style.boxSizing} display=${metrics.style.display} overflowX=${metrics.style.overflowX}`,
-    `  paddingL/R=${metrics.style.paddingLeft}/${metrics.style.paddingRight} borderL/R=${metrics.style.borderLeftWidth}/${metrics.style.borderRightWidth}`,
-    `  marginL/R=${metrics.style.marginLeft}/${metrics.style.marginRight}`
-  ];
-
-  if (metrics.type !== undefined) {
-    lines.splice(1, 0, `  type=${metrics.type}`);
-    lines.splice(2, 0, `  inlineStyle.boxSizing=${metrics.inlineStyle?.boxSizing || ""}`);
-  }
-
-  return lines.join("\n");
-}
-
-function setAdminDashboardInlineBorderBoxExperimentState(isOn) {
-  adminDashboardLayoutDebugInlineBorderBoxEnabled = Boolean(isOn);
-  const stateEl = document.getElementById("adminDashboardInlineBorderBoxExperimentState");
-  if (stateEl) {
-    stateEl.textContent = adminDashboardLayoutDebugInlineBorderBoxEnabled ? "ON" : "OFF";
-  }
-}
-
-function remeasureAdminDashboardLayoutDebugAfterStyleChange() {
-  const dateFrom = document.getElementById("dashboardDateFrom");
-  const dateTo = document.getElementById("dashboardDateTo");
-  void dateFrom?.offsetWidth;
-  void dateTo?.offsetWidth;
-  measureAdminDashboardLayoutDebug();
-}
-
-function applyAdminDashboardInlineBorderBoxExperiment() {
-  if (!isAdminDashboardLayoutDebugEnabled()) return;
-
-  const dateFrom = document.getElementById("dashboardDateFrom");
-  const dateTo = document.getElementById("dashboardDateTo");
-  dateFrom?.style.setProperty("box-sizing", "border-box");
-  dateTo?.style.setProperty("box-sizing", "border-box");
-  setAdminDashboardInlineBorderBoxExperimentState(true);
-  remeasureAdminDashboardLayoutDebugAfterStyleChange();
-}
-
-function resetAdminDashboardInlineBorderBoxExperiment() {
-  if (!isAdminDashboardLayoutDebugEnabled()) return;
-
-  const dateFrom = document.getElementById("dashboardDateFrom");
-  const dateTo = document.getElementById("dashboardDateTo");
-  dateFrom?.style.removeProperty("box-sizing");
-  dateTo?.style.removeProperty("box-sizing");
-  setAdminDashboardInlineBorderBoxExperimentState(false);
-  remeasureAdminDashboardLayoutDebugAfterStyleChange();
-}
-
-function measureAdminDashboardLayoutDebug() {
-  if (!isAdminDashboardLayoutDebugEnabled()) return;
-
-  const output = document.getElementById("adminDashboardLayoutDebugOutput");
-  if (!output) return;
-
-  const dateFrom = document.getElementById("dashboardDateFrom");
-  const dateTo = document.getElementById("dashboardDateTo");
-  const poSearch = document.getElementById("adminOrderPoSearch");
-  const dashboard = document.querySelector(".dashboard-filter-wrap");
-  const doc = document.documentElement;
-
-  const dateFromMetrics = getAdminDashboardLayoutDebugMetrics(dateFrom, true);
-  const dateToMetrics = getAdminDashboardLayoutDebugMetrics(dateTo, true);
-  const poMetrics = getAdminDashboardLayoutDebugMetrics(poSearch, true);
-  const dateFromPickerMetrics = getAdminDashboardLayoutDebugMetrics(dateFrom?.closest(".dashboard-date-picker"));
-  const dateToPickerMetrics = getAdminDashboardLayoutDebugMetrics(dateTo?.closest(".dashboard-date-picker"));
-  const dateFromShellMetrics = getAdminDashboardLayoutDebugMetrics(dateFrom?.closest(".dashboard-date-field-shell"));
-  const dateToShellMetrics = getAdminDashboardLayoutDebugMetrics(dateTo?.closest(".dashboard-date-field-shell"));
-  const dateFromParentMetrics = getAdminDashboardLayoutDebugMetrics(dateFrom?.closest(".form-group"));
-  const dateToParentMetrics = getAdminDashboardLayoutDebugMetrics(dateTo?.closest(".form-group"));
-  const poParentMetrics = getAdminDashboardLayoutDebugMetrics(poSearch?.closest(".form-group"));
-  const dashboardMetrics = getAdminDashboardLayoutDebugMetrics(dashboard);
-  const documentMetrics = {
-    clientWidth: doc.clientWidth,
-    scrollWidth: doc.scrollWidth
-  };
-
-  const diff = {
-    dateFromRightMinusPoRight: roundLayoutDebugValue((dateFromMetrics?.rect.right ?? 0) - (poMetrics?.rect.right ?? 0)),
-    dateToRightMinusPoRight: roundLayoutDebugValue((dateToMetrics?.rect.right ?? 0) - (poMetrics?.rect.right ?? 0)),
-    dateFromWidthMinusPoWidth: roundLayoutDebugValue((dateFromMetrics?.rect.width ?? 0) - (poMetrics?.rect.width ?? 0)),
-    dateToWidthMinusPoWidth: roundLayoutDebugValue((dateToMetrics?.rect.width ?? 0) - (poMetrics?.rect.width ?? 0)),
-    dateFromPickerRightMinusPoRight: roundLayoutDebugValue((dateFromPickerMetrics?.rect.right ?? 0) - (poMetrics?.rect.right ?? 0)),
-    dateToPickerRightMinusPoRight: roundLayoutDebugValue((dateToPickerMetrics?.rect.right ?? 0) - (poMetrics?.rect.right ?? 0)),
-    dateFromPickerWidthMinusPoWidth: roundLayoutDebugValue((dateFromPickerMetrics?.rect.width ?? 0) - (poMetrics?.rect.width ?? 0)),
-    dateToPickerWidthMinusPoWidth: roundLayoutDebugValue((dateToPickerMetrics?.rect.width ?? 0) - (poMetrics?.rect.width ?? 0)),
-    dateFromShellRightMinusPoRight: roundLayoutDebugValue((dateFromShellMetrics?.rect.right ?? 0) - (poMetrics?.rect.right ?? 0)),
-    dateToShellRightMinusPoRight: roundLayoutDebugValue((dateToShellMetrics?.rect.right ?? 0) - (poMetrics?.rect.right ?? 0)),
-    dateFromShellWidthMinusPoWidth: roundLayoutDebugValue((dateFromShellMetrics?.rect.width ?? 0) - (poMetrics?.rect.width ?? 0)),
-    dateToShellWidthMinusPoWidth: roundLayoutDebugValue((dateToShellMetrics?.rect.width ?? 0) - (poMetrics?.rect.width ?? 0)),
-    dateFromParentWidthMinusPoParentWidth: roundLayoutDebugValue((dateFromParentMetrics?.rect.width ?? 0) - (poParentMetrics?.rect.width ?? 0)),
-    dateToParentWidthMinusPoParentWidth: roundLayoutDebugValue((dateToParentMetrics?.rect.width ?? 0) - (poParentMetrics?.rect.width ?? 0)),
-    dashboardScrollMinusClient: (dashboard?.scrollWidth ?? 0) - (dashboard?.clientWidth ?? 0),
-    documentScrollMinusClient: doc.scrollWidth - doc.clientWidth
-  };
-
-  output.textContent = [
-    formatAdminDashboardLayoutDebugMetrics("DATE FROM", dateFromMetrics),
-    formatAdminDashboardLayoutDebugMetrics("DATE TO", dateToMetrics),
-    formatAdminDashboardLayoutDebugMetrics("PO SEARCH", poMetrics),
-    "PICKERS",
-    formatAdminDashboardLayoutDebugMetrics("  DATE FROM PICKER", dateFromPickerMetrics),
-    formatAdminDashboardLayoutDebugMetrics("  DATE TO PICKER", dateToPickerMetrics),
-    "SHELLS",
-    formatAdminDashboardLayoutDebugMetrics("  DATE FROM SHELL", dateFromShellMetrics),
-    formatAdminDashboardLayoutDebugMetrics("  DATE TO SHELL", dateToShellMetrics),
-    "PARENTS",
-    formatAdminDashboardLayoutDebugMetrics("  DATE FROM PARENT", dateFromParentMetrics),
-    formatAdminDashboardLayoutDebugMetrics("  DATE TO PARENT", dateToParentMetrics),
-    formatAdminDashboardLayoutDebugMetrics("  PO SEARCH PARENT", poParentMetrics),
-    "DASHBOARD",
-    formatAdminDashboardLayoutDebugMetrics("  .dashboard-filter-wrap", dashboardMetrics),
-    `DOCUMENT\n  clientWidth=${documentMetrics.clientWidth} scrollWidth=${documentMetrics.scrollWidth}`,
-    "DIFF",
-    `  DateFrom right - PO right=${diff.dateFromRightMinusPoRight}`,
-    `  DateTo right - PO right=${diff.dateToRightMinusPoRight}`,
-    `  DateFrom width - PO width=${diff.dateFromWidthMinusPoWidth}`,
-    `  DateTo width - PO width=${diff.dateToWidthMinusPoWidth}`,
-    `  DateFrom picker right - PO right=${diff.dateFromPickerRightMinusPoRight}`,
-    `  DateTo picker right - PO right=${diff.dateToPickerRightMinusPoRight}`,
-    `  DateFrom picker width - PO width=${diff.dateFromPickerWidthMinusPoWidth}`,
-    `  DateTo picker width - PO width=${diff.dateToPickerWidthMinusPoWidth}`,
-    `  DateFrom shell right - PO right=${diff.dateFromShellRightMinusPoRight}`,
-    `  DateTo shell right - PO right=${diff.dateToShellRightMinusPoRight}`,
-    `  DateFrom shell width - PO width=${diff.dateFromShellWidthMinusPoWidth}`,
-    `  DateTo shell width - PO width=${diff.dateToShellWidthMinusPoWidth}`,
-    `  DateFrom parent width - PO parent width=${diff.dateFromParentWidthMinusPoParentWidth}`,
-    `  DateTo parent width - PO parent width=${diff.dateToParentWidthMinusPoParentWidth}`,
-    `  dashboard scrollWidth - clientWidth=${diff.dashboardScrollMinusClient}`,
-    `  document scrollWidth - clientWidth=${diff.documentScrollMinusClient}`
-  ].join("\n\n");
-}
-
-function scheduleAdminDashboardLayoutDebugMeasurement() {
-  if (!isAdminDashboardLayoutDebugEnabled()) return;
-
-  const measure = () => setTimeout(measureAdminDashboardLayoutDebug, 0);
-  if (typeof requestAnimationFrame === "function") {
-    requestAnimationFrame(measure);
-    return;
-  }
-  measure();
-}
-
 function setAdminOrderPoQueryDraft(value) {
   state.admin.filters.poQueryDraft = value || "";
 }
@@ -14313,7 +14074,7 @@ async function openAdminDashboard(mode = "SUMMARY", force = false) {
       <div class="dashboard-filter-wrap">
         <div class="form-group">
           <label for="dashboardDateFrom">${t("fromDate", "ตั้งแต่วันที่")}</label>
-          <div class="dashboard-date-picker dashboard-date-field-shell">
+          <div class="dashboard-date-picker">
             <span class="dashboard-date-display" aria-hidden="true">${esc(formatDashboardDateDisplay(from))}</span>
             <input id="dashboardDateFrom" type="date" value="${escAttr(from)}" onchange="syncDashboardDateDisplay(this)">
           </div>
@@ -14321,7 +14082,7 @@ async function openAdminDashboard(mode = "SUMMARY", force = false) {
 
         <div class="form-group">
           <label for="dashboardDateTo">${t("toDate", "ถึงวันที่")}</label>
-          <div class="dashboard-date-picker dashboard-date-field-shell">
+          <div class="dashboard-date-picker">
             <span class="dashboard-date-display" aria-hidden="true">${esc(formatDashboardDateDisplay(to))}</span>
             <input id="dashboardDateTo" type="date" value="${escAttr(to)}" onchange="syncDashboardDateDisplay(this)">
           </div>
@@ -14330,7 +14091,6 @@ async function openAdminDashboard(mode = "SUMMARY", force = false) {
         ${renderAdminOrderPoSearch()}
       </div>
 
-      ${renderAdminDashboardLayoutDebugPanel()}
 
       <div class="action-row">
         <button class="btn btn-primary" onclick="applyAdminDashboardRange()">
@@ -14407,7 +14167,6 @@ ${
           `
       }
     `;
-    scheduleAdminDashboardLayoutDebugMeasurement();
   } catch (err) {
     console.error(err);
 
@@ -14808,6 +14567,7 @@ function buildAdminPoPrintHtml(order) {
   const poPrintSubtitle = t("poPrintSubtitle", "เอกสารสำหรับตรวจสอบรายการสินค้าและการแพ็กของ");
   const printedAtLabel = t("printedAt", "พิมพ์เมื่อ");
   const closePrintPageAlert = t("closePrintPageAlert", "กรุณาปิดหน้านี้เพื่อกลับสู่ระบบ");
+  const displayOrderId = formatOrderIdForDisplay(order?.orderId);
   const itemRows = items.length
     ? items.map((item, index) => {
       const productId = String(item?.productId || "").trim() || "-";
@@ -14999,14 +14759,14 @@ function buildAdminPoPrintHtml(order) {
           </div>
           <div class="doc-meta">
             <div><strong>PO</strong><span>${esc(order?.poNumber || "-")}</span></div>
-            <div><strong>${t("orderNumber", "เลขออเดอร์")}</strong><span>${esc(order?.orderId || "-")}</span></div>
+            <div><strong>${t("orderNumber", "เลขออเดอร์")}</strong><span>${esc(displayOrderId)}</span></div>
             <div><strong>${esc(printedAtLabel)}</strong><span>${esc(printDateTime)}</span></div>
           </div>
         </div>
 
         <div class="meta-grid">
           <div class="meta-item"><strong>PO</strong><span>${esc(order?.poNumber || "-")}</span></div>
-          <div class="meta-item"><strong>${t("orderNumber", "เลขออเดอร์")}</strong><span>${esc(order?.orderId || "-")}</span></div>
+          <div class="meta-item"><strong>${t("orderNumber", "เลขออเดอร์")}</strong><span>${esc(displayOrderId)}</span></div>
           <div class="meta-item"><strong>${t("status", "สถานะ")}</strong><span>${esc(getAdminOrderStatusLabel(status) || "-")}</span></div>
           <div class="meta-item"><strong>${t("source", "แหล่งที่มา")}</strong><span>${esc(getAdminOrderSourceLabel(order))}</span></div>
           ${partnerName ? `<div class="meta-item"><strong>${t("partner", "คู่ค้า")}</strong><span>${esc(partnerName)}</span></div>` : ""}
@@ -19583,6 +19343,7 @@ function buildDeliveryNotePrintHtml(data, options = {}) {
         data-po-number="${escAttr(order.poNumber || "-")}"
         data-order-date="${escAttr(formatDeliveryNoteShortDate(order.orderDate) || "-")}"
         data-order-id="${escAttr(order.orderId || "")}"
+        data-display-order-id="${escAttr(formatOrderIdForDisplay(order.orderId))}"
         data-po-note="${escAttr(order.poNote || "")}">
         <div class="delivery-note-source-rows">${itemRows}</div>
       </section>
@@ -19941,6 +19702,7 @@ function buildDeliveryNotePrintHtml(data, options = {}) {
           var poNumber = escapePrintHtml(orderEl.dataset.poNumber || "-");
           var orderDate = escapePrintHtml(orderEl.dataset.orderDate || "-");
           var orderId = escapePrintHtml(orderEl.dataset.orderId || "");
+          var displayOrderId = escapePrintHtml(orderEl.dataset.displayOrderId || orderEl.dataset.orderId || "");
           var poNote = escapePrintHtml(orderEl.dataset.poNote || "");
           var page = document.createElement("section");
           page.className = "delivery-note-print-page";
@@ -19962,7 +19724,7 @@ function buildDeliveryNotePrintHtml(data, options = {}) {
                   '<h2>' + poNumber + '</h2>' +
                   '<div class="muted">' +
                     orderDate +
-                    (orderId ? ' · ' + escapePrintHtml(cfg.orderNumber) + ': ' + orderId : '') +
+                    (displayOrderId ? ' · ' + escapePrintHtml(cfg.orderNumber) + ': ' + displayOrderId : '') +
                   '</div>' +
                 '</div>' +
               '</div>' +
@@ -30371,8 +30133,10 @@ ctx.fillText(
 /* ===== DOCUMENT META ===== */
 const rightX = canvas.width - cfg.padding;
 
+  const displayOrderId = formatOrderIdForDisplay(order.orderId);
+
   ctx.textAlign = "right";
-  ctx.fillText(`${printOrderNumberLabel}: ${order.orderId}`, rightX, headerTopY);
+  ctx.fillText(`${printOrderNumberLabel}: ${displayOrderId}`, rightX, headerTopY);
  ctx.fillText(`PO: ${po}`, rightX, headerTopY + cfg.lineHeight);
  const docDate = new Date(order.createdAt);
  ctx.fillText(
@@ -30510,11 +30274,12 @@ function exportOrderPrint() {
     : "-";
 
   const safeOrderId = esc(order.orderId);
+  const safeDisplayOrderId = esc(formatOrderIdForDisplay(order.orderId));
   const safePo = esc(po);
   const printLang = getCurrentLang();
   const printLocale = printLang === "en" ? "en-US" : "th-TH";
   const printTitle = formatUiText("legacyOrderPrintTitle", { orderId: safeOrderId }, "ออเดอร์ {orderId}");
-  const printTopMeta = formatUiText("legacyOrderPrintTopMeta", { orderId: safeOrderId }, "ออเดอร์ {orderId}");
+  const printTopMeta = formatUiText("legacyOrderPrintTopMeta", { orderId: safeDisplayOrderId }, "ออเดอร์ {orderId}");
   const printDocumentTitle = t("legacyOrderDocumentTitle", "ใบสั่งซื้อ");
   const printOrderNumberLabel = t("legacyOrderNumber", "เลขที่");
   const printDateLabel = t("legacyOrderDate", "วันที่");
@@ -30717,7 +30482,7 @@ function exportOrderPrint() {
         </div>
 
         <div>
-          <div>${printOrderNumberLabel}: ${safeOrderId}</div>
+          <div>${printOrderNumberLabel}: ${safeDisplayOrderId}</div>
           <div>PO: ${safePo}</div>
           <div>${printDateLabel}: ${today}</div>
         </div>
