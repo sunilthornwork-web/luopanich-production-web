@@ -455,10 +455,31 @@ header.scrolled{
   flex: 0 0 28px;
   width: 28px;
   height: 28px;
-  margin-left: 6px;
+  margin-right: 6px;
   pointer-events: none;
   position: relative;
   z-index: 1;
+}
+
+.live-brand-logo{
+  display:none;
+  flex:0 0 28px;
+  width:28px;
+  height:28px;
+  object-fit:contain;
+  border-radius:8px;
+  margin-right:6px;
+  pointer-events:none;
+  position:relative;
+  z-index:1;
+}
+
+.live-brand-logo.is-visible{
+  display:block;
+}
+
+.brand-lottie.is-branding-hidden{
+  display:none;
 }
 
 .admin-badge-lottie{
@@ -1426,6 +1447,77 @@ header.scrolled + .home-controls.show{
     border:1px solid var(--border);
   }
 
+  .partner-admin-panel{
+    border-color:var(--border-strong);
+    background:var(--surface);
+  }
+
+  .partner-admin-panel + .partner-admin-panel{
+    margin-top:22px;
+  }
+
+  .partner-form-section{
+    margin-top:14px;
+    padding:14px;
+    border:1px solid var(--border);
+    border-radius:14px;
+    background:var(--surface-2);
+  }
+
+  .partner-form-section:first-of-type{
+    margin-top:10px;
+  }
+
+  .partner-admin-list{
+    display:grid;
+    gap:12px;
+  }
+
+  .partner-admin-card{
+    display:grid;
+    gap:12px;
+    padding:14px;
+    border:1px solid var(--border-strong);
+    border-radius:14px;
+    background:var(--surface-2);
+  }
+
+  .partner-admin-card-header{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+  }
+
+  .partner-admin-card-name{
+    min-width:0;
+    color:var(--text);
+    font-size:15px;
+    font-weight:800;
+    line-height:1.35;
+    overflow-wrap:anywhere;
+  }
+
+  .partner-admin-card-meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 12px;
+    color:var(--muted);
+    font-size:13px;
+    line-height:1.35;
+  }
+
+  .partner-admin-card-actions{
+    display:flex;
+    justify-content:flex-end;
+  }
+
+  .partner-admin-detail-btn{
+    width:auto;
+    min-height:38px;
+    padding:8px 12px;
+  }
+
   .admin-detail-title{
     margin:0 0 10px;
     color:var(--text);
@@ -1961,6 +2053,154 @@ button:disabled {
   font-size:16px;
   font-weight:600;
   color:var(--text-soft);
+}
+
+.branding-settings-section{
+  margin:16px 0;
+  padding:14px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--surface);
+}
+
+.branding-settings-section h4{
+  margin:0 0 12px;
+  font-size:15px;
+  color:var(--text);
+}
+
+.branding-settings-sheet textarea{
+  width:100%;
+  min-height:88px;
+  box-sizing:border-box;
+  resize:vertical;
+}
+
+.branding-logo-preview{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-top:10px;
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--surface-2);
+}
+
+.branding-logo-preview img{
+  width:56px;
+  height:56px;
+  object-fit:contain;
+  border-radius:10px;
+  background:var(--surface);
+}
+
+.branding-logo-preview-text{
+  min-width:0;
+  color:var(--text-soft);
+  font-size:13px;
+  overflow-wrap:anywhere;
+  user-select:all;
+}
+
+.branding-logo-url-copy{
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
+  border:0;
+  background:transparent;
+  color:var(--text-soft);
+  font:inherit;
+  padding:0;
+}
+
+.branding-logo-url-diagnostic{
+  display:grid;
+  gap:6px;
+  padding:10px;
+  border:1px dashed var(--border);
+  border-radius:10px;
+  background:var(--surface-2);
+}
+
+.branding-logo-url-diagnostic label,
+.branding-logo-url-lengths{
+  color:var(--text-soft);
+  font-size:12px;
+}
+
+.branding-logo-upload{
+  margin-top:10px;
+  display:grid;
+  gap:8px;
+}
+
+.branding-logo-upload-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+}
+
+.branding-logo-file-input{
+  position:absolute;
+  width:1px;
+  height:1px;
+  opacity:0;
+  pointer-events:none;
+}
+
+.branding-logo-file-info,
+.branding-logo-upload-status{
+  color:var(--text-soft);
+  font-size:13px;
+  overflow-wrap:anywhere;
+}
+
+.branding-logo-upload-status.is-error{
+  color:#ff6b6b;
+}
+
+.branding-preview-card{
+  margin-top:14px;
+  padding:14px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--surface-2);
+}
+
+.branding-preview-card strong{
+  display:block;
+  color:var(--text);
+  margin-bottom:4px;
+}
+
+.branding-preview-card div{
+  color:var(--text-soft);
+  font-size:13px;
+  line-height:1.45;
+}
+
+.branding-preview-section + .branding-preview-section{
+  margin-top:12px;
+  padding-top:12px;
+  border-top:1px solid var(--border);
+}
+
+.branding-preview-card img{
+  display:block;
+  width:auto;
+  max-width:120px;
+  max-height:64px;
+  object-fit:contain;
+  margin:4px 0 8px;
+}
+
+.branding-settings-error{
+  margin:10px 0;
+  color:var(--danger);
+  font-size:13px;
+  line-height:1.45;
 }
 
 .dashboard-filter-wrap{
@@ -5519,6 +5759,7 @@ textarea.input{
 <!-- ================= ADMIN SHEETS ================= -->
  <div id="adminLoginSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="adminLoginSheetTitle" tabindex="-1"></div>
  <div id="adminDashboardSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="adminDashboardSheetTitle" tabindex="-1"></div>
+ <div id="adminBrandingSettingsSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="adminBrandingSettingsSheetTitle" tabindex="-1"></div>
  <div id="adminOrderSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="adminOrderSheetTitle" tabindex="-1"></div>
  <div id="adminStockSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="adminStockSheetTitle" tabindex="-1"></div>
  <div id="pendingDeliverySheet"
@@ -5597,6 +5838,7 @@ const confirmSheet = document.getElementById("confirmSheet");
 const stockSheet = document.getElementById("stockSheet");
 const adminLoginSheet = document.getElementById("adminLoginSheet");
 const adminDashboardSheet = document.getElementById("adminDashboardSheet");
+const adminBrandingSettingsSheet = document.getElementById("adminBrandingSettingsSheet");
 const adminOrderSheet = document.getElementById("adminOrderSheet");
 const adminStockSheet = document.getElementById("adminStockSheet");
 const pendingDeliverySheet =
@@ -5632,6 +5874,7 @@ const adminPartnerRequestsSheet =
 const ADMIN_SHEETS = Object.freeze({
   login: adminLoginSheet,
   dashboard: adminDashboardSheet,
+  brandingSettings: adminBrandingSettingsSheet,
   order: adminOrderSheet,
   stock: adminStockSheet,
   pendingDelivery: pendingDeliverySheet,
@@ -5856,8 +6099,10 @@ const state = {
   // 🔒 viewer submit guard (ใช้กับ createOrder)
   isSubmitting: false,
   createRequestId: "",
+  createOrderPartnerId: "",
   forgotPassword: null,
   adminAuthConfirm: null,
+  brandingSettings: null,
 
   admin: {
     pendingDeliveryExpanded:{},
@@ -5873,6 +6118,21 @@ const state = {
     openingOrderId: "",
     dashboardMode: "SUMMARY",
     logs: [],
+    brandingSettings: {
+      draft: null,
+      error: "",
+      isLoading: false,
+      isSaving: false,
+      isUploading: false,
+      uploadFile: null,
+      uploadPreviewUrl: "",
+      uploadRemoteUrl: "",
+      uploadFileName: "",
+      uploadFileSize: 0,
+      uploadError: "",
+      uploadTarget: "logoUrl",
+      returnTo: "mainMenu"
+    },
     filters: {
       status: "all",
       dashboardFrom: "",
@@ -5913,6 +6173,20 @@ const state = {
       matchedOrders: [],
       selectedItems: {},
       itemQty: {},
+      billingDocumentId: "",
+      billingDocumentStatus: "",
+      billingDocument: null,
+      recipientDraft: null,
+      recipientSource: "",
+      recipientOriginalSource: "",
+      poSelectorLoading: false,
+      poSelectorError: "",
+      poSelectorLoadAttempted: false,
+      isCreatingDraft: false,
+      isLoadingDraft: false,
+      isSavingDraft: false,
+      isFinalizing: false,
+      draftError: "",
       imageExportLoading: false,
       imageExportPages: [],
       error: "",
@@ -6003,6 +6277,14 @@ const state = {
         email: "",
         phone: "",
         company: "",
+        billingCompanyName: "",
+        billingAddress: "",
+        billingTaxId: "",
+        billingBranchType: "",
+        billingBranchCode: "",
+        billingPhone: "",
+        billingEmail: "",
+        billingContactName: "",
         status: "active",
         note: ""
       }
@@ -6275,6 +6557,56 @@ const UI_TEXT = {
     invalidQuantityError: "จำนวนไม่ถูกต้อง",
     partners: "คู่ค้า",
     system: "ระบบ",
+    brandingSettings: "ตั้งค่าร้าน",
+    brandingSettingsTitle: "ตั้งค่าร้าน",
+    brandingIdentitySection: "ข้อมูลแบรนด์",
+    brandingContactSection: "ข้อมูลติดต่อ",
+    brandingDocumentSection: "ข้อมูลเอกสาร",
+    brandingPreviewSection: "ตัวอย่าง",
+    brandName: "ชื่อแบรนด์",
+    companyName: "ชื่อบริษัท",
+    logoUrl: "URL โลโก้",
+    documentLogoUrl: "URL โลโก้เอกสาร",
+    appTitle: "ชื่อแอป",
+    address: "ที่อยู่",
+    phone: "โทรศัพท์",
+    line: "LINE",
+    email: "อีเมล",
+    documentCompanyName: "ชื่อบริษัทบนเอกสาร",
+    documentCompanyNameEn: "ชื่อบริษัทภาษาอังกฤษบนเอกสาร",
+    documentRegistrationNumber: "เลขทะเบียนนิติบุคคล",
+    documentAddress: "ที่อยู่บนเอกสาร",
+    documentPhone: "โทรศัพท์บนเอกสาร",
+    documentFooter: "ข้อความท้ายเอกสาร",
+    brandingLoadFailed: "โหลดค่าตั้งค่าร้านไม่สำเร็จ ระบบแสดงค่าเริ่มต้นไว้ก่อน",
+    brandingSaveSuccess: "บันทึกตั้งค่าร้านแล้ว",
+    brandingSaveFailed: "บันทึกตั้งค่าร้านไม่สำเร็จ",
+    brandingSaving: "กำลังบันทึก...",
+    brandingFieldRequired: "กรุณากรอก {field}",
+    brandingFieldTooLong: "{field} ยาวเกิน {limit} ตัวอักษร",
+    brandingUnsafeCharacters: "{field} ห้ามมีเครื่องหมาย < หรือ >",
+    brandingLogoUrlInvalid: "URL โลโก้ต้องเป็น https:// เท่านั้น หรือเว้นว่าง",
+    brandingNoLivePreview: "ตัวอย่างนี้ใช้สำหรับตรวจสอบข้อมูลก่อนบันทึก",
+    brandingLogoPreviewEmpty: "ยังไม่มี URL โลโก้",
+    brandingLogoPreviewAlt: "ตัวอย่างโลโก้ร้าน",
+    brandingLogoChooseFile: "เลือกไฟล์",
+    brandingLogoUpload: "อัปโหลดโลโก้",
+    brandingLogoUploading: "กำลังอัปโหลด...",
+    brandingLogoSelected: "เลือกแล้ว: {name} ({size})",
+    brandingLogoNoFile: "กรุณาเลือกไฟล์โลโก้ก่อน",
+    brandingLogoUploadSuccess: "อัปโหลดโลโก้แล้ว กดบันทึกเพื่อใช้โลโก้นี้",
+    brandingLogoUploadFailed: "อัปโหลดโลโก้ไม่สำเร็จ",
+    brandingLogoFileTypeError: "รองรับเฉพาะไฟล์ PNG, JPG, WEBP",
+    brandingLogoFileEmptyError: "ไฟล์โลโก้ว่าง กรุณาเลือกไฟล์ใหม่",
+    brandingLogoFileSizeError: "โลโก้ต้องมีขนาดไม่เกิน 2MB",
+    brandingLogoBackendUrl: "URL จากระบบอัปโหลด",
+    brandingLogoUrlLengths: "ความยาว URL: backend {backend} / draft {draft} / input {input}",
+    brandingLogoUrlInvalidResponse: "ระบบส่ง URL โลโก้กลับมาไม่ถูกต้อง",
+    brandingLogoRemoteLoadFailed: "อัปโหลดสำเร็จ แต่ยังโหลดรูปจาก URL ไม่ได้ กรุณาทดสอบ URL ด้านล่างก่อนบันทึก",
+    brandingDocumentLogoUpload: "อัปโหลดโลโก้เอกสาร",
+    brandingDocumentLogoHelp: "เว้นว่างเพื่อใช้โลโก้ร้าน",
+    brandingDocumentLogoPreviewAlt: "ตัวอย่างโลโก้เอกสาร",
+    brandingDocumentLogoUploadSuccess: "อัปโหลดโลโก้เอกสารแล้ว กดบันทึกเพื่อใช้โลโก้นี้",
     stockTimeline: "ไทม์ไลน์สต๊อก",
     stockMovementHistory: "ประวัติความเคลื่อนไหวสต๊อก",
     stockTimelineSummary: "{items} รายการ · {qty} ชิ้น · {amount}",
@@ -7235,6 +7567,56 @@ const UI_TEXT = {
     invalidQuantityError: "Invalid quantity",
     partners: "Partners",
     system: "System",
+    brandingSettings: "Shop settings",
+    brandingSettingsTitle: "Shop settings",
+    brandingIdentitySection: "Brand information",
+    brandingContactSection: "Contact",
+    brandingDocumentSection: "Documents",
+    brandingPreviewSection: "Preview",
+    brandName: "Brand name",
+    companyName: "Company name",
+    logoUrl: "Logo URL",
+    documentLogoUrl: "Document logo URL",
+    appTitle: "App title",
+    address: "Address",
+    phone: "Phone",
+    line: "LINE",
+    email: "Email",
+    documentCompanyName: "Document company name",
+    documentCompanyNameEn: "Document English company name",
+    documentRegistrationNumber: "Company registration number",
+    documentAddress: "Document address",
+    documentPhone: "Document phone",
+    documentFooter: "Document footer",
+    brandingLoadFailed: "Could not load shop settings. Defaults are shown for now.",
+    brandingSaveSuccess: "Shop settings saved",
+    brandingSaveFailed: "Could not save shop settings",
+    brandingSaving: "Saving...",
+    brandingFieldRequired: "Please enter {field}",
+    brandingFieldTooLong: "{field} is longer than {limit} characters",
+    brandingUnsafeCharacters: "{field} cannot contain < or >",
+    brandingLogoUrlInvalid: "Logo URL must be https:// or blank",
+    brandingNoLivePreview: "Use this preview to review the information before saving.",
+    brandingLogoPreviewEmpty: "No logo URL yet",
+    brandingLogoPreviewAlt: "Shop logo preview",
+    brandingLogoChooseFile: "Choose file",
+    brandingLogoUpload: "Upload logo",
+    brandingLogoUploading: "Uploading...",
+    brandingLogoSelected: "Selected: {name} ({size})",
+    brandingLogoNoFile: "Please choose a logo file first",
+    brandingLogoUploadSuccess: "Logo uploaded. Save to use this logo.",
+    brandingLogoUploadFailed: "Could not upload logo",
+    brandingLogoFileTypeError: "Only PNG, JPG, WEBP files are supported",
+    brandingLogoFileEmptyError: "Logo file is empty. Please choose another file.",
+    brandingLogoFileSizeError: "Logo must be 2MB or smaller",
+    brandingLogoBackendUrl: "Backend image URL",
+    brandingLogoUrlLengths: "URL length: backend {backend} / draft {draft} / input {input}",
+    brandingLogoUrlInvalidResponse: "The upload returned an invalid logo URL",
+    brandingLogoRemoteLoadFailed: "Upload succeeded, but the image URL could not be loaded. Test the URL below before saving.",
+    brandingDocumentLogoUpload: "Upload document logo",
+    brandingDocumentLogoHelp: "Leave blank to use the shop logo",
+    brandingDocumentLogoPreviewAlt: "Document logo preview",
+    brandingDocumentLogoUploadSuccess: "Document logo uploaded. Save to use this logo.",
     stockTimeline: "Stock timeline",
     stockMovementHistory: "Stock Movement History",
     stockTimelineSummary: "{items} items · {qty} units · {amount}",
@@ -8139,6 +8521,7 @@ function setCurrentLang(lang) {
 function syncStaticUiLabels() {
   document.documentElement.lang = getCurrentLang();
   document.title = t("documentTitleStore", "ร้านค้า Luopanich");
+  applyBrandingToLiveUi();
 
   const viewerControls = document.getElementById("viewerHomeControls");
   if (viewerControls) {
@@ -9151,6 +9534,64 @@ function isAuthError(message = "") {
  }
 
 const API_URL = resolveLuopanichApiBaseUrl();
+const BRANDING_LOGO_UPLOAD_ALLOWED_TYPES = Object.freeze(["image/png", "image/jpeg", "image/webp"]);
+const BRANDING_LOGO_UPLOAD_MAX_BYTES = 2 * 1024 * 1024;
+const BRANDING_SETTINGS_FIELDS = Object.freeze([
+  "brandName",
+  "companyName",
+  "logoUrl",
+  "documentLogoUrl",
+  "appTitle",
+  "address",
+  "phone",
+  "line",
+  "email",
+  "documentCompanyName",
+  "documentCompanyNameEn",
+  "documentRegistrationNumber",
+  "documentAddress",
+  "documentPhone",
+  "documentFooter"
+]);
+const BRANDING_SETTINGS_MULTILINE_FIELDS = Object.freeze({
+  address: true,
+  documentAddress: true,
+  documentFooter: true
+});
+const BRANDING_SETTINGS_LENGTH_LIMITS = Object.freeze({
+  brandName: 80,
+  companyName: 160,
+  logoUrl: 2048,
+  documentLogoUrl: 2048,
+  appTitle: 80,
+  address: 500,
+  phone: 80,
+  line: 80,
+  email: 160,
+  documentCompanyName: 160,
+  documentCompanyNameEn: 160,
+  documentRegistrationNumber: 80,
+  documentAddress: 500,
+  documentPhone: 80,
+  documentFooter: 500
+});
+const BRANDING_SETTINGS_DEFAULTS = Object.freeze({
+  brandName: "Luopanich",
+  companyName: "บริษัท แอลยูโอพาริช จำกัด",
+  logoUrl: "",
+  documentLogoUrl: "",
+  appTitle: "ร้านค้า Luopanich",
+  address: "เลขที่ 7/13 หมู่ที่ 5 ตำบลหนองแขม อำเภอหนองแค จังหวัดสระบุรี 18140",
+  phone: "",
+  line: "",
+  email: "",
+  documentCompanyName: "",
+  documentCompanyNameEn: "LUOPARICH COMPANY LIMITED",
+  documentRegistrationNumber: "0195569002218",
+  documentAddress: "",
+  documentPhone: "",
+  documentFooter: ""
+});
 
 function resolveLuopanichApiBaseUrl() {
   const config = window.LUOPANICH_CONFIG;
@@ -9235,6 +9676,820 @@ function failLuopanichFrontendConfig(message) {
    return json;
  } 
 
+function getBrandingFieldLabel(key) {
+  return {
+    brandName: t("brandName", "ชื่อแบรนด์"),
+    companyName: t("companyName", "ชื่อบริษัท"),
+    logoUrl: t("logoUrl", "URL โลโก้"),
+    documentLogoUrl: t("documentLogoUrl", "URL โลโก้เอกสาร"),
+    appTitle: t("appTitle", "ชื่อแอป"),
+    address: t("address", "ที่อยู่"),
+    phone: t("phone", "โทรศัพท์"),
+    line: t("line", "LINE"),
+    email: t("email", "อีเมล"),
+    documentCompanyName: t("documentCompanyName", "ชื่อบริษัทบนเอกสาร"),
+    documentCompanyNameEn: t("documentCompanyNameEn", "ชื่อบริษัทภาษาอังกฤษบนเอกสาร"),
+    documentRegistrationNumber: t("documentRegistrationNumber", "เลขทะเบียนนิติบุคคล"),
+    documentAddress: t("documentAddress", "ที่อยู่บนเอกสาร"),
+    documentPhone: t("documentPhone", "โทรศัพท์บนเอกสาร"),
+    documentFooter: t("documentFooter", "ข้อความท้ายเอกสาร")
+  }[key] || key;
+}
+
+function normalizeBrandingSettingsForUi(source = {}) {
+  const normalized = {};
+  BRANDING_SETTINGS_FIELDS.forEach(key => {
+    normalized[key] = String(
+      Object.prototype.hasOwnProperty.call(source, key)
+        ? source[key] ?? ""
+        : BRANDING_SETTINGS_DEFAULTS[key] ?? ""
+    );
+  });
+  return normalized;
+}
+
+function sanitizeBrandingDraftValue(key, value) {
+  let text = value === null || value === undefined ? "" : String(value);
+  text = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  if (!BRANDING_SETTINGS_MULTILINE_FIELDS[key]) {
+    text = text.replace(/\n+/g, " ");
+  }
+  return text
+    .split("\n")
+    .map(line => line.replace(/[ \t]+/g, " ").trim())
+    .join("\n")
+    .trim();
+}
+
+function createBrandingSettingsDraft(source = {}) {
+  return normalizeBrandingSettingsForUi(source);
+}
+
+function collectBrandingSettingsDraft() {
+  const draft = {};
+  BRANDING_SETTINGS_FIELDS.forEach(key => {
+    const el = document.getElementById(`brandingField-${key}`);
+    draft[key] = el ? el.value : state.admin.brandingSettings.draft?.[key] || "";
+  });
+  return draft;
+}
+
+function validateBrandingSettingsDraft(draft) {
+  for (const key of BRANDING_SETTINGS_FIELDS) {
+    const label = getBrandingFieldLabel(key);
+    const text = sanitizeBrandingDraftValue(key, draft[key]);
+    const limit = BRANDING_SETTINGS_LENGTH_LIMITS[key] || 0;
+    if (/[<>]/.test(text)) {
+      return t("brandingUnsafeCharacters", "{field} ห้ามมีเครื่องหมาย < หรือ >")
+        .replace("{field}", label);
+    }
+    if (limit && text.length > limit) {
+      return t("brandingFieldTooLong", "{field} ยาวเกิน {limit} ตัวอักษร")
+        .replace("{field}", label)
+        .replace("{limit}", String(limit));
+    }
+    if ((key === "logoUrl" || key === "documentLogoUrl") && text && !/^https:\/\/[^\s<>]+$/i.test(text)) {
+      return t("brandingLogoUrlInvalid", "URL โลโก้ต้องเป็น https:// เท่านั้น หรือเว้นว่าง");
+    }
+    if (key === "email" && text) {
+      if (/\s/.test(text) || text.indexOf("@") <= 0 || text.lastIndexOf("@") !== text.indexOf("@")) {
+        return `${label} ไม่ถูกต้อง`;
+      }
+    }
+  }
+  return "";
+}
+
+function buildBrandingSettingsPatch(draft) {
+  const patch = {};
+  BRANDING_SETTINGS_FIELDS.forEach(key => {
+    patch[key] = sanitizeBrandingDraftValue(key, draft[key]);
+  });
+  return patch;
+}
+
+function getDefaultDocumentCompanyInfo() {
+  return {
+    nameTh: "บริษัท แอลยูโอพาริช จำกัด",
+    nameEn: "LUOPARICH COMPANY LIMITED",
+    registrationNumber: "0195569002218",
+    address: "เลขที่ 7/13 หมู่ที่ 5 ตำบลหนองแขม อำเภอหนองแค จังหวัดสระบุรี 18140"
+  };
+}
+
+function resolveDocumentBrandingFromSettings(settings = {}, defaultLogoUrl = getDefaultBillingNoteLogoUrl()) {
+  const source = normalizeBrandingSettingsForUi(settings || BRANDING_SETTINGS_DEFAULTS);
+  const defaultCompany = getDefaultDocumentCompanyInfo();
+  const companyName = sanitizeBrandingDraftValue("documentCompanyName", source.documentCompanyName) ||
+    sanitizeBrandingDraftValue("companyName", source.companyName) ||
+    defaultCompany.nameTh;
+  const companyNameEn = sanitizeBrandingDraftValue("documentCompanyNameEn", source.documentCompanyNameEn) ||
+    defaultCompany.nameEn;
+  const registrationNumber = sanitizeBrandingDraftValue("documentRegistrationNumber", source.documentRegistrationNumber) ||
+    defaultCompany.registrationNumber;
+  const address = sanitizeBrandingDraftValue("documentAddress", source.documentAddress) ||
+    sanitizeBrandingDraftValue("address", source.address) ||
+    defaultCompany.address;
+  const phone = sanitizeBrandingDraftValue("documentPhone", source.documentPhone) ||
+    sanitizeBrandingDraftValue("phone", source.phone);
+  const footer = sanitizeBrandingDraftValue("documentFooter", source.documentFooter);
+  const logoUrl = resolveBrandingHttpsUrl(source.documentLogoUrl) ||
+    resolveBrandingHttpsUrl(source.logoUrl) ||
+    defaultLogoUrl;
+  const registrationLabel = registrationNumber
+    ? `ทะเบียนนิติบุคคลเลขที่ ${registrationNumber}`
+    : "";
+  return {
+    logoUrl,
+    companyName,
+    companyNameEn,
+    registrationNumber,
+    registrationLabel,
+    address,
+    phone,
+    footer,
+    company: {
+      nameTh: companyName,
+      nameEn: companyNameEn,
+      taxId: registrationLabel,
+      registrationNumber,
+      address,
+      phone,
+      footer
+    }
+  };
+}
+
+async function fetchBrandSettingsForAdmin() {
+  const url = new URL(API_URL);
+  url.searchParams.set("action", "getBrandSettings");
+  const res = await fetchWithTimeout(url.toString(), {}, 30000);
+  const json = await res.json();
+  if (json?.error || json?.success === false) {
+    throw new Error(json.message || json.error || "Could not load brand settings");
+  }
+  return normalizeBrandingSettingsForUi(json?.data || json || {});
+}
+
+function renderBrandingField(key, options = {}) {
+  const draft = state.admin.brandingSettings.draft || createBrandingSettingsDraft(state.brandingSettings || BRANDING_SETTINGS_DEFAULTS);
+  const value = draft[key] || "";
+  const label = getBrandingFieldLabel(key);
+  const disabled = state.admin.brandingSettings.isSaving ? " disabled" : "";
+  if (options.multiline) {
+    return `
+      <div class="form-group">
+        <label for="brandingField-${key}">${escapeHtml(label)}</label>
+        <textarea id="brandingField-${key}" rows="${Number(options.rows || 3)}"${disabled}
+          oninput="setBrandingSettingsDraftField('${key}', this.value)">${escapeHtml(value)}</textarea>
+      </div>
+    `;
+  }
+  const type = key === "email" ? "email" : (key === "logoUrl" || key === "documentLogoUrl") ? "url" : "text";
+  return `
+    <div class="form-group">
+      <label for="brandingField-${key}">${escapeHtml(label)}</label>
+      <input id="brandingField-${key}" type="${type}" value="${escapeHtml(value)}"${disabled}
+        oninput="setBrandingSettingsDraftField('${key}', this.value)">
+    </div>
+  `;
+}
+
+function formatBrandingLogoFileSize(bytes) {
+  const value = Number(bytes || 0);
+  if (!Number.isFinite(value) || value <= 0) return "0 KB";
+  if (value >= 1024 * 1024) return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+  return `${Math.max(1, Math.round(value / 1024))} KB`;
+}
+
+function validateBrandingLogoFile(file) {
+  if (!file) {
+    throw localizedUiError("brandingLogoNoFile", "กรุณาเลือกไฟล์โลโก้ก่อน");
+  }
+  if (!BRANDING_LOGO_UPLOAD_ALLOWED_TYPES.includes(file.type)) {
+    throw localizedUiError("brandingLogoFileTypeError", "รองรับเฉพาะไฟล์ PNG, JPG, WEBP");
+  }
+  if (!file.size) {
+    throw localizedUiError("brandingLogoFileEmptyError", "ไฟล์โลโก้ว่าง กรุณาเลือกไฟล์ใหม่");
+  }
+  if (file.size > BRANDING_LOGO_UPLOAD_MAX_BYTES) {
+    throw localizedUiError("brandingLogoFileSizeError", "โลโก้ต้องมีขนาดไม่เกิน 2MB");
+  }
+}
+
+function normalizeBrandingLogoTargetKey(key) {
+  return key === "documentLogoUrl" ? "documentLogoUrl" : "logoUrl";
+}
+
+function isBrandingLogoUploadTarget(targetKey, brandingState = state.admin.brandingSettings) {
+  return normalizeBrandingLogoTargetKey(brandingState.uploadTarget || "logoUrl") === normalizeBrandingLogoTargetKey(targetKey);
+}
+
+function revokeBrandingLogoObjectUrl() {
+  const brandingState = state.admin.brandingSettings;
+  if (brandingState.uploadPreviewUrl && brandingState.uploadPreviewUrl.startsWith("blob:")) {
+    URL.revokeObjectURL(brandingState.uploadPreviewUrl);
+  }
+  brandingState.uploadPreviewUrl = "";
+}
+
+function isCleanBrandingUploadImageUrl(url) {
+  return /^https:\/\/lh3\.googleusercontent\.com\/d\/[A-Za-z0-9_-]+=w800$/.test(String(url || "").trim());
+}
+
+function delayBrandingLogoPreload(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function preloadBrandingLogoImageUrl(imageUrl, options = {}) {
+  const cleanImageUrl = String(imageUrl || "").trim();
+  const attempts = Math.max(1, Number(options.attempts || 1));
+  const retryDelayMs = Array.isArray(options.retryDelayMs) ? options.retryDelayMs : [];
+  const loadOnce = () => new Promise((resolve, reject) => {
+    const img = new Image();
+    img.referrerPolicy = "no-referrer";
+    img.onload = () => resolve(cleanImageUrl);
+    img.onerror = () => reject(localizedUiError("brandingLogoRemoteLoadFailed", "อัปโหลดสำเร็จ แต่ยังโหลดรูปจาก URL ไม่ได้ กรุณาทดสอบ URL ด้านล่างก่อนบันทึก"));
+    img.src = cleanImageUrl;
+  });
+  return (async () => {
+    let lastError = null;
+    for (let attempt = 0; attempt < attempts; attempt += 1) {
+      try {
+        return await loadOnce();
+      } catch (err) {
+        lastError = err;
+        if (attempt < attempts - 1) {
+          await delayBrandingLogoPreload(Number(retryDelayMs[attempt] || 400));
+        }
+      }
+    }
+    throw lastError || localizedUiError("brandingLogoRemoteLoadFailed", "อัปโหลดสำเร็จ แต่ยังโหลดรูปจาก URL ไม่ได้ กรุณาทดสอบ URL ด้านล่างก่อนบันทึก");
+  })();
+}
+
+function resetBrandingLogoUploadState() {
+  const brandingState = state.admin.brandingSettings;
+  revokeBrandingLogoObjectUrl();
+  brandingState.uploadRemoteUrl = "";
+  brandingState.uploadFile = null;
+  brandingState.uploadFileName = "";
+  brandingState.uploadFileSize = 0;
+  brandingState.uploadError = "";
+  brandingState.uploadTarget = "logoUrl";
+  brandingState.isUploading = false;
+}
+
+function handleBrandingLogoFileSelected(input, targetKey = "logoUrl") {
+  const brandingState = state.admin.brandingSettings;
+  const cleanTargetKey = normalizeBrandingLogoTargetKey(targetKey);
+  const file = input?.files?.[0] || null;
+  if (!file) return;
+  try {
+    validateBrandingLogoFile(file);
+    revokeBrandingLogoObjectUrl();
+    brandingState.uploadTarget = cleanTargetKey;
+    brandingState.uploadFile = file;
+    brandingState.uploadFileName = file.name || "logo";
+    brandingState.uploadFileSize = file.size || 0;
+    brandingState.uploadPreviewUrl = URL.createObjectURL(file);
+    brandingState.uploadRemoteUrl = "";
+    brandingState.uploadError = "";
+  } catch (err) {
+    if (input) input.value = "";
+    brandingState.uploadTarget = cleanTargetKey;
+    brandingState.uploadFile = null;
+    brandingState.uploadFileName = "";
+    brandingState.uploadFileSize = 0;
+    brandingState.uploadError = getUserFacingError(err, "brandingLogoUploadFailed", "อัปโหลดโลโก้ไม่สำเร็จ");
+    showToast(brandingState.uploadError, "error");
+  }
+  renderBrandingSettingsSheet();
+}
+function readBrandingLogoFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(localizedUiError("brandingLogoUploadFailed", "อัปโหลดโลโก้ไม่สำเร็จ"));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadBrandingLogoFromAdmin(targetKey = "logoUrl") {
+  const brandingState = state.admin.brandingSettings;
+  const cleanTargetKey = normalizeBrandingLogoTargetKey(targetKey);
+  if (brandingState.isUploading) return;
+  if (!state.admin.loggedIn || !state.admin.token || isAdminSessionExpired()) {
+    showToast(t("sessionExpiredLoginAgain", "Session หมดอายุ กรุณา login ใหม่"), "warning");
+    exitAdmin();
+    return;
+  }
+
+  const file = isBrandingLogoUploadTarget(cleanTargetKey, brandingState)
+    ? brandingState.uploadFile
+    : null;
+  try {
+    validateBrandingLogoFile(file);
+  } catch (err) {
+    brandingState.uploadTarget = cleanTargetKey;
+    brandingState.uploadError = getUserFacingError(err, "brandingLogoNoFile", "กรุณาเลือกไฟล์โลโก้ก่อน");
+    showToast(brandingState.uploadError, "warning");
+    renderBrandingSettingsSheet();
+    return;
+  }
+
+  brandingState.uploadTarget = cleanTargetKey;
+  brandingState.isUploading = true;
+  brandingState.uploadError = "";
+  renderBrandingSettingsSheet();
+
+  try {
+    const dataUrl = await readBrandingLogoFileAsDataUrl(file);
+    const base64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : "";
+    if (!base64) {
+      throw localizedUiError("brandingLogoUploadFailed", "อัปโหลดโลโก้ไม่สำเร็จ");
+    }
+    const form = new FormData();
+    form.append("action", "uploadBrandingLogo");
+    form.append("token", state.admin.token);
+    form.append("filename", file.name || "branding-logo");
+    form.append("mimeType", file.type || "");
+    form.append("data", base64);
+    const json = await postFormAction(form, { timeout: 30000 });
+    const imageUrl = String(json?.data?.imageUrl || "").trim();
+    brandingState.uploadRemoteUrl = imageUrl;
+    if (!isCleanBrandingUploadImageUrl(imageUrl)) {
+      throw localizedUiError("brandingLogoUrlInvalidResponse", "ระบบส่ง URL โลโก้กลับมาไม่ถูกต้อง");
+    }
+    await preloadBrandingLogoImageUrl(imageUrl, cleanTargetKey === "documentLogoUrl"
+      ? { attempts: 3, retryDelayMs: [500, 1000] }
+      : undefined);
+    if (!brandingState.draft) {
+      brandingState.draft = createBrandingSettingsDraft(state.brandingSettings || BRANDING_SETTINGS_DEFAULTS);
+    }
+    brandingState.draft[cleanTargetKey] = imageUrl;
+    const logoInput = document.getElementById(`brandingField-${cleanTargetKey}`);
+    if (logoInput) logoInput.value = imageUrl;
+    resetBrandingLogoUploadState();
+    const successKey = cleanTargetKey === "documentLogoUrl"
+      ? "brandingDocumentLogoUploadSuccess"
+      : "brandingLogoUploadSuccess";
+    const successFallback = cleanTargetKey === "documentLogoUrl"
+      ? "อัปโหลดโลโก้เอกสารแล้ว กดบันทึกเพื่อใช้โลโก้นี้"
+      : "อัปโหลดโลโก้แล้ว กดบันทึกเพื่อใช้โลโก้นี้";
+    showToast(t(successKey, successFallback), "success");
+  } catch (err) {
+    brandingState.uploadTarget = cleanTargetKey;
+    brandingState.uploadError = getUserFacingError(err, "brandingLogoUploadFailed", "อัปโหลดโลโก้ไม่สำเร็จ");
+    showToast(brandingState.uploadError, "error");
+  } finally {
+    brandingState.isUploading = false;
+    renderBrandingSettingsSheet();
+  }
+}
+function getBrandingLogoFileInfo(brandingState = state.admin.brandingSettings, targetKey = "logoUrl") {
+  return isBrandingLogoUploadTarget(targetKey, brandingState) && brandingState.uploadFile
+    ? t("brandingLogoSelected", "เลือกแล้ว: {name} ({size})")
+      .replace("{name}", brandingState.uploadFileName || "logo")
+      .replace("{size}", formatBrandingLogoFileSize(brandingState.uploadFileSize))
+    : t("brandingLogoNoFile", "กรุณาเลือกไฟล์โลโก้ก่อน");
+}
+
+function renderBrandingLogoPreviewContent(brandingState, draft, options = {}) {
+  const targetKey = normalizeBrandingLogoTargetKey(options.key || "logoUrl");
+  const logoUrl = String(draft?.[targetKey] || "").trim();
+  const localPreviewUrl = isBrandingLogoUploadTarget(targetKey, brandingState)
+    ? brandingState.uploadPreviewUrl
+    : "";
+  const logoPreviewUrl = localPreviewUrl || logoUrl;
+  const fileInfo = getBrandingLogoFileInfo(brandingState, targetKey);
+  const altText = options.altText || t("brandingLogoPreviewAlt", "ตัวอย่างโลโก้ร้าน");
+  return `
+          ${
+            logoPreviewUrl
+              ? `<img src="${escapeHtml(logoPreviewUrl)}" alt="${escapeHtml(altText)}">`
+              : ``
+          }
+          <div class="branding-logo-preview-text">
+            ${logoPreviewUrl
+              ? (String(logoPreviewUrl).startsWith("blob:")
+                ? escapeHtml(fileInfo)
+                : `<input class="branding-logo-url-copy" type="text" readonly value="${escapeHtml(logoPreviewUrl)}" aria-label="${escapeHtml(getBrandingFieldLabel(targetKey))}">`)
+              : t("brandingLogoPreviewEmpty", "ยังไม่มี URL โลโก้")}
+          </div>
+        `;
+}
+
+function renderBrandingLogoUploadControls(targetKey = "logoUrl", options = {}) {
+  const brandingState = state.admin.brandingSettings;
+  const cleanTargetKey = normalizeBrandingLogoTargetKey(targetKey);
+  const suffix = cleanTargetKey === "documentLogoUrl" ? "Document" : "";
+  const uploadDisabled = brandingState.isSaving || brandingState.isUploading;
+  const isTarget = isBrandingLogoUploadTarget(cleanTargetKey, brandingState);
+  const fileInfo = getBrandingLogoFileInfo(brandingState, cleanTargetKey);
+  const uploadStatus = isTarget
+    ? (brandingState.isUploading ? t("brandingLogoUploading", "กำลังอัปโหลด...") : brandingState.uploadError)
+    : "";
+  const backendImageUrl = isTarget ? String(brandingState.uploadRemoteUrl || "").trim() : "";
+  const draft = brandingState.draft || createBrandingSettingsDraft(state.brandingSettings || BRANDING_SETTINGS_DEFAULTS);
+  const draftLogoUrl = String(draft[cleanTargetKey] || "").trim();
+  const urlLengths = t("brandingLogoUrlLengths", "ความยาว URL: backend {backend} / draft {draft} / input {input}")
+    .replace("{backend}", String(backendImageUrl.length))
+    .replace("{draft}", String(draftLogoUrl.length))
+    .replace("{input}", String(draftLogoUrl.length));
+  const uploadLabel = options.uploadLabel || t("brandingLogoUpload", "อัปโหลดโลโก้");
+  return `
+        <div class="branding-logo-upload">
+          <div class="branding-logo-upload-row">
+            <input id="brandingLogo${suffix}FileInput" class="branding-logo-file-input" type="file"
+              accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+              onchange="handleBrandingLogoFileSelected(this, '${cleanTargetKey}')"
+              ${uploadDisabled ? "disabled" : ""}>
+            <label class="btn btn-outline" for="brandingLogo${suffix}FileInput">${t("brandingLogoChooseFile", "เลือกไฟล์")}</label>
+            <button class="btn btn-primary" type="button"
+              onclick="uploadBrandingLogoFromAdmin('${cleanTargetKey}')"
+              ${(!isTarget || !brandingState.uploadFile || uploadDisabled) ? "disabled" : ""}>
+              ${(isTarget && brandingState.isUploading) ? t("brandingLogoUploading", "กำลังอัปโหลด...") : uploadLabel}
+            </button>
+          </div>
+          <div class="branding-logo-file-info">${escapeHtml(fileInfo)}</div>
+          ${options.helpText ? `<div class="helper-text">${escapeHtml(options.helpText)}</div>` : ""}
+          ${uploadStatus ? `<div class="branding-logo-upload-status ${brandingState.uploadError ? "is-error" : ""}">${escapeHtml(uploadStatus)}</div>` : ""}
+          ${backendImageUrl ? `
+            <div class="branding-logo-url-diagnostic">
+              <label for="brandingUploaded${suffix}ImageUrl">${t("brandingLogoBackendUrl", "URL จากระบบอัปโหลด")}</label>
+              <input id="brandingUploaded${suffix}ImageUrl" class="branding-logo-url-copy" type="text" readonly value="${escapeHtml(backendImageUrl)}">
+              <div class="branding-logo-url-lengths">${escapeHtml(urlLengths)}</div>
+            </div>
+          ` : ""}
+        </div>
+      `;
+}
+function renderBrandingDraftPreviewContent(draft) {
+  const source = draft || createBrandingSettingsDraft(state.brandingSettings || BRANDING_SETTINGS_DEFAULTS);
+  const documentBranding = resolveDocumentBrandingFromSettings(source);
+  const brandLogoUrl = resolveBrandingHttpsUrl(source.logoUrl);
+  return `
+        <div class="branding-preview-section">
+          <strong>${t("brandingPreviewBrandSection", "ตัวอย่างข้อมูลแบรนด์")}</strong>
+          ${brandLogoUrl ? `<img src="${escapeHtml(brandLogoUrl)}" alt="${escapeHtml(t("brandingLogoPreviewAlt", "ตัวอย่างโลโก้ร้าน"))}">` : ""}
+          <div>${escapeHtml(source.brandName || BRANDING_SETTINGS_DEFAULTS.brandName)}</div>
+          <div>${escapeHtml(source.companyName || BRANDING_SETTINGS_DEFAULTS.companyName)}</div>
+          <div>${escapeHtml(source.appTitle || source.brandName || BRANDING_SETTINGS_DEFAULTS.appTitle)}</div>
+        </div>
+        <div class="branding-preview-section">
+          <strong>${t("brandingPreviewDocumentSection", "ตัวอย่างข้อมูลเอกสาร")}</strong>
+          ${documentBranding.logoUrl ? `<img src="${escapeHtml(documentBranding.logoUrl)}" alt="${escapeHtml(t("brandingDocumentLogoPreviewAlt", "ตัวอย่างโลโก้เอกสาร"))}">` : ""}
+          <div>${escapeHtml(documentBranding.companyName)}</div>
+          <div>${escapeHtml(documentBranding.companyNameEn)}</div>
+          <div>${escapeHtml(documentBranding.registrationLabel)}</div>
+          <div>${escapeHtml(documentBranding.address)}</div>
+          ${documentBranding.phone ? `<div>${escapeHtml(documentBranding.phone)}</div>` : ""}
+          ${documentBranding.footer ? `<div>${escapeHtml(documentBranding.footer)}</div>` : ""}
+        </div>
+        <div>${t("brandingNoLivePreview", "ตัวอย่างนี้ใช้สำหรับตรวจสอบข้อมูลก่อนบันทึก")}</div>
+      `;
+}
+
+function syncBrandingDraftPreview() {
+  const brandingState = state.admin.brandingSettings;
+  const draft = brandingState.draft || createBrandingSettingsDraft(state.brandingSettings || BRANDING_SETTINGS_DEFAULTS);
+  brandingState.draft = draft;
+  const logoPreview = document.getElementById("brandingLogoDraftPreview");
+  if (logoPreview) {
+    logoPreview.innerHTML = renderBrandingLogoPreviewContent(brandingState, draft);
+  }
+  const documentLogoPreview = document.getElementById("brandingDocumentLogoDraftPreview");
+  if (documentLogoPreview) {
+    documentLogoPreview.innerHTML = renderBrandingLogoPreviewContent(brandingState, draft, {
+      key: "documentLogoUrl",
+      altText: t("brandingDocumentLogoPreviewAlt", "ตัวอย่างโลโก้เอกสาร")
+    });
+  }
+  const draftPreview = document.getElementById("brandingDraftPreview");
+  if (draftPreview) {
+    draftPreview.innerHTML = renderBrandingDraftPreviewContent(draft);
+  }
+}
+function renderBrandingSettingsSheet() {
+  const brandingState = state.admin.brandingSettings;
+  const draft = brandingState.draft || createBrandingSettingsDraft(state.brandingSettings || BRANDING_SETTINGS_DEFAULTS);
+  brandingState.draft = draft;
+  const uploadDisabled = brandingState.isSaving || brandingState.isUploading;
+  const loadingBlock = brandingState.isLoading
+    ? `<div class="helper-text">${t("loading", "กำลังโหลด...")}</div>`
+    : "";
+  const errorBlock = brandingState.error
+    ? `<div class="branding-settings-error">${escapeHtml(brandingState.error)}</div>`
+    : "";
+  const saveLabel = brandingState.isSaving
+    ? t("brandingSaving", "กำลังบันทึก...")
+    : t("save", "บันทึก");
+
+  adminBrandingSettingsSheet.innerHTML = `
+    <div class="branding-settings-sheet">
+      <div class="admin-sheet-topbar">
+        <button class="app-back-btn" type="button"
+          onclick="closeBrandingSettingsSheetToReturn()"
+          ${brandingState.isUploading ? "disabled" : ""}
+          aria-label="${t("back", "กลับ")}">
+          <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+          <span>${t("back", "กลับ")}</span>
+        </button>
+        <h3 id="adminBrandingSettingsSheetTitle">${t("brandingSettingsTitle", "ตั้งค่าร้าน")}</h3>
+      </div>
+
+      ${loadingBlock}
+      ${errorBlock}
+
+      <section class="branding-settings-section">
+        <h4>${t("brandingIdentitySection", "ข้อมูลแบรนด์")}</h4>
+        ${renderBrandingField("brandName")}
+        ${renderBrandingField("companyName")}
+        ${renderBrandingField("logoUrl")}
+        <div id="brandingLogoDraftPreview" class="branding-logo-preview">${renderBrandingLogoPreviewContent(brandingState, draft)}</div>
+        ${renderBrandingLogoUploadControls("logoUrl")}
+        ${renderBrandingField("appTitle")}
+      </section>
+
+      <section class="branding-settings-section">
+        <h4>${t("brandingContactSection", "ข้อมูลติดต่อ")}</h4>
+        ${renderBrandingField("address", { multiline: true, rows: 3 })}
+        ${renderBrandingField("phone")}
+        ${renderBrandingField("line")}
+        ${renderBrandingField("email")}
+      </section>
+
+      <section class="branding-settings-section">
+        <h4>${t("brandingDocumentSection", "ข้อมูลเอกสาร")}</h4>
+        ${renderBrandingField("documentLogoUrl")}
+        <div id="brandingDocumentLogoDraftPreview" class="branding-logo-preview">${renderBrandingLogoPreviewContent(brandingState, draft, {
+          key: "documentLogoUrl",
+          altText: t("brandingDocumentLogoPreviewAlt", "ตัวอย่างโลโก้เอกสาร")
+        })}</div>
+        ${renderBrandingLogoUploadControls("documentLogoUrl", {
+          uploadLabel: t("brandingDocumentLogoUpload", "อัปโหลดโลโก้เอกสาร"),
+          helpText: t("brandingDocumentLogoHelp", "เว้นว่างเพื่อใช้โลโก้ร้าน")
+        })}
+        ${renderBrandingField("documentCompanyName")}
+        ${renderBrandingField("documentCompanyNameEn")}
+        ${renderBrandingField("documentRegistrationNumber")}
+        ${renderBrandingField("documentAddress", { multiline: true, rows: 3 })}
+        ${renderBrandingField("documentPhone")}
+        ${renderBrandingField("documentFooter", { multiline: true, rows: 3 })}
+      </section>
+
+      <section id="brandingDraftPreview" class="branding-preview-card">${renderBrandingDraftPreviewContent(draft)}</section>
+
+      <div class="sheet-action-footer">
+        <button class="btn btn-primary" type="button"
+          onclick="saveBrandingSettingsFromAdmin()"
+          ${(brandingState.isSaving || brandingState.isUploading) ? "disabled" : ""}>
+          ${saveLabel}
+        </button>
+        <button class="btn btn-outline" type="button"
+          onclick="closeBrandingSettingsSheetToReturn()"
+          ${(brandingState.isSaving || brandingState.isUploading) ? "disabled" : ""}>
+          ${t("cancel", "ยกเลิก")}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function setBrandingSettingsDraftField(key, value) {
+  if (!BRANDING_SETTINGS_FIELDS.includes(key)) return;
+  if (!state.admin.brandingSettings.draft) {
+    state.admin.brandingSettings.draft = createBrandingSettingsDraft(state.brandingSettings || BRANDING_SETTINGS_DEFAULTS);
+  }
+  state.admin.brandingSettings.draft[key] = value;
+  syncBrandingDraftPreview();
+}
+
+async function loadBrandingSettingsForAdmin() {
+  const brandingState = state.admin.brandingSettings;
+  if (brandingState.isLoading) return;
+  brandingState.isLoading = true;
+  brandingState.error = "";
+  renderBrandingSettingsSheet();
+  try {
+    const settings = await fetchBrandSettingsForAdmin();
+    state.brandingSettings = settings;
+    brandingState.draft = createBrandingSettingsDraft(settings);
+    applyBrandingToLiveUi();
+  } catch (err) {
+    console.warn("Branding settings load failed", err);
+    state.brandingSettings = normalizeBrandingSettingsForUi(state.brandingSettings || BRANDING_SETTINGS_DEFAULTS);
+    brandingState.draft = createBrandingSettingsDraft(state.brandingSettings);
+    applyBrandingToLiveUi();
+    brandingState.error = t("brandingLoadFailed", "โหลดค่าตั้งค่าร้านไม่สำเร็จ ระบบแสดงค่าเริ่มต้นไว้ก่อน");
+  } finally {
+    brandingState.isLoading = false;
+    renderBrandingSettingsSheet();
+  }
+}
+
+function openBrandingSettingsSheet(returnTo = "mainMenu") {
+  if (!ensureAdminUiContext()) return;
+  const brandingState = state.admin.brandingSettings;
+  brandingState.returnTo = returnTo === "stockMenu" ? "stockMenu" : "mainMenu";
+  brandingState.error = "";
+  resetBrandingLogoUploadState();
+  brandingState.draft = createBrandingSettingsDraft(state.brandingSettings || BRANDING_SETTINGS_DEFAULTS);
+  renderBrandingSettingsSheet();
+  openOverlay(adminBrandingSettingsSheet);
+  loadBrandingSettingsForAdmin();
+}
+
+function closeBrandingSettingsSheetToReturn() {
+  if (state.admin.brandingSettings.isUploading) return;
+  const returnTo = state.admin.brandingSettings.returnTo;
+  state.admin.brandingSettings.draft = createBrandingSettingsDraft(state.brandingSettings || BRANDING_SETTINGS_DEFAULTS);
+  state.admin.brandingSettings.error = "";
+  resetBrandingLogoUploadState();
+  closeOverlay(adminBrandingSettingsSheet);
+  if (returnTo === "stockMenu") {
+    renderAdminMenuInStockSheet();
+  } else {
+    openMainMenu(document.querySelector(".menu-btn"));
+  }
+}
+
+function closeBrandingSettingsAfterSaveSuccess() {
+  const brandingState = state.admin.brandingSettings;
+  brandingState.draft = createBrandingSettingsDraft(state.brandingSettings || BRANDING_SETTINGS_DEFAULTS);
+  brandingState.error = "";
+  resetBrandingLogoUploadState();
+  closeOverlay(adminBrandingSettingsSheet);
+  if (mainMenuSheet?.classList?.contains("show")) {
+    closeMainMenu();
+  } else {
+    syncOverlayBackdropState();
+  }
+  resetAdminRootAfterSheetClose();
+}
+
+async function saveBrandingSettingsFromAdmin() {
+  const brandingState = state.admin.brandingSettings;
+  if (brandingState.isSaving || brandingState.isUploading) return;
+  if (!state.admin.loggedIn || !state.admin.token || isAdminSessionExpired()) {
+    showToast(t("sessionExpiredLoginAgain", "Session หมดอายุ กรุณา login ใหม่"), "warning");
+    exitAdmin();
+    return;
+  }
+
+  const draft = collectBrandingSettingsDraft();
+  const validationError = validateBrandingSettingsDraft(draft);
+  if (validationError) {
+    showToast(validationError, "warning");
+    return;
+  }
+
+  const patch = buildBrandingSettingsPatch(draft);
+  brandingState.draft = { ...patch };
+  brandingState.isSaving = true;
+  brandingState.error = "";
+  let saved = false;
+  renderBrandingSettingsSheet();
+
+  try {
+    const form = new URLSearchParams();
+    form.append("action", "updateBrandSettings");
+    form.append("token", state.admin.token);
+    BRANDING_SETTINGS_FIELDS.forEach(key => {
+      form.append(key, patch[key]);
+    });
+    const json = await postFormAction(form, { timeout: 30000 });
+    const settings = normalizeBrandingSettingsForUi(json?.data || patch);
+    state.brandingSettings = settings;
+    brandingState.draft = createBrandingSettingsDraft(settings);
+    applyBrandingToLiveUi();
+    showToast(t("brandingSaveSuccess", "บันทึกตั้งค่าร้านแล้ว"), "success");
+    saved = true;
+    closeBrandingSettingsAfterSaveSuccess();
+  } catch (err) {
+    console.error(err);
+    brandingState.draft = { ...patch };
+    brandingState.error = getUserFacingError(err, "brandingSaveFailed", "บันทึกตั้งค่าร้านไม่สำเร็จ");
+    showToast(brandingState.error, "error");
+  } finally {
+    brandingState.isSaving = false;
+    if (!saved) {
+      renderBrandingSettingsSheet();
+    }
+  }
+}
+
+function getLiveBrandingSettings() {
+  return normalizeBrandingSettingsForUi(state.brandingSettings || BRANDING_SETTINGS_DEFAULTS);
+}
+
+function getLiveBrandName(settings = getLiveBrandingSettings()) {
+  return sanitizeBrandingDraftValue("brandName", settings.brandName) || BRANDING_SETTINGS_DEFAULTS.brandName;
+}
+
+function getLiveAppTitle(settings = getLiveBrandingSettings()) {
+  const appTitle = sanitizeBrandingDraftValue("appTitle", settings.appTitle);
+  return appTitle || getLiveBrandName(settings) || BRANDING_SETTINGS_DEFAULTS.appTitle;
+}
+
+function getLiveLogoUrl(settings = getLiveBrandingSettings()) {
+  const logoUrl = sanitizeBrandingDraftValue("logoUrl", settings.logoUrl);
+  return /^https:\/\/[^\s<>]+$/i.test(logoUrl) ? logoUrl : "";
+}
+
+function syncLiveBrandLogo(img, logoUrl, brandName) {
+  if (!img) return;
+  const titleEl = img.closest(".viewer-brand-title, .admin-brand-title");
+  const lottie = titleEl?.querySelector(".brand-lottie");
+  if (!logoUrl) {
+    img.removeAttribute("src");
+    img.setAttribute("alt", "");
+    img.setAttribute("aria-hidden", "true");
+    img.hidden = true;
+    img.classList.remove("is-visible");
+    lottie?.classList.remove("is-branding-hidden");
+    return;
+  }
+  img.setAttribute("alt", brandName);
+  img.removeAttribute("aria-hidden");
+  if (img.getAttribute("src") !== logoUrl) {
+    img.hidden = true;
+    img.classList.remove("is-visible");
+    lottie?.classList.remove("is-branding-hidden");
+    img.setAttribute("src", logoUrl);
+    return;
+  }
+  if (img.complete && img.naturalWidth > 0) {
+    img.hidden = false;
+    img.classList.add("is-visible");
+    lottie?.classList.add("is-branding-hidden");
+  }
+}
+
+function handleLiveBrandLogoLoad(img) {
+  if (!img) return;
+  if (!img.naturalWidth) {
+    handleLiveBrandLogoError(img);
+    return;
+  }
+  const titleEl = img.closest(".viewer-brand-title, .admin-brand-title");
+  const lottie = titleEl?.querySelector(".brand-lottie");
+  img.hidden = false;
+  img.classList.add("is-visible");
+  lottie?.classList.add("is-branding-hidden");
+}
+
+function handleLiveBrandLogoError(img) {
+  if (img) {
+    img.hidden = true;
+    img.classList.remove("is-visible");
+    img.removeAttribute("src");
+  }
+  syncLiveBrandLogo(img, "", getLiveBrandName());
+}
+
+function applyBrandingToLiveUi() {
+  const settings = getLiveBrandingSettings();
+  const brandName = getLiveBrandName(settings);
+  const appTitle = getLiveAppTitle(settings);
+  const logoUrl = getLiveLogoUrl(settings);
+
+  document.title = appTitle;
+
+  document.querySelectorAll("[data-live-brand-text]").forEach(el => {
+    el.textContent = brandName;
+    el.setAttribute("title", brandName);
+  });
+
+  document.querySelectorAll("[data-live-brand-logo]").forEach(img => {
+    syncLiveBrandLogo(img, logoUrl, brandName);
+  });
+
+  syncStickyHeaderOffset();
+}
+
+let liveBrandingLoadPromise = null;
+
+function loadBrandingSettingsForLiveUi() {
+  if (liveBrandingLoadPromise) return liveBrandingLoadPromise;
+  liveBrandingLoadPromise = fetchBrandSettingsForAdmin()
+    .then(settings => {
+      state.brandingSettings = settings;
+      applyBrandingToLiveUi();
+      return settings;
+    })
+    .catch(err => {
+      console.warn("Live branding load failed", err);
+      state.brandingSettings = normalizeBrandingSettingsForUi(state.brandingSettings || BRANDING_SETTINGS_DEFAULTS);
+      applyBrandingToLiveUi();
+      return state.brandingSettings;
+    })
+    .finally(() => {
+      liveBrandingLoadPromise = null;
+    });
+  return liveBrandingLoadPromise;
+}
 /* ================= API LAYER ================= */
 const PRODUCT_FETCH_TIMEOUT_MS = 30000;
 const PRODUCT_LOAD_RETRY_DELAYS = [800, 1800];
@@ -9752,6 +11007,13 @@ async function createOrder(createRequestId) {
   form.append("total", total);
   form.append("poNumber", String(state.poNumber || "").trim());
   form.append("createRequestId", String(createRequestId || "").trim());
+  const selectedPartnerId = isAdminCreateOrderPartnerSelectorEnabled()
+    ? String(state.createOrderPartnerId || "").trim()
+    : "";
+  if (selectedPartnerId) {
+    form.append("token", state.admin.token);
+    form.append("partnerId", selectedPartnerId);
+  }
  
   // ใช้ fetchWithTimeout เพื่อป้องกัน request แขวน
   const res = await fetchWithTimeout(API_URL, {
@@ -11446,9 +12708,9 @@ function validateCartQuantities() {
   return true;
 }
 
-function openConfirmFromCart() {
+async function openConfirmFromCart() {
   if (!validateCartQuantities()) return;
-  openConfirm();
+  await openConfirm();
 }
 
 function selectMoreProductsFromCart() {
@@ -11838,11 +13100,111 @@ function renderBadge(){
       cartButton.style.display = "none";
     }
   }
-  
+
   // 🔴 NEW: sync floating bar ทุกครั้งที่ badge update
   renderFloatingBar();
 }
- 
+
+function hasValidAdminSessionForCreateOrderPartner() {
+  return state.admin?.loggedIn === true &&
+    !!state.admin?.token &&
+    !isAdminSessionExpired();
+}
+
+function isAdminCreateOrderPartnerSelectorEnabled() {
+  return hasValidAdminSessionForCreateOrderPartner();
+}
+
+function getActiveCreateOrderPartners() {
+  const items = Array.isArray(state.admin?.partners?.items)
+    ? state.admin.partners.items
+    : [];
+  return items
+    .filter(partner =>
+      partner &&
+      String(partner.partnerId || "").trim() &&
+      String(partner.partnerName || "").trim() &&
+      String(partner.status || "").trim().toLowerCase() === "active"
+    )
+    .slice()
+    .sort((left, right) =>
+      String(left.partnerName || left.partnerId || "").localeCompare(
+        String(right.partnerName || right.partnerId || ""),
+        "th"
+      )
+    );
+}
+
+async function ensureCreateOrderPartnerOptions() {
+  if (!isAdminCreateOrderPartnerSelectorEnabled()) return;
+  const partnerState = state.admin.partners;
+  if (Array.isArray(partnerState.items) && partnerState.items.length > 0) return;
+  partnerState.loading = true;
+  partnerState.error = "";
+  try {
+    const form = new URLSearchParams();
+    form.append("action", "listPartners");
+    form.append("token", state.admin.token);
+    form.append("status", "active");
+
+    const res = await fetchWithTimeout(API_URL, {
+      method: "POST",
+      body: form
+    }, 30000);
+    const json = await res.json();
+
+    if (json?.success !== true) {
+      if (isAuthError(json?.error)) {
+        partnerState.items = [];
+        partnerState.total = 0;
+        state.createOrderPartnerId = "";
+        return;
+      }
+      throw new Error(json?.error || json?.message || t("partnerLoadDeployError", "ยังไม่สามารถโหลดคู่ค้าได้ กรุณาตรวจสอบการ Deploy Apps Script"));
+    }
+
+    partnerState.items = Array.isArray(json.data?.partners)
+      ? json.data.partners
+      : [];
+    partnerState.total = Number(json.data?.total || partnerState.items.length || 0);
+  } catch (err) {
+    console.warn(err);
+    partnerState.items = [];
+    partnerState.total = 0;
+    partnerState.error = t("partnerLoadDeployError", "ยังไม่สามารถโหลดคู่ค้าได้ กรุณาตรวจสอบการ Deploy Apps Script");
+  } finally {
+    partnerState.loading = false;
+  }
+}
+
+function setCreateOrderPartnerId(value) {
+  state.createOrderPartnerId = String(value || "").trim();
+}
+
+function renderCreateOrderPartnerSelector() {
+  if (!isAdminCreateOrderPartnerSelectorEnabled()) return "";
+  const partners = getActiveCreateOrderPartners();
+  const selectedId = String(state.createOrderPartnerId || "").trim();
+  const hasSelected = partners.some(partner => String(partner.partnerId || "").trim() === selectedId);
+  if (selectedId && !hasSelected) state.createOrderPartnerId = "";
+
+  const options = [
+    `<option value="">${esc(t("noPartner", "ไม่ระบุคู่ค้า"))}</option>`
+  ].concat(partners.map(partner => {
+    const partnerId = String(partner.partnerId || "").trim();
+    const label = [partner.partnerName || partnerId, partnerId].filter(Boolean).join(" — ");
+    return `<option value="${escAttr(partnerId)}" ${partnerId === state.createOrderPartnerId ? "selected" : ""}>${esc(label)}</option>`;
+  })).join("");
+
+  return `
+    <div class="form-group">
+      <label for="orderPartnerSelect">${t("partner", "คู่ค้า")}</label>
+      <select id="orderPartnerSelect" class="input" onchange="setCreateOrderPartnerId(this.value)">
+        ${options}
+      </select>
+    </div>
+  `;
+}
 function renderConfirmSheet(){
   const confirmSheet = document.getElementById("confirmSheet");
   if (!confirmSheet) return;
@@ -11878,6 +13240,8 @@ function renderConfirmSheet(){
         <strong>฿${total}</strong>
       </div>
     </div>
+
+    ${renderCreateOrderPartnerSelector()}
 
     <div class="form-group">
      <label>${t("poNumber", "เลข PO")} <span style="color:#ff3b30">*</span></label>
@@ -11946,7 +13310,7 @@ function renderHeader(){
       <div class="header-left">
         <div class="header-stack">
           <div class="shop-title viewer-brand-title">
-            <span class="brand-title-text">Luopanich</span>
+            <img class="live-brand-logo" data-live-brand-logo alt="" aria-hidden="true" onload="handleLiveBrandLogoLoad(this)" onerror="handleLiveBrandLogoError(this)">
             <dotlottie-player class="brand-lottie"
               src="assets/dog-wagging-tail.lottie"
               background="transparent"
@@ -11954,6 +13318,7 @@ function renderHeader(){
               loop
               autoplay
               aria-hidden="true"></dotlottie-player>
+            <span class="brand-title-text" data-live-brand-text>Luopanich</span>
           </div>
         </div>
       </div>
@@ -11981,8 +13346,7 @@ function renderHeader(){
     <div class="header-left">
       <div class="header-stack">
         <div class="admin-title admin-brand-title">
-          <span class="brand-title-text">Luopanich</span>
-          <span class="badge">${t("adminBadge", "แอดมิน")}</span>
+          <img class="live-brand-logo" data-live-brand-logo alt="" aria-hidden="true" onload="handleLiveBrandLogoLoad(this)" onerror="handleLiveBrandLogoError(this)">
           <dotlottie-player class="brand-lottie"
             src="assets/dog-wagging-tail.lottie"
             background="transparent"
@@ -11990,6 +13354,8 @@ function renderHeader(){
             loop
             autoplay
             aria-hidden="true"></dotlottie-player>
+          <span class="brand-title-text" data-live-brand-text>Luopanich</span>
+          <span class="badge">${t("adminBadge", "แอดมิน")}</span>
         </div>
       </div>
     </div>
@@ -12015,6 +13381,7 @@ function renderHeader(){
 bindStickyHeaderOffset();
 renderViewerHomeControls();
 renderBottomNav();
+applyBrandingToLiveUi();
 } // ✅ ปิด renderHeader()
 
  let lastFocusTrigger = null;
@@ -12414,7 +13781,7 @@ function closeStockError(){
   openOverlay(confirmSheet);
 }
   
-function openConfirm(){
+async function openConfirm(){
   if (state.cart.length === 0) return;
   if (!validateCartQuantities()) return;
 
@@ -12423,15 +13790,26 @@ function openConfirm(){
   // ปิด cart ก่อน
   closeOverlay(cartSheet);
 
+  const partnerOptionsPromise = ensureCreateOrderPartnerOptions();
+  if (!isAdminCreateOrderPartnerSelectorEnabled()) {
+    state.createOrderPartnerId = "";
+  }
+
   // render เนื้อหา
   renderConfirmSheet();
 
   // 🔥 หัวใจ: ต้องเปิด sheet จริง
   openOverlay(confirmSheet);
+
+  await partnerOptionsPromise;
+  if (confirmSheet?.classList?.contains("show")) {
+    renderConfirmSheet();
+  }
 }
 
   
 function cancelConfirm(){
+  state.createOrderPartnerId = "";
   state.ui.backdropLocked = false;
   closeOverlay(confirmSheet);
   openOverlay(cartSheet);
@@ -12577,6 +13955,8 @@ function renderAdminLogin(){
       <div aria-hidden="true"></div>
     </div>
 
+    <div class="helper-text" data-live-brand-text>Luopanich</div>
+
     <div class="form-group">
       <label for="adminUser">${t("username", "ชื่อผู้ใช้")}</label>
       <input id="adminUser"
@@ -12626,6 +14006,7 @@ function renderAdminLogin(){
   // อนุญาตให้กด backdrop ปิดได้
   state.ui.backdropLocked = false;
 
+  applyBrandingToLiveUi();
   openOverlay(adminLoginSheet);
 }
 
@@ -14522,6 +15903,11 @@ function renderAdminMenuInStockSheet() {
         onclick="closeStockMenuSheetThen(openChangePasswordSheet)">
         ${t("changePassword", "เปลี่ยนรหัสผ่าน")}
       </button>
+
+      <button class="btn btn-secondary"
+        onclick="closeStockMenuSheetThen(() => openBrandingSettingsSheet('stockMenu'))">
+        ${t("brandingSettings", "ตั้งค่าร้าน")}
+      </button>
     </div>
 
     <hr>
@@ -14727,8 +16113,9 @@ function buildAdminPoPrintHtml(order) {
   const printedAtLabel = t("printedAt", "พิมพ์เมื่อ");
   const closePrintPageAlert = t("closePrintPageAlert", "กรุณาปิดหน้านี้เพื่อกลับสู่ระบบ");
   const displayOrderId = formatOrderIdForDisplay(order?.orderId);
-  const company = getBillingNoteCompanyInfo();
-  const logoUrl = getBillingNoteLogoUrl();
+  const documentBranding = getDocumentBranding(getDefaultBillingNoteLogoUrl());
+  const company = documentBranding.company;
+  const logoUrl = documentBranding.logoUrl;
   const totalLabel = t("total", "รวม");
   const itemRows = items.length
     ? items.map((item, index) => {
@@ -17511,12 +18898,161 @@ function getBillingNoteState() {
   if (!Array.isArray(billingState.matchedOrders)) billingState.matchedOrders = [];
   if (!billingState.selectedItems || typeof billingState.selectedItems !== "object") billingState.selectedItems = {};
   if (!billingState.itemQty || typeof billingState.itemQty !== "object") billingState.itemQty = {};
+  if (billingState.billingDocumentId === undefined) billingState.billingDocumentId = "";
+  if (billingState.billingDocumentStatus === undefined) billingState.billingDocumentStatus = "";
+  if (billingState.billingDocument === undefined) billingState.billingDocument = null;
+  if (!billingState.recipientDraft || typeof billingState.recipientDraft !== "object") billingState.recipientDraft = null;
+  if (billingState.recipientSource === undefined) billingState.recipientSource = "";
+  if (billingState.recipientOriginalSource === undefined) billingState.recipientOriginalSource = "";
+  if (billingState.poSelectorLoading === undefined) billingState.poSelectorLoading = false;
+  if (billingState.poSelectorError === undefined) billingState.poSelectorError = "";
+  if (billingState.poSelectorLoadAttempted === undefined) billingState.poSelectorLoadAttempted = false;
+  if (billingState.isCreatingDraft === undefined) billingState.isCreatingDraft = false;
+  if (billingState.isLoadingDraft === undefined) billingState.isLoadingDraft = false;
+  if (billingState.isSavingDraft === undefined) billingState.isSavingDraft = false;
+  if (billingState.isFinalizing === undefined) billingState.isFinalizing = false;
+  if (billingState.draftError === undefined) billingState.draftError = "";
   if (billingState.imageExportLoading === undefined) billingState.imageExportLoading = false;
   if (billingState.imageExportError === undefined) billingState.imageExportError = "";
   if (!Array.isArray(billingState.imageExportPages)) billingState.imageExportPages = [];
   if (billingState.error === undefined) billingState.error = "";
   if (billingState.isBuilding === undefined) billingState.isBuilding = false;
   return billingState;
+}
+
+const BILLING_NOTE_RECIPIENT_FIELDS = [
+  "billingCompanyName",
+  "billingAddress",
+  "billingTaxId",
+  "billingBranchType",
+  "billingBranchCode",
+  "billingPhone",
+  "billingEmail",
+  "billingContactName"
+];
+
+const BILLING_NOTE_RECIPIENT_SOURCES = {
+  PARTNER_PROFILE: "PARTNER_PROFILE",
+  MANUAL: "MANUAL",
+  PARTNER_PROFILE_OVERRIDDEN: "PARTNER_PROFILE_OVERRIDDEN"
+};
+
+function createEmptyBillingRecipientDraft() {
+  return {
+    billingCompanyName: "",
+    billingAddress: "",
+    billingTaxId: "",
+    billingBranchType: "HEAD_OFFICE",
+    billingBranchCode: "",
+    billingPhone: "",
+    billingEmail: "",
+    billingContactName: ""
+  };
+}
+
+function extractBillingRecipientDraft(source) {
+  const draft = createEmptyBillingRecipientDraft();
+  BILLING_NOTE_RECIPIENT_FIELDS.forEach(field => {
+    draft[field] = String(source?.[field] || "").trim();
+  });
+  if (!draft.billingBranchType) draft.billingBranchType = "HEAD_OFFICE";
+  return draft;
+}
+
+function getBillingNoteActiveDocument(billingState = getBillingNoteState()) {
+  return !!String(billingState.billingDocumentId || "").trim();
+}
+
+function resetBillingNoteDocumentState(billingState = getBillingNoteState()) {
+  Object.assign(billingState, {
+    billingDocumentId: "",
+    billingDocumentStatus: "",
+    billingDocument: null,
+    recipientDraft: null,
+    recipientSource: "",
+    recipientOriginalSource: "",
+    isCreatingDraft: false,
+    isLoadingDraft: false,
+    isSavingDraft: false,
+    isFinalizing: false,
+    draftError: ""
+  });
+}
+
+function applyBillingDocumentToState(doc) {
+  const billingState = getBillingNoteState();
+  const billingDocument = doc || null;
+  billingState.billingDocument = billingDocument;
+  billingState.billingDocumentId = String(billingDocument?.billingDocumentId || "").trim();
+  billingState.billingDocumentStatus = String(billingDocument?.status || "").trim().toUpperCase();
+  billingState.recipientDraft = billingDocument ? extractBillingRecipientDraft(billingDocument) : null;
+  billingState.recipientSource = String(billingDocument?.billingRecipientSnapshotSource || "").trim();
+  billingState.recipientOriginalSource = billingState.recipientSource;
+  billingState.draftError = "";
+}
+
+function getBillingNoteSelectedOrderIds() {
+  return (Array.isArray(getBillingNoteState().matchedOrders) ? getBillingNoteState().matchedOrders : [])
+    .map(order => String(order?.orderId || "").trim())
+    .filter(Boolean);
+}
+
+function billingRecipientDraftDiffersFromDocument(billingState = getBillingNoteState()) {
+  const source = billingState.billingDocument || {};
+  const draft = billingState.recipientDraft || {};
+  return BILLING_NOTE_RECIPIENT_FIELDS.some(field =>
+    String(source[field] || "").trim() !== String(draft[field] || "").trim()
+  );
+}
+
+function getBillingNoteDisplayedRecipientSource(billingState = getBillingNoteState()) {
+  const source = String(billingState.recipientSource || "").trim();
+  if (
+    source === BILLING_NOTE_RECIPIENT_SOURCES.PARTNER_PROFILE &&
+    billingRecipientDraftDiffersFromDocument(billingState)
+  ) {
+    return BILLING_NOTE_RECIPIENT_SOURCES.PARTNER_PROFILE_OVERRIDDEN;
+  }
+  return source || BILLING_NOTE_RECIPIENT_SOURCES.MANUAL;
+}
+
+function getBillingNoteRecipientSourceLabel(source) {
+  const cleanSource = String(source || "").trim();
+  if (cleanSource === BILLING_NOTE_RECIPIENT_SOURCES.PARTNER_PROFILE) {
+    return t("billingRecipientSourcePartner", "จากคู่ค้า");
+  }
+  if (cleanSource === BILLING_NOTE_RECIPIENT_SOURCES.PARTNER_PROFILE_OVERRIDDEN) {
+    return t("billingRecipientSourceOverridden", "แก้ไขเฉพาะเอกสาร");
+  }
+  return t("billingRecipientSourceManual", "กรอกเอง");
+}
+
+function getBillingNotePartnerContextLabel(billingState = getBillingNoteState()) {
+  const doc = billingState.billingDocument || {};
+  const partnerId = String(doc.partnerId || "").trim();
+  const partnerName = String(doc.partnerNameSnapshot || "").trim();
+  const orders = Array.isArray(billingState.matchedOrders) ? billingState.matchedOrders : [];
+  const linkedIds = new Set();
+  let blankCount = 0;
+  orders.forEach(order => {
+    const orderPartnerId = String(order?.partnerId || "").trim();
+    if (orderPartnerId) linkedIds.add(orderPartnerId);
+    else blankCount++;
+  });
+  if (partnerId) {
+    return formatUiText(
+      "billingRecipientPartnerContext",
+      { partner: partnerName || partnerId },
+      "คู่ค้าที่อ้างอิง: {partner}"
+    );
+  }
+  if (!linkedIds.size) return t("billingRecipientNoPartner", "ไม่ระบุคู่ค้า");
+  if (linkedIds.size > 1 || blankCount) return t("billingRecipientMultiPartner", "หลายคู่ค้า / ต้องระบุผู้รับเอง");
+  return t("billingRecipientNoPartner", "ไม่ระบุคู่ค้า");
+}
+
+function isBillingDocumentFinalized(billingState = getBillingNoteState()) {
+  return String(billingState.billingDocumentStatus || "").trim().toUpperCase() === "FINALIZED";
 }
 
 function resetBillingNoteBuilderState() {
@@ -17527,6 +19063,18 @@ function resetBillingNoteBuilderState() {
     matchedOrders: [],
     selectedItems: {},
     itemQty: {},
+    poSelectorError: "",
+    billingDocumentId: "",
+    billingDocumentStatus: "",
+    billingDocument: null,
+    recipientDraft: null,
+    recipientSource: "",
+    recipientOriginalSource: "",
+    isCreatingDraft: false,
+    isLoadingDraft: false,
+    isSavingDraft: false,
+    isFinalizing: false,
+    draftError: "",
     imageExportLoading: false,
     imageExportError: "",
     imageExportPages: [],
@@ -17552,6 +19100,136 @@ function parseBillingNotePoInput(value) {
 
 function isBillingNoteApprovedOrder(order) {
   return String(order?.status || "").trim().toUpperCase() === "APPROVED";
+}
+
+function getBillingNotePoGroupPartnerLabel(group) {
+  const partnerNamesById = new Map();
+  (Array.isArray(group?.orders) ? group.orders : []).forEach(order => {
+    const partnerId = String(order?.partnerId || "").trim();
+    if (!partnerId) return;
+    const partnerName = String(order?.partnerNameSnapshot || partnerId).trim() || partnerId;
+    if (!partnerNamesById.has(partnerId)) {
+      partnerNamesById.set(partnerId, partnerName);
+    }
+  });
+
+  if (partnerNamesById.size === 0) return t("noPartner", "ไม่ระบุคู่ค้า");
+  if (partnerNamesById.size > 1) return t("multiplePartners", "หลายคู่ค้า");
+  return Array.from(partnerNamesById.values())[0];
+}
+
+function getBillingNotePoGroups() {
+  const groupsByPo = new Map();
+  const orders = Array.isArray(state.admin.orders) ? state.admin.orders : [];
+
+  orders.forEach(order => {
+    if (!isBillingNoteApprovedOrder(order)) return;
+    const poNumber = String(order?.poNumber || "").trim();
+    const key = normalizePoNumberForCompare(poNumber);
+    if (!key) return;
+
+    if (!groupsByPo.has(key)) {
+      groupsByPo.set(key, {
+        key,
+        poNumber,
+        orders: []
+      });
+    }
+    groupsByPo.get(key).orders.push(order);
+  });
+
+  return Array.from(groupsByPo.values())
+    .map(group => {
+      const latestMs = group.orders.reduce((maxMs, order) => {
+        const date = getOrderDateValue(order);
+        const ms = date ? new Date(date).getTime() : 0;
+        return Number.isFinite(ms) ? Math.max(maxMs, ms) : maxMs;
+      }, 0);
+      const count = group.orders.length;
+      const partnerLabel = getBillingNotePoGroupPartnerLabel(group);
+      return Object.assign(group, {
+        sortMs: latestMs,
+        partnerLabel,
+        label: `${group.poNumber} — ${partnerLabel} · ${count} ${count === 1 ? "Order" : "Orders"}`
+      });
+    })
+    .sort((left, right) => {
+      if (right.sortMs !== left.sortMs) return right.sortMs - left.sortMs;
+      return String(left.poNumber || "").localeCompare(String(right.poNumber || ""), "th");
+    });
+}
+
+async function ensureBillingNotePoSelectorOrders() {
+  const billingState = getBillingNoteState();
+  if (Array.isArray(state.admin.orders) && state.admin.orders.length > 0) {
+    billingState.poSelectorLoadAttempted = true;
+    billingState.poSelectorError = "";
+    if (adminBillingNoteSheet?.classList?.contains("show")) {
+      syncBillingNotePoSelectorRegion();
+    }
+    return;
+  }
+  if (billingState.poSelectorLoading) return;
+
+  billingState.poSelectorLoading = true;
+  billingState.poSelectorError = "";
+  billingState.poSelectorLoadAttempted = true;
+  syncBillingNotePoSelectorRegion();
+
+  try {
+    const orders = await fetchOrders();
+    state.admin.orders = Array.isArray(orders) ? orders : [];
+  } catch (err) {
+    console.error("billing note PO selector load failed:", err);
+    billingState.poSelectorError = getUserFacingError(err, "deliveryNotePickerLoadError", "ไม่สามารถโหลดออเดอร์ได้");
+  } finally {
+    billingState.poSelectorLoading = false;
+    syncBillingNotePoSelectorRegion();
+  }
+}
+
+function setBillingNotePoFromSelector(value) {
+  const billingState = getBillingNoteState();
+  if (getBillingNoteActiveDocument(billingState)) return;
+  const poNumber = String(value || "").trim();
+  billingState.poInput = poNumber;
+  const input = document.getElementById("billingNotePoInput");
+  if (input) input.value = poNumber;
+}
+
+function renderBillingNotePoSelector() {
+  const billingState = getBillingNoteState();
+  const groups = getBillingNotePoGroups();
+  const currentKey = normalizePoNumberForCompare(billingState.poInput || "");
+  const selectedPo = groups.some(group => group.key === currentKey)
+    ? (groups.find(group => group.key === currentKey)?.poNumber || "")
+    : "";
+  const hasOrderSource = Array.isArray(state.admin.orders) && state.admin.orders.length > 0;
+  const isLoading = billingState.poSelectorLoading || (!billingState.poSelectorLoadAttempted && !hasOrderSource && !groups.length);
+  const disabled = isLoading || groups.length === 0 || getBillingNoteActiveDocument(billingState);
+
+  return `
+    <div id="billingNotePoSelectorRegion" class="form-group" style="margin-top:12px">
+      <label for="billingNotePoSelector">${t("selectExistingPo", "เลือก PO ที่มีอยู่")}</label>
+      <select id="billingNotePoSelector" class="input" onchange="setBillingNotePoFromSelector(this.value)" ${disabled ? "disabled" : ""}>
+        <option value="">${t("selectPo", "เลือก PO")}</option>
+        ${groups.map(group => `
+          <option value="${escAttr(group.poNumber)}" ${group.poNumber === selectedPo ? "selected" : ""}>${esc(group.label)}</option>
+        `).join("")}
+      </select>
+      ${isLoading ? `<div class="loading has-lottie" style="margin-top:10px">${renderLottieLoading(t("billingNotePoLoading", "กำลังโหลดรายการ PO..."), { detail: t("pleaseWaitMoment", "กรุณารอสักครู่") })}</div>` : ""}
+      ${!isLoading && billingState.poSelectorError ? `<div class="error-text" style="margin-top:6px">${esc(billingState.poSelectorError)}</div>` : ""}
+      ${!isLoading && !billingState.poSelectorError && !groups.length ? `<div class="helper-text" style="margin-top:6px">${esc(t("billingNoteNoReadyPo", "ยังไม่มี PO ที่พร้อมสำหรับใบวางบิล"))}</div>` : ""}
+      <div class="helper-text" style="margin-top:8px">${t("orEnterPoManually", "หรือกรอกเลข PO")}</div>
+    </div>
+  `;
+}
+
+function syncBillingNotePoSelectorRegion() {
+  const region = document.getElementById("billingNotePoSelectorRegion");
+  if (region) {
+    region.outerHTML = renderBillingNotePoSelector();
+  }
 }
 
 function getBillingNoteItemKeyFromParts(orderId, productId, index) {
@@ -17726,6 +19404,330 @@ function updateBillingNoteItemQty(orderId, productId, index, value) {
   refreshBillingNoteOrderTotals(orderId);
 }
 
+function setBillingRecipientDraftField(field, value) {
+  if (BILLING_NOTE_RECIPIENT_FIELDS.indexOf(field) === -1) return;
+  const billingState = getBillingNoteState();
+  if (!billingState.recipientDraft) billingState.recipientDraft = createEmptyBillingRecipientDraft();
+  billingState.recipientDraft[field] = String(value || "");
+  syncBillingRecipientDraftUi();
+}
+
+function syncBillingRecipientDraftUi() {
+  const billingState = getBillingNoteState();
+  const sourceBadge = document.getElementById("billingRecipientSourceBadge");
+  if (sourceBadge) {
+    sourceBadge.textContent = getBillingNoteRecipientSourceLabel(
+      getBillingNoteDisplayedRecipientSource(billingState)
+    );
+  }
+  const branchCodeInput = document.getElementById("billingRecipientBranchCode");
+  if (branchCodeInput) {
+    const isBranch = String(billingState.recipientDraft?.billingBranchType || "").trim() === "BRANCH";
+    branchCodeInput.required = isBranch;
+    branchCodeInput.setAttribute("aria-required", isBranch ? "true" : "false");
+  }
+}
+
+function getBillingRecipientValidationError(draft) {
+  const source = draft || {};
+  const requiredFields = [
+    ["billingCompanyName", t("billingRecipientCompanyName", "ชื่อบริษัท")],
+    ["billingAddress", t("billingRecipientAddress", "ที่อยู่")],
+    ["billingTaxId", t("billingRecipientTaxId", "เลขประจำตัวผู้เสียภาษี")]
+  ];
+  for (const [field, label] of requiredFields) {
+    if (!String(source[field] || "").trim()) {
+      return formatUiText("requiredFieldMissing", { field: label }, "กรุณากรอก{field}");
+    }
+  }
+  if (String(source.billingBranchType || "").trim() === "BRANCH" && !String(source.billingBranchCode || "").trim()) {
+    return t("billingRecipientBranchCodeRequired", "กรุณากรอกรหัสสาขา");
+  }
+  const values = BILLING_NOTE_RECIPIENT_FIELDS.map(field => String(source[field] || ""));
+  if (values.some(value => value.includes("<") || value.includes(">"))) {
+    return t("invalidCharacterAngleBracket", "ห้ามใช้เครื่องหมาย < หรือ >");
+  }
+  const email = String(source.billingEmail || "").trim();
+  if (email && !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email)) {
+    return t("invalidEmail", "อีเมลไม่ถูกต้อง");
+  }
+  return "";
+}
+
+function isExpectedBillingDocumentFinalizeRejection(err) {
+  const message = String(err?.message || err?.error || err || "").trim();
+  return message === "Order already has a finalized billing document";
+}
+
+function getBillingDocumentUserFacingError(err, fallbackKey = "billingDocumentActionFailed", fallback = "ไม่สามารถดำเนินการใบวางบิลได้") {
+  const message = String(err?.message || err?.error || err || "");
+  if (message.includes("finalized billing document")) {
+    return t("billingDocumentDuplicateOrder", "Order ที่เลือกมีใบวางบิลที่ออกเอกสารแล้ว");
+  }
+  return getUserFacingError(err, fallbackKey, fallback);
+}
+
+async function callBillingDocumentAction(action, params = {}) {
+  if (!state.admin.loggedIn || !state.admin.token || isAdminSessionExpired()) {
+    showToast(t("sessionExpiredLoginAgain", "Session หมดอายุ กรุณา login ใหม่"), "warning");
+    exitAdmin();
+    return null;
+  }
+  const form = new URLSearchParams();
+  form.append("action", action);
+  form.append("token", state.admin.token);
+  Object.keys(params || {}).forEach(key => {
+    form.append(key, params[key] == null ? "" : String(params[key]));
+  });
+  return await postFormAction(form, { timeout: 30000 });
+}
+
+function buildBillingRecipientParams(draft) {
+  const source = draft || {};
+  const params = {};
+  BILLING_NOTE_RECIPIENT_FIELDS.forEach(field => {
+    params[field] = String(source[field] || "").trim();
+  });
+  if (!params.billingBranchType) params.billingBranchType = "HEAD_OFFICE";
+  return params;
+}
+
+async function createBillingDocumentDraftForBillingNote() {
+  const billingState = getBillingNoteState();
+  if (getBillingNoteActiveDocument(billingState) || billingState.isCreatingDraft) return;
+  const orderIds = getBillingNoteSelectedOrderIds();
+  if (!orderIds.length) {
+    showToast(t("billingNotePoNotFoundEmpty", "ยังไม่พบออเดอร์ APPROVED สำหรับ PO นี้"), "warning");
+    return;
+  }
+
+  billingState.isCreatingDraft = true;
+  billingState.draftError = "";
+  renderBillingNoteSheet();
+
+  try {
+    const json = await callBillingDocumentAction("createBillingDocumentDraft", {
+      orderIds: JSON.stringify(orderIds)
+    });
+    const doc = json?.data?.billingDocument;
+    if (!doc) throw new Error("Billing document response missing");
+    applyBillingDocumentToState(doc);
+    showToast(t("billingDocumentDraftCreated", "สร้างร่างใบวางบิลแล้ว"), "success");
+  } catch (err) {
+    console.error("create billing document draft failed:", err);
+    billingState.draftError = getBillingDocumentUserFacingError(err, "billingDocumentDraftCreateFailed", "สร้างร่างใบวางบิลไม่สำเร็จ");
+    showToast(billingState.draftError, "error");
+  } finally {
+    billingState.isCreatingDraft = false;
+    renderBillingNoteSheet();
+  }
+}
+
+async function reloadCurrentBillingDocument() {
+  const billingState = getBillingNoteState();
+  const billingDocumentId = String(billingState.billingDocumentId || "").trim();
+  if (!billingDocumentId || billingState.isLoadingDraft) return;
+
+  billingState.isLoadingDraft = true;
+  billingState.draftError = "";
+  renderBillingNoteSheet();
+
+  try {
+    const json = await callBillingDocumentAction("getBillingDocument", { billingDocumentId });
+    const doc = json?.data?.billingDocument;
+    if (!json?.data?.found || !doc) throw new Error("Billing document not found");
+    applyBillingDocumentToState(doc);
+    showToast(t("billingDocumentReloaded", "โหลดร่างใบวางบิลอีกครั้งแล้ว"), "success");
+  } catch (err) {
+    console.error("reload billing document failed:", err);
+    billingState.draftError = getBillingDocumentUserFacingError(err, "billingDocumentLoadFailed", "โหลดข้อมูลใบวางบิลไม่สำเร็จ");
+    showToast(billingState.draftError, "error");
+  } finally {
+    billingState.isLoadingDraft = false;
+    renderBillingNoteSheet();
+  }
+}
+
+async function saveBillingDocumentDraft() {
+  const billingState = getBillingNoteState();
+  if (!getBillingNoteActiveDocument(billingState) || isBillingDocumentFinalized(billingState) || billingState.isSavingDraft) return;
+  const draft = buildBillingRecipientParams(billingState.recipientDraft || {});
+  const validationError = getBillingRecipientValidationError(draft);
+  if (validationError) {
+    showToast(validationError, "warning");
+    return;
+  }
+
+  billingState.isSavingDraft = true;
+  billingState.draftError = "";
+  renderBillingNoteSheet();
+
+  try {
+    const json = await callBillingDocumentAction(
+      "updateBillingDocumentDraft",
+      Object.assign({ billingDocumentId: billingState.billingDocumentId }, draft)
+    );
+    const doc = json?.data?.billingDocument;
+    if (!doc) throw new Error("Billing document response missing");
+    applyBillingDocumentToState(doc);
+    showToast(t("billingDocumentDraftSaved", "บันทึกร่างใบวางบิลแล้ว"), "success");
+  } catch (err) {
+    console.error("save billing document draft failed:", err);
+    billingState.draftError = getBillingDocumentUserFacingError(err, "billingDocumentDraftSaveFailed", "บันทึกร่างใบวางบิลไม่สำเร็จ");
+    showToast(billingState.draftError, "error");
+  } finally {
+    billingState.isSavingDraft = false;
+    renderBillingNoteSheet();
+  }
+}
+
+async function finalizeBillingDocumentFromBillingNote() {
+  const billingState = getBillingNoteState();
+  if (!getBillingNoteActiveDocument(billingState) || isBillingDocumentFinalized(billingState) || billingState.isFinalizing) return;
+  const validationError = getBillingRecipientValidationError(billingState.recipientDraft || {});
+  if (validationError) {
+    showToast(validationError, "warning");
+    return;
+  }
+  if (billingRecipientDraftDiffersFromDocument(billingState)) {
+    showToast(t("billingDocumentSaveBeforeFinalize", "กรุณาบันทึกร่างก่อนออกใบวางบิล"), "warning");
+    return;
+  }
+  if (!confirm(t("billingDocumentFinalizeWarning", "เมื่อออกใบวางบิลแล้ว ข้อมูลผู้รับจะถูกล็อกและไม่สามารถแก้ไขได้"))) {
+    return;
+  }
+
+  billingState.isFinalizing = true;
+  billingState.draftError = "";
+  renderBillingNoteSheet();
+
+  try {
+    const json = await callBillingDocumentAction("finalizeBillingDocument", {
+      billingDocumentId: billingState.billingDocumentId
+    });
+    const doc = json?.data?.billingDocument;
+    if (!doc) throw new Error("Billing document response missing");
+    applyBillingDocumentToState(doc);
+    showToast(t("billingDocumentFinalized", "ออกใบวางบิลแล้ว"), "success");
+  } catch (err) {
+    if (!isExpectedBillingDocumentFinalizeRejection(err)) {
+      console.error("finalize billing document failed:", err);
+    }
+    billingState.draftError = getBillingDocumentUserFacingError(err, "billingDocumentFinalizeFailed", "ออกใบวางบิลไม่สำเร็จ");
+    showToast(billingState.draftError, "error");
+  } finally {
+    billingState.isFinalizing = false;
+    renderBillingNoteSheet();
+  }
+}
+
+function startOverBillingNoteDraft() {
+  const billingState = getBillingNoteState();
+  if (getBillingNoteActiveDocument(billingState)) {
+    const confirmed = confirm(t(
+      "billingDocumentStartOverConfirm",
+      "ร่างเดิมยังคงอยู่ในระบบ ต้องการเริ่มใหม่หรือไม่?"
+    ));
+    if (!confirmed) return;
+  }
+  resetBillingNoteBuilderState();
+  showToast(t("billingDocumentStartedOver", "เริ่มใบวางบิลใหม่แล้ว"), "info", 1500);
+}
+
+function renderBillingRecipientPanel() {
+  const billingState = getBillingNoteState();
+  if (!getBillingNoteActiveDocument(billingState)) return "";
+  const draft = billingState.recipientDraft || createEmptyBillingRecipientDraft();
+  const readonly = isBillingDocumentFinalized(billingState);
+  const source = getBillingNoteDisplayedRecipientSource(billingState);
+  const statusText = readonly
+    ? t("billingDocumentFinalizedStatus", "ออกเอกสารแล้ว")
+    : t("billingDocumentDraftStatus", "ร่าง");
+  const disabledAttr = readonly ? "readonly" : "";
+  const selectDisabledAttr = readonly ? "disabled" : "";
+  const sourceLabel = getBillingNoteRecipientSourceLabel(source);
+  const partnerContext = getBillingNotePartnerContextLabel(billingState);
+  const isManualMulti = source === BILLING_NOTE_RECIPIENT_SOURCES.MANUAL &&
+    partnerContext === t("billingRecipientMultiPartner", "หลายคู่ค้า / ต้องระบุผู้รับเอง");
+
+  return `
+    <div class="card">
+      <div class="admin-detail-title">${t("billingRecipientTitle", "ข้อมูลผู้รับใบวางบิล")}</div>
+      <div class="helper-text" style="margin-top:6px">
+        <strong>${esc(statusText)}</strong>
+        · ${t("billingDocumentId", "เลขที่เอกสาร")}: ${esc(billingState.billingDocumentId)}
+        · <span id="billingRecipientSourceBadge" class="status-badge compact">${esc(sourceLabel)}</span>
+      </div>
+      <div class="helper-text" style="margin-top:6px">${esc(partnerContext)}</div>
+      ${isManualMulti ? `<div class="error-text" style="margin-top:8px">${esc(t("billingRecipientMultiWarning", "PO นี้มีหลายคู่ค้า กรุณาระบุข้อมูลผู้รับใบวางบิล"))}</div>` : ""}
+      ${billingState.draftError ? `<div class="error-text" style="margin-top:8px">${esc(billingState.draftError)}</div>` : ""}
+
+      <div class="dashboard-filter-wrap" style="margin-top:14px">
+        <div class="form-group">
+          <label for="billingRecipientCompanyName">${t("billingRecipientCompanyName", "ชื่อบริษัท")}</label>
+          <input id="billingRecipientCompanyName" class="input" type="text" value="${escAttr(draft.billingCompanyName)}" ${disabledAttr}
+            oninput="setBillingRecipientDraftField('billingCompanyName', this.value)">
+        </div>
+        <div class="form-group">
+          <label for="billingRecipientTaxId">${t("billingRecipientTaxId", "เลขประจำตัวผู้เสียภาษี")}</label>
+          <input id="billingRecipientTaxId" class="input" type="text" inputmode="text" value="${escAttr(draft.billingTaxId)}" ${disabledAttr}
+            oninput="setBillingRecipientDraftField('billingTaxId', this.value)">
+        </div>
+        <div class="form-group">
+          <label for="billingRecipientBranchType">${t("billingRecipientBranchType", "ประเภทสาขา")}</label>
+          <select id="billingRecipientBranchType" class="input" ${selectDisabledAttr}
+            onchange="setBillingRecipientDraftField('billingBranchType', this.value)">
+            <option value="HEAD_OFFICE" ${String(draft.billingBranchType || "") !== "BRANCH" ? "selected" : ""}>${t("headOffice", "สำนักงานใหญ่")}</option>
+            <option value="BRANCH" ${String(draft.billingBranchType || "") === "BRANCH" ? "selected" : ""}>${t("branch", "สาขา")}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="billingRecipientBranchCode">${t("billingRecipientBranchCode", "รหัสสาขา")}</label>
+          <input id="billingRecipientBranchCode" class="input" type="text" inputmode="text" value="${escAttr(draft.billingBranchCode)}" ${disabledAttr}
+            oninput="setBillingRecipientDraftField('billingBranchCode', this.value)">
+        </div>
+        <div class="form-group">
+          <label for="billingRecipientPhone">${t("billingRecipientPhone", "โทรศัพท์")}</label>
+          <input id="billingRecipientPhone" class="input" type="text" inputmode="text" value="${escAttr(draft.billingPhone)}" ${disabledAttr}
+            oninput="setBillingRecipientDraftField('billingPhone', this.value)">
+        </div>
+        <div class="form-group">
+          <label for="billingRecipientEmail">${t("billingRecipientEmail", "อีเมล")}</label>
+          <input id="billingRecipientEmail" class="input" type="email" value="${escAttr(draft.billingEmail)}" ${disabledAttr}
+            oninput="setBillingRecipientDraftField('billingEmail', this.value)">
+        </div>
+        <div class="form-group">
+          <label for="billingRecipientContactName">${t("billingRecipientContactName", "ผู้ติดต่อ")}</label>
+          <input id="billingRecipientContactName" class="input" type="text" value="${escAttr(draft.billingContactName)}" ${disabledAttr}
+            oninput="setBillingRecipientDraftField('billingContactName', this.value)">
+        </div>
+        <div class="form-group">
+          <label for="billingRecipientAddress">${t("billingRecipientAddress", "ที่อยู่")}</label>
+          <textarea id="billingRecipientAddress" rows="3" ${disabledAttr}
+            oninput="setBillingRecipientDraftField('billingAddress', this.value)">${esc(draft.billingAddress)}</textarea>
+        </div>
+      </div>
+
+      <div class="action-row" style="margin-top:14px;gap:8px;flex-wrap:wrap">
+        ${readonly ? "" : `
+          <button class="btn btn-outline" type="button" onclick="saveBillingDocumentDraft()" ${billingState.isSavingDraft ? "disabled" : ""}>
+            ${billingState.isSavingDraft ? t("saving", "กำลังบันทึก...") : t("saveDraft", "บันทึกร่าง")}
+          </button>
+          <button class="btn btn-primary" type="button" onclick="finalizeBillingDocumentFromBillingNote()" ${billingState.isFinalizing ? "disabled" : ""}>
+            ${billingState.isFinalizing ? t("billingDocumentFinalizing", "กำลังออกใบวางบิล...") : t("finalizeBillingDocument", "ออกใบวางบิล")}
+          </button>
+        `}
+        <button class="btn btn-outline" type="button" onclick="reloadCurrentBillingDocument()" ${billingState.isLoadingDraft ? "disabled" : ""}>
+          ${billingState.isLoadingDraft ? t("loading", "กำลังโหลด...") : t("reloadDraft", "โหลดร่างอีกครั้ง")}
+        </button>
+        <button class="btn btn-outline" type="button" onclick="startOverBillingNoteDraft()">
+          ${t("startOver", "เริ่มใหม่")}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
 function renderBillingNoteItemRow(order, item, index) {
   const billingState = getBillingNoteState();
   const key = getBillingNoteItemKey(order, item, index);
@@ -17807,8 +19809,23 @@ function renderBillingNoteMatchedOrders() {
 
   const itemCount = orders.reduce((sum, order) => sum + (Array.isArray(order?.items) ? order.items.length : 0), 0);
   const exportPages = Array.isArray(billingState.imageExportPages) ? billingState.imageExportPages : [];
+  const hasActiveDocument = getBillingNoteActiveDocument(billingState);
 
   return `
+    ${hasActiveDocument ? renderBillingRecipientPanel() : `
+      <div class="card">
+        <div class="admin-detail-title">${t("billingDocumentDraftTitle", "ร่างใบวางบิล")}</div>
+        <div class="helper-text" style="margin-top:6px">
+          ${t("billingDocumentDraftHelp", "สร้างร่างเพื่อกำหนดข้อมูลผู้รับก่อนออกใบวางบิล")}
+        </div>
+        ${billingState.draftError ? `<div class="error-text" style="margin-top:8px">${esc(billingState.draftError)}</div>` : ""}
+        <div class="action-row" style="margin-top:12px;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary" type="button" onclick="createBillingDocumentDraftForBillingNote()" ${billingState.isCreatingDraft ? "disabled" : ""}>
+            ${billingState.isCreatingDraft ? t("billingDocumentDraftCreating", "กำลังสร้างร่าง...") : t("createBillingDocumentDraft", "สร้างร่างใบวางบิล")}
+          </button>
+        </div>
+      </div>
+    `}
     ${itemCount ? `
       <div class="card">
         <div class="action-row" style="gap:8px;flex-wrap:wrap">
@@ -17900,6 +19917,10 @@ async function searchBillingNotePo() {
   }
 
   const billingState = getBillingNoteState();
+  if (getBillingNoteActiveDocument(billingState)) {
+    showToast(t("billingDocumentStartOverRequired", "กรุณาเริ่มใหม่ก่อนเปลี่ยน PO"), "warning");
+    return;
+  }
   const input = document.getElementById("billingNotePoInput");
   billingState.poInput = String(input?.value || billingState.poInput || "");
   const poList = parseBillingNotePoInput(billingState.poInput);
@@ -18051,26 +20072,74 @@ function getValidatedBillingNoteData() {
   return data;
 }
 
-function getBillingNoteLogoUrl() {
+function getDefaultBillingNoteLogoUrl() {
   return new URL("assets/logo-luoparich-billing-round.png", window.location.href).href;
 }
 
-function getBillingNoteCompanyInfo() {
-  return {
-    nameTh: "บริษัท แอลยูโอพาริช จำกัด",
-    nameEn: "LUOPARICH COMPANY LIMITED",
-    taxId: "ทะเบียนนิติบุคคลเลขที่ 0195569002218",
-    address: "เลขที่ 7/13 หมู่ที่ 5 ตำบลหนองแขม อำเภอหนองแค จังหวัดสระบุรี 18140"
-  };
+function getDefaultDeliveryNoteLogoUrl() {
+  return new URL("assets/logo-luopanich-horizontal.png", window.location.href).href;
 }
 
-function getBillingNoteCustomerInfo() {
+function resolveBrandingHttpsUrl(value) {
+  const url = sanitizeBrandingDraftValue("logoUrl", value);
+  return /^https:\/\/[^\s<>]+$/i.test(url) ? url : "";
+}
+
+function getDocumentBranding(defaultLogoUrl = getDefaultBillingNoteLogoUrl()) {
+  return resolveDocumentBrandingFromSettings(
+    state.brandingSettings || BRANDING_SETTINGS_DEFAULTS,
+    defaultLogoUrl
+  );
+}
+
+function getBillingNoteLogoUrl() {
+  return getDocumentBranding(getDefaultBillingNoteLogoUrl()).logoUrl;
+}
+
+function getBillingNoteCompanyInfo() {
+  return getDocumentBranding(getDefaultBillingNoteLogoUrl()).company;
+}
+
+function getLegacyBillingNoteCustomerInfo() {
   return {
     label: t("customerLabel", "ลูกค้า"),
     name: "บริษัท ออร์เดอร์ พลัส 88 จำกัด (สำนักงานใหญ่)",
     address: "99 หมู่5 ตำบลท้วยทราย อำเภอหนองแค สระบุรี 18230",
     taxId: "เลขประจำตัวผู้เสียภาษี 01955566000907"
   };
+}
+
+function getBillingNoteCustomerFromBillingDocument(billingState = getBillingNoteState()) {
+  if (!isBillingDocumentFinalized(billingState) || !billingState.billingDocument) return null;
+
+  const documentSnapshot = billingState.billingDocument;
+  const name = String(documentSnapshot.billingCompanyName || "").trim();
+  const address = String(documentSnapshot.billingAddress || "").trim();
+  const taxId = String(documentSnapshot.billingTaxId || "").trim();
+  if (!name && !address && !taxId) return null;
+
+  const branchType = String(documentSnapshot.billingBranchType || "").trim().toUpperCase();
+  const branchCode = String(documentSnapshot.billingBranchCode || "").trim();
+  let branchLabel = "";
+  if (branchType === "HEAD_OFFICE") {
+    branchLabel = t("headOffice", "สำนักงานใหญ่");
+  } else if (branchType === "BRANCH") {
+    branchLabel = branchCode
+      ? `${t("branch", "สาขา")} ${branchCode}`
+      : t("branch", "สาขา");
+  }
+
+  const taxLabel = t("billingRecipientTaxId", "เลขประจำตัวผู้เสียภาษี");
+  return {
+    label: t("customerLabel", "ลูกค้า"),
+    name: name && branchLabel ? `${name} (${branchLabel})` : (name || "-"),
+    address: address || "-",
+    taxId: taxId ? `${taxLabel} ${taxId}` : taxLabel
+  };
+}
+
+function getBillingNoteCustomerInfo() {
+  return getBillingNoteCustomerFromBillingDocument() || getLegacyBillingNoteCustomerInfo();
 }
 
 function getBillingNotePaymentInfo() {
@@ -18991,6 +21060,7 @@ function downloadBillingNoteExportImage(pageNumber) {
 
 function renderBillingNoteSheet() {
   const billingState = getBillingNoteState();
+  const hasActiveDocument = getBillingNoteActiveDocument(billingState);
   adminBillingNoteSheet.innerHTML = `
     <div class="admin-sheet-topbar">
       <button class="app-back-btn" type="button" onclick="closeBillingNoteSheet()">
@@ -19010,20 +21080,22 @@ function renderBillingNoteSheet() {
       <div class="helper-text" style="margin-top:6px">
         ${t("billingNoteShellNext", "จะใช้รูปแบบการค้นหา PO และเลือกรายการสินค้าเหมือนใบส่งของในขั้นตอนถัดไป")}
       </div>
+      ${renderBillingNotePoSelector()}
       <div class="form-group" style="margin-top:12px">
         <label for="billingNotePoInput">${t("billingNotePoInput", "เลข PO สำหรับใบวางบิล")}</label>
         <textarea
           id="billingNotePoInput"
           rows="4"
+          ${hasActiveDocument ? "readonly" : ""}
           placeholder="${escAttr(t("billingNotePoPlaceholder", "กรอกเลข PO เพื่อสร้างใบวางบิล"))}"
-          oninput="state.admin.billingNote.poInput = this.value">${esc(billingState.poInput || "")}</textarea>
+          oninput="if (!getBillingNoteActiveDocument()) state.admin.billingNote.poInput = this.value">${esc(billingState.poInput || "")}</textarea>
       </div>
       <div class="action-row" style="margin-top:12px;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-primary" type="button" onclick="searchBillingNotePo()">
+        <button class="btn btn-primary" type="button" onclick="searchBillingNotePo()" ${hasActiveDocument ? "disabled" : ""}>
           ${billingState.isBuilding ? t("billingNoteSearching", "กำลังค้นหา PO...") : t("searchPo", "ค้นหา PO")}
         </button>
-        <button class="btn btn-outline" type="button" onclick="resetBillingNoteBuilderState()">
-          ${t("resetDeliveryNote", "ล้างค่า / เริ่มใหม่")}
+        <button class="btn btn-outline" type="button" onclick="${hasActiveDocument ? "startOverBillingNoteDraft()" : "resetBillingNoteBuilderState()"}">
+          ${hasActiveDocument ? t("startOver", "เริ่มใหม่") : t("resetDeliveryNote", "ล้างค่า / เริ่มใหม่")}
         </button>
       </div>
     </div>
@@ -19045,6 +21117,7 @@ function openBillingNoteSheet() {
 
   renderBillingNoteSheet();
   openOverlay(adminBillingNoteSheet);
+  ensureBillingNotePoSelectorOrders();
 }
 
 function closeBillingNoteSheet() {
@@ -19655,16 +21728,17 @@ function renderDeliveryNotePrintImage(imageUrl, altText) {
 }
 
 function getDeliveryNoteLogoUrl() {
-  return new URL("assets/logo-luopanich-horizontal.png", window.location.href).href;
+  return getDocumentBranding(getDefaultDeliveryNoteLogoUrl()).logoUrl;
 }
 
 function buildDeliveryNotePrintHtml(data, options = {}) {
   const autoPrint = options.autoPrint !== false;
   const imageExportMode = options.imageExport === true;
-  const logoUrl = getDeliveryNoteLogoUrl();
+  const documentBranding = getDocumentBranding(getDefaultDeliveryNoteLogoUrl());
+  const logoUrl = documentBranding.logoUrl;
   const printDateTime = new Date().toLocaleString("th-TH");
   const title = t("deliveryNote", "ใบส่งของ");
-  const shopName = t("shopTitle", "ร้านค้า Luopanich");
+  const shopName = documentBranding.company.nameTh;
   const noteLabel = t("note", "หมายเหตุ");
   const orderNumberLabel = t("orderNumber", "เลขออเดอร์");
   const columnHeaderHtml = `
@@ -19722,9 +21796,11 @@ function buildDeliveryNotePrintHtml(data, options = {}) {
         .muted { color:#6B7280; font-size:12px; }
         .doc-header {
           display:flex;
-          justify-content:space-between;
-          align-items:flex-start;
+          flex-direction:column;
+          justify-content:flex-start;
+          align-items:center;
           gap:18px;
+          text-align:center;
           padding-bottom:14px;
           border-bottom:2px solid #111827;
           margin-bottom:14px;
@@ -19737,13 +21813,15 @@ function buildDeliveryNotePrintHtml(data, options = {}) {
           width:150px;
           max-width:42vw;
           height:auto;
-          margin-bottom:5px;
+          margin:0 auto 5px;
           object-fit:contain;
         }
         .doc-meta {
           min-width:210px;
+          width:100%;
           max-width:100%;
           flex:0 0 auto;
+          text-align:left;
           border:1px solid #D1D5DB;
           border-radius:10px;
           overflow:hidden;
@@ -19991,7 +22069,7 @@ function buildDeliveryNotePrintHtml(data, options = {}) {
         @media screen and (max-width:640px) {
           .print-screen-toolbar { justify-content:stretch; }
           .print-screen-toolbar button { flex:1; }
-          .doc-header { display:block; }
+          .doc-header { display:flex; }
           .doc-meta { min-width:0; margin-top:12px; }
           .signature-grid { grid-template-columns:1fr; }
         }
@@ -22811,6 +24889,11 @@ function openMainMenu(triggerEl){
                 </button>
 
                 <button class="btn btn-secondary"
+                  onclick="closeMainMenu(); openBrandingSettingsSheet('mainMenu');">
+                  ${t("brandingSettings", "ตั้งค่าร้าน")}
+                </button>
+
+                <button class="btn btn-secondary"
                   onclick="closeMainMenu(); openAdminApplicationReviewSheet();">
                   ${t("adminApplicationRequests", "คำขอสมัครแอดมิน")}
                 </button>
@@ -23453,6 +25536,7 @@ async function submitOrder(){
     state.cart = [];
     clearCartStorage();
     state.poNumber = "";
+    state.createOrderPartnerId = "";
     state.createRequestId = "";
     if (typeof renderBadge === "function") renderBadge();
     // 🔴 CHANGED: เคลียร์ตะกร้าแล้วต้องซ่อน/รีเฟรช floating bar
@@ -27730,6 +29814,14 @@ function resetNewPartnerDraft() {
     email: "",
     phone: "",
     company: "",
+    billingCompanyName: "",
+    billingAddress: "",
+    billingTaxId: "",
+    billingBranchType: "",
+    billingBranchCode: "",
+    billingPhone: "",
+    billingEmail: "",
+    billingContactName: "",
     status: "active",
     note: ""
   };
@@ -27781,6 +29873,9 @@ function updateNewPartnerField(field, value) {
   if (!Object.prototype.hasOwnProperty.call(draft, field)) return;
   draft[field] = value || "";
   state.admin.partners.error = "";
+  if (field === "billingBranchType") {
+    renderPartnerAdminSheet();
+  }
 }
 
 function getPartnerStatusLabel(status) {
@@ -27828,6 +29923,14 @@ function createPartnerEditDraft(partner) {
     email: String(partner?.email || "").trim(),
     phone: String(partner?.phone || "").trim(),
     company: String(partner?.company || "").trim(),
+    billingCompanyName: String(partner?.billingCompanyName || "").trim(),
+    billingAddress: String(partner?.billingAddress || "").trim(),
+    billingTaxId: String(partner?.billingTaxId || "").trim(),
+    billingBranchType: String(partner?.billingBranchType || "").trim(),
+    billingBranchCode: String(partner?.billingBranchCode || "").trim(),
+    billingPhone: String(partner?.billingPhone || "").trim(),
+    billingEmail: String(partner?.billingEmail || "").trim(),
+    billingContactName: String(partner?.billingContactName || "").trim(),
     note: String(partner?.note || "").trim(),
     status: String(partner?.status || "active").trim().toLowerCase() === "disabled"
       ? "disabled"
@@ -27845,22 +29948,160 @@ function renderPartnerDetailRow(label, value) {
   `;
 }
 
-function renderPartnerAdminCard(partner) {
+const PARTNER_BILLING_PROFILE_FIELDS = [
+  "billingCompanyName",
+  "billingAddress",
+  "billingTaxId",
+  "billingBranchType",
+  "billingBranchCode",
+  "billingPhone",
+  "billingEmail",
+  "billingContactName"
+];
+
+function getPartnerBillingBranchLabel(value) {
+  const normalized = String(value || "").trim();
+  if (normalized === "HEAD_OFFICE") return t("billingBranchHeadOffice", "สำนักงานใหญ่");
+  if (normalized === "BRANCH") return t("billingBranchBranch", "สาขา");
+  return "";
+}
+
+function partnerBillingFieldHasUnsafeText(value) {
+  const text = String(value || "");
+  return text.includes("<") || text.includes(">");
+}
+
+function validatePartnerBillingDraft(draft) {
+  const source = draft || {};
+  const limits = {
+    billingCompanyName: 160,
+    billingAddress: 500,
+    billingTaxId: 32,
+    billingBranchCode: 20,
+    billingPhone: 40,
+    billingEmail: 160,
+    billingContactName: 120
+  };
+  for (const field of PARTNER_BILLING_PROFILE_FIELDS) {
+    const value = String(source[field] || "").trim();
+    if (partnerBillingFieldHasUnsafeText(value)) {
+      return t("partnerBillingInvalidCharacters", "ข้อมูลออกใบวางบิลห้ามมีเครื่องหมาย < หรือ >");
+    }
+    if (limits[field] && value.length > limits[field]) {
+      return t("partnerBillingTooLong", "ข้อมูลออกใบวางบิลยาวเกินกำหนด");
+    }
+  }
+  const branchType = String(source.billingBranchType || "").trim();
+  if (branchType && branchType !== "HEAD_OFFICE" && branchType !== "BRANCH") {
+    return t("partnerBillingInvalidBranchType", "ประเภทสาขาไม่ถูกต้อง");
+  }
+  if (branchType === "BRANCH" && !String(source.billingBranchCode || "").trim()) {
+    return t("partnerBillingBranchCodeRequired", "กรุณาระบุรหัสสาขาสำหรับสาขา");
+  }
+  const email = String(source.billingEmail || "").trim();
+  if (email && !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email)) {
+    return t("partnerBillingInvalidEmail", "อีเมลสำหรับใบวางบิลไม่ถูกต้อง");
+  }
+  return "";
+}
+
+function renderPartnerBillingProfileFormSection(draft, updateFnName, prefix) {
+  const source = draft || {};
+  const branchType = String(source.billingBranchType || "").trim();
+  const isBranch = branchType === "BRANCH";
+  const updateAttr = field => `${updateFnName}('${field}', this.value)`;
+  const helper = t("partnerBillingFallbackHelp", "เว้นว่างเพื่อใช้ข้อมูลคู่ค้าหลัก");
   return `
-    <div class="admin-order-card">
-      <div class="row">
-        <div class="name">${esc(partner.partnerName || partner.partnerId || "-")}</div>
+    <div class="admin-detail-title" style="margin-top:16px">${t("partnerBillingProfileSection", "ข้อมูลออกใบวางบิล")}</div>
+    <div class="helper-text" style="margin-bottom:10px">${helper}</div>
+    <div class="form-group">
+      <label for="${prefix}BillingCompanyName">${t("billingCompanyName", "ชื่อบริษัทสำหรับใบวางบิล")}</label>
+      <input id="${prefix}BillingCompanyName" class="input" value="${escAttr(source.billingCompanyName || "")}"
+        oninput="${updateAttr("billingCompanyName")}">
+    </div>
+    <div class="form-group">
+      <label for="${prefix}BillingAddress">${t("billingAddress", "ที่อยู่ออกใบวางบิล")}</label>
+      <textarea id="${prefix}BillingAddress" class="input" rows="3"
+        oninput="${updateAttr("billingAddress")}">${esc(source.billingAddress || "")}</textarea>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="${prefix}BillingTaxId">${t("billingTaxId", "เลขประจำตัวผู้เสียภาษี")}</label>
+        <input id="${prefix}BillingTaxId" class="input" inputmode="numeric" value="${escAttr(source.billingTaxId || "")}"
+          oninput="${updateAttr("billingTaxId")}">
+      </div>
+      <div class="form-group">
+        <label for="${prefix}BillingPhone">${t("billingPhone", "เบอร์โทรสำหรับใบวางบิล")}</label>
+        <input id="${prefix}BillingPhone" class="input" inputmode="tel" value="${escAttr(source.billingPhone || "")}"
+          oninput="${updateAttr("billingPhone")}">
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="${prefix}BillingBranchType">${t("billingBranchType", "ประเภทสาขา")}</label>
+        <select id="${prefix}BillingBranchType" class="input" onchange="${updateAttr("billingBranchType")}">
+          <option value="" ${branchType ? "" : "selected"}>${t("billingBranchUnspecified", "ไม่ระบุ")}</option>
+          <option value="HEAD_OFFICE" ${branchType === "HEAD_OFFICE" ? "selected" : ""}>${t("billingBranchHeadOffice", "สำนักงานใหญ่")}</option>
+          <option value="BRANCH" ${branchType === "BRANCH" ? "selected" : ""}>${t("billingBranchBranch", "สาขา")}</option>
+        </select>
+      </div>
+      <div class="form-group" style="${isBranch ? "" : "display:none"}">
+        <label for="${prefix}BillingBranchCode">${t("billingBranchCode", "รหัสสาขา")}${isBranch ? " *" : ""}</label>
+        <input id="${prefix}BillingBranchCode" class="input" inputmode="numeric" value="${escAttr(source.billingBranchCode || "")}"
+          ${isBranch ? "" : "disabled"}
+          oninput="${updateAttr("billingBranchCode")}">
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="${prefix}BillingEmail">${t("billingEmail", "อีเมลสำหรับใบวางบิล")}</label>
+        <input id="${prefix}BillingEmail" class="input" value="${escAttr(source.billingEmail || "")}"
+          oninput="${updateAttr("billingEmail")}">
+      </div>
+      <div class="form-group">
+        <label for="${prefix}BillingContactName">${t("billingContactName", "ผู้ติดต่อสำหรับใบวางบิล")}</label>
+        <input id="${prefix}BillingContactName" class="input" value="${escAttr(source.billingContactName || "")}"
+          oninput="${updateAttr("billingContactName")}">
+      </div>
+    </div>
+  `;
+}
+
+function renderPartnerBillingProfileDetailSection(partner) {
+  const branchType = String(partner?.billingBranchType || "").trim();
+  return `
+    <div class="admin-detail-title" style="margin-top:16px">${t("partnerBillingProfileSection", "ข้อมูลออกใบวางบิล")}</div>
+    ${renderPartnerDetailRow(t("billingCompanyName", "ชื่อบริษัทสำหรับใบวางบิล"), partner?.billingCompanyName)}
+    ${renderPartnerDetailRow(t("billingAddress", "ที่อยู่ออกใบวางบิล"), partner?.billingAddress)}
+    ${renderPartnerDetailRow(t("billingTaxId", "เลขประจำตัวผู้เสียภาษี"), partner?.billingTaxId)}
+    ${renderPartnerDetailRow(t("billingBranchType", "ประเภทสาขา"), getPartnerBillingBranchLabel(branchType))}
+    ${renderPartnerDetailRow(t("billingBranchCode", "รหัสสาขา"), partner?.billingBranchCode)}
+    ${renderPartnerDetailRow(t("billingPhone", "เบอร์โทรสำหรับใบวางบิล"), partner?.billingPhone)}
+    ${renderPartnerDetailRow(t("billingEmail", "อีเมลสำหรับใบวางบิล"), partner?.billingEmail)}
+    ${renderPartnerDetailRow(t("billingContactName", "ผู้ติดต่อสำหรับใบวางบิล"), partner?.billingContactName)}
+  `;
+}
+
+function renderPartnerAdminCard(partner) {
+  const statusLabel = getPartnerStatusLabel(partner.status);
+  return `
+    <div class="partner-admin-card">
+      <div class="partner-admin-card-header">
+        <div class="partner-admin-card-name">${esc(partner.partnerName || partner.partnerId || "-")}</div>
         <span class="status-badge compact ${getPartnerStatusClass(partner.status)}">
-          ${esc(getPartnerStatusLabel(partner.status))}
+          ${esc(statusLabel)}
         </span>
       </div>
-      <div class="meta">
-        ${t("partnerId", "รหัสคู่ค้า")}: ${esc(partner.partnerId || "-")}
+      <div class="partner-admin-card-meta">
+        <span>${t("partnerId", "รหัสคู่ค้า")}: ${esc(partner.partnerId || "-")}</span>
+        <span>${t("status", "สถานะ")}: ${esc(statusLabel)}</span>
       </div>
-      <button class="btn btn-outline" type="button"
-        onclick="openPartnerDetail(${toInlineJsStringLiteral(partner.partnerId || "")})">
-        ${t("viewDetails", "ดูรายละเอียด")}
-      </button>
+      <div class="partner-admin-card-actions">
+        <button class="btn btn-outline partner-admin-detail-btn" type="button"
+          onclick="openPartnerDetail(${toInlineJsStringLiteral(partner.partnerId || "")})">
+          ${t("viewDetails", "ดูรายละเอียด")} ›
+        </button>
+      </div>
     </div>
   `;
 }
@@ -27910,6 +30151,9 @@ function updatePartnerEditField(field, value) {
   if (!draft || !Object.prototype.hasOwnProperty.call(draft, field)) return;
   draft[field] = value || "";
   state.admin.partners.editError = "";
+  if (field === "billingBranchType") {
+    renderPartnerAdminSheet();
+  }
 }
 
 function cancelPartnerEdit() {
@@ -27951,16 +30195,13 @@ function renderPartnerDetailView() {
         ${renderPartnerDetailRow(t("company", "บริษัท"), partner.company)}
         ${renderPartnerDetailRow(t("status", "สถานะ"), getPartnerStatusLabel(partner.status))}
         ${renderPartnerDetailRow(t("note", "หมายเหตุ"), partner.note)}
+        ${renderPartnerBillingProfileDetailSection(partner)}
         ${renderPartnerDetailRow(t("createdAt", "สร้างเมื่อ"), partner.createdAt ? formatThaiDate(partner.createdAt) : "")}
         ${renderPartnerDetailRow(t("createdBy", "ผู้สร้าง"), partner.createdBy)}
         ${renderPartnerDetailRow(t("updatedAt", "อัปเดตล่าสุด"), partner.updatedAt ? formatThaiDate(partner.updatedAt) : "")}
         ${renderPartnerDetailRow(t("updatedBy", "ผู้อัปเดต"), partner.updatedBy)}
       </div>
       <div class="action-row" style="margin-top:12px">
-        <button class="app-back-btn" type="button" onclick="backToPartnerList()">
-          <span class="app-back-btn-icon" aria-hidden="true">‹</span>
-          <span>${t("back", "กลับ")}</span>
-        </button>
         <button class="btn btn-primary" type="button" onclick="openPartnerEdit()">
           ${t("editPartner", "แก้ไขคู่ค้า")}
         </button>
@@ -27989,6 +30230,8 @@ function renderPartnerEditView() {
     <div class="admin-detail-card">
       <div class="admin-detail-title">${t("editPartner", "แก้ไขคู่ค้า")}</div>
       ${partnerState.editError ? `<div class="bulk-error-list" role="alert">${esc(partnerState.editError)}</div>` : ""}
+      <div class="partner-form-section">
+        <div class="admin-detail-title">${t("partnerCoreInfo", "ข้อมูลคู่ค้าหลัก")}</div>
       <div class="form-group">
         <label for="editPartnerId">${t("partnerId", "รหัสคู่ค้า")}</label>
         <input id="editPartnerId" class="input" value="${escAttr(partner.partnerId || "")}" disabled readonly>
@@ -27998,6 +30241,9 @@ function renderPartnerEditView() {
         <input id="editPartnerName" class="input" value="${escAttr(draft.partnerName || "")}"
           oninput="updatePartnerEditField('partnerName', this.value)">
       </div>
+      </div>
+      <div class="partner-form-section">
+        <div class="admin-detail-title">${t("partnerContactInfo", "ข้อมูลติดต่อ")}</div>
       <div class="form-grid">
         <div class="form-group">
           <label for="editPartnerContactName">${t("contactName", "ผู้ติดต่อ")}</label>
@@ -28022,6 +30268,12 @@ function renderPartnerEditView() {
             oninput="updatePartnerEditField('company', this.value)">
         </div>
       </div>
+      </div>
+      <div class="partner-form-section">
+        ${renderPartnerBillingProfileFormSection(draft, "updatePartnerEditField", "editPartner")}
+      </div>
+      <div class="partner-form-section">
+        <div class="admin-detail-title">${t("partnerStatusAndNote", "สถานะและหมายเหตุ")}</div>
       <div class="form-group">
         <label for="editPartnerStatus">${t("status", "สถานะ")}</label>
         <select id="editPartnerStatus" class="input" onchange="updatePartnerEditField('status', this.value)">
@@ -28033,6 +30285,7 @@ function renderPartnerEditView() {
         <label for="editPartnerNote">${t("note", "หมายเหตุ")}</label>
         <textarea id="editPartnerNote" class="input" rows="3"
           oninput="updatePartnerEditField('note', this.value)">${esc(draft.note || "")}</textarea>
+      </div>
       </div>
       <div class="action-row" style="margin-top:12px">
         <button class="btn btn-outline" type="button"
@@ -28070,7 +30323,7 @@ function renderPartnerAdminList() {
     <div class="helper-text" style="margin-bottom:8px">
       ${formatUiText("partnersFound", { count: Number(partnerState.total || partnerState.items.length || 0).toLocaleString("th-TH") }, "พบ {count} คู่ค้า")}
     </div>
-    <div class="bulk-preview-list">
+    <div class="partner-admin-list">
       ${partnerState.items.map(renderPartnerAdminCard).join("")}
     </div>
   `;
@@ -28079,11 +30332,13 @@ function renderPartnerAdminList() {
 function renderAddPartnerForm() {
   const draft = state.admin.partners.newPartner;
   return `
-    <div class="admin-detail-card" style="margin-top:14px">
+    <div class="admin-detail-card partner-admin-panel" style="margin-top:22px">
       <div class="admin-detail-title">${t("addPartner", "เพิ่มคู่ค้า")}</div>
       <div class="helper-text" style="margin-bottom:10px">
         ${t("addPartnerHelp", "ใช้สร้างหรือกู้คืนรหัสคู่ค้า เช่น PTR-001 เพื่อใช้สร้างลิงก์คู่ค้า")}
       </div>
+      <div class="partner-form-section">
+        <div class="admin-detail-title">${t("partnerCoreInfo", "ข้อมูลคู่ค้าหลัก")}</div>
       <div class="form-group">
         <label for="newPartnerId">${t("partnerId", "รหัสคู่ค้า")} *</label>
         <input id="newPartnerId" class="input" value="${escAttr(draft.partnerId || "")}"
@@ -28096,6 +30351,9 @@ function renderAddPartnerForm() {
           placeholder="${t("partnerNamePlaceholder", "ชื่อร้าน / ชื่อคู่ค้า")}"
           oninput="updateNewPartnerField('partnerName', this.value)">
       </div>
+      </div>
+      <div class="partner-form-section">
+        <div class="admin-detail-title">${t("partnerContactInfo", "ข้อมูลติดต่อ")}</div>
       <div class="form-grid">
         <div class="form-group">
           <label for="newPartnerContactName">${t("contactName", "ผู้ติดต่อ")}</label>
@@ -28120,6 +30378,12 @@ function renderAddPartnerForm() {
             oninput="updateNewPartnerField('company', this.value)">
         </div>
       </div>
+      </div>
+      <div class="partner-form-section">
+        ${renderPartnerBillingProfileFormSection(draft, "updateNewPartnerField", "newPartner")}
+      </div>
+      <div class="partner-form-section">
+        <div class="admin-detail-title">${t("partnerStatusAndNote", "สถานะและหมายเหตุ")}</div>
       <div class="form-group">
         <label for="newPartnerStatus">${t("status", "สถานะ")}</label>
         <select id="newPartnerStatus" onchange="updateNewPartnerField('status', this.value)">
@@ -28131,6 +30395,7 @@ function renderAddPartnerForm() {
         <label for="newPartnerNote">${t("note", "หมายเหตุ")}</label>
         <textarea id="newPartnerNote" class="input" rows="3"
           oninput="updateNewPartnerField('note', this.value)">${esc(draft.note || "")}</textarea>
+      </div>
       </div>
       <button class="btn btn-primary" type="button"
         ${state.admin.partners.isCreating ? "disabled" : ""}
@@ -28162,9 +30427,11 @@ function renderPartnerAdminSheet() {
         <span>${t("back", "กลับ")}</span>
       </button>
       <h3 id="adminPartnersSheetTitle">${title}</h3>
-      <button class="btn btn-outline sheet-nav-btn"
-        onclick="closePartnerAdminSheet()"
-        aria-label="${t("close", "ปิด")}">×</button>
+      ${partnerState.view === "detail" ? "" : `
+        <button class="btn btn-outline sheet-nav-btn"
+          onclick="closePartnerAdminSheet()"
+          aria-label="${t("close", "ปิด")}">×</button>
+      `}
     </div>
 
     ${
@@ -28174,31 +30441,34 @@ function renderPartnerAdminSheet() {
             ${t("partnerAdminHelp", "จัดการข้อมูลคู่ค้าที่ใช้สร้างลิงก์ Partner Catalog เช่น PTR-001")}
           </div>
 
-          <div class="bulk-product-picker-controls">
-            <input
-              id="partnerAdminSearch"
-              class="input"
-              type="search"
-              value="${escAttr(partnerState.q || "")}"
-              placeholder="${t("partnerSearchPlaceholder", "ค้นหารหัสคู่ค้า / ชื่อ / ผู้ติดต่อ")}"
-              oninput="setPartnerAdminSearch(this.value)"
-              onkeydown="if(event.key === 'Enter') refreshPartners();">
-            <select id="partnerAdminStatus" class="input" onchange="setPartnerAdminStatusFilter(this.value)">
-              <option value="all" ${partnerState.status === "all" ? "selected" : ""}>${t("allProducts", "ทั้งหมด")}</option>
-              <option value="active" ${partnerState.status === "active" ? "selected" : ""}>${t("activeDisplay", "เปิดใช้งาน")}</option>
-              <option value="disabled" ${partnerState.status === "disabled" ? "selected" : ""}>${t("disabledDisplay", "ปิดใช้งาน")}</option>
-            </select>
-          </div>
-          <div class="bulk-product-picker-actions">
-            <button class="btn btn-outline" type="button" onclick="refreshPartners()">${t("refresh", "รีเฟรช")}</button>
-            <button class="btn btn-outline" type="button"
-              onclick="state.admin.partners.q=''; state.admin.partners.status='all'; refreshPartners();">
-              ${t("clearFilters", "ล้างตัวกรอง")}
-            </button>
-          </div>
+          <div class="admin-detail-card partner-admin-panel">
+            <div class="admin-detail-title">${t("existingPartners", "คู่ค้าที่มีอยู่")}</div>
+            <div class="bulk-product-picker-controls">
+              <input
+                id="partnerAdminSearch"
+                class="input"
+                type="search"
+                value="${escAttr(partnerState.q || "")}"
+                placeholder="${t("partnerSearchPlaceholder", "ค้นหารหัสคู่ค้า / ชื่อ / ผู้ติดต่อ")}"
+                oninput="setPartnerAdminSearch(this.value)"
+                onkeydown="if(event.key === 'Enter') refreshPartners();">
+              <select id="partnerAdminStatus" class="input" onchange="setPartnerAdminStatusFilter(this.value)">
+                <option value="all" ${partnerState.status === "all" ? "selected" : ""}>${t("allProducts", "ทั้งหมด")}</option>
+                <option value="active" ${partnerState.status === "active" ? "selected" : ""}>${t("activeDisplay", "เปิดใช้งาน")}</option>
+                <option value="disabled" ${partnerState.status === "disabled" ? "selected" : ""}>${t("disabledDisplay", "ปิดใช้งาน")}</option>
+              </select>
+            </div>
+            <div class="bulk-product-picker-actions">
+              <button class="btn btn-outline" type="button" onclick="refreshPartners()">${t("refresh", "รีเฟรช")}</button>
+              <button class="btn btn-outline" type="button"
+                onclick="state.admin.partners.q=''; state.admin.partners.status='all'; refreshPartners();">
+                ${t("clearFilters", "ล้างตัวกรอง")}
+              </button>
+            </div>
 
-          ${partnerState.message ? `<div class="bulk-import-success-card" role="status">${esc(partnerState.message)}</div>` : ""}
-          ${renderPartnerAdminList()}
+            ${partnerState.message ? `<div class="bulk-import-success-card" role="status">${esc(partnerState.message)}</div>` : ""}
+            ${renderPartnerAdminList()}
+          </div>
           ${renderAddPartnerForm()}
         `
         : partnerState.view === "edit"
@@ -28302,6 +30572,12 @@ async function savePartnerEditFromAdmin() {
     renderPartnerAdminSheet();
     return;
   }
+  const billingError = validatePartnerBillingDraft(draft);
+  if (billingError) {
+    partnerState.editError = billingError;
+    renderPartnerAdminSheet();
+    return;
+  }
 
   partnerState.isUpdating = true;
   partnerState.editError = "";
@@ -28319,6 +30595,14 @@ async function savePartnerEditFromAdmin() {
       "email",
       "phone",
       "company",
+      "billingCompanyName",
+      "billingAddress",
+      "billingTaxId",
+      "billingBranchType",
+      "billingBranchCode",
+      "billingPhone",
+      "billingEmail",
+      "billingContactName",
       "note",
       "status"
     ].forEach(field => {
@@ -28368,6 +30652,12 @@ async function createPartnerFromAdmin() {
     renderPartnerAdminSheet();
     return;
   }
+  const billingError = validatePartnerBillingDraft(draft);
+  if (billingError) {
+    partnerState.error = billingError;
+    renderPartnerAdminSheet();
+    return;
+  }
 
   partnerState.isCreating = true;
   partnerState.error = "";
@@ -28385,6 +30675,14 @@ async function createPartnerFromAdmin() {
       "email",
       "phone",
       "company",
+      "billingCompanyName",
+      "billingAddress",
+      "billingTaxId",
+      "billingBranchType",
+      "billingBranchCode",
+      "billingPhone",
+      "billingEmail",
+      "billingContactName",
       "status",
       "note"
     ].forEach(field => {
@@ -30138,7 +32436,7 @@ function renderPartnerRequestConvertCard(request) {
   const error = String(requestState.convertError || "").trim();
 
   return `
-    <div class="admin-detail-card" style="margin-top:14px">
+    <div class="admin-detail-card" style="margin-top:22px">
       <div class="admin-detail-title">${t("createOrderFromRequest", "สร้างออเดอร์จากคำขอ")}</div>
       <div class="helper-text">
         ${t("partnerConvertHelp", "ออเดอร์ที่สร้างจากคำขอคู่ค้าจะเริ่มเป็น PENDING และต้องอนุมัติในออเดอร์รออนุมัติก่อน ระบบจึงจะตัดสต็อก")}
@@ -30516,21 +32814,28 @@ async function exportOrderPNG() {
   const headerTopY = y;
 
   /* ===== COMPANY BLOCK ===== */
+const documentBranding = getDocumentBranding(getDefaultBillingNoteLogoUrl());
+const legacyCompany = documentBranding.company;
+const legacyAddressLines = String(legacyCompany.address || "")
+  .split(/\n+/)
+  .map(line => line.trim())
+  .filter(Boolean)
+  .slice(0, 3);
 ctx.font = `700 ${cfg.textSize + 4}px ${SARABUN_CANVAS_FONT_STACK}`;
-ctx.fillText("ร้านล้อพาณิชย์", cfg.padding, headerTopY);
+ctx.fillText(legacyCompany.nameTh || "Luopanich", cfg.padding, headerTopY);
 
 ctx.fillText(
-   "7/13 หมู่ 5",
+   legacyAddressLines[0] || "",
    cfg.padding,
    headerTopY + cfg.lineHeight
  );
  ctx.fillText(
-   "ต.หนองแขม อ.หนองแค",
+   legacyAddressLines[1] || legacyCompany.phone || "",
    cfg.padding,
    headerTopY + cfg.lineHeight * 2
  );
  ctx.fillText(
-   "จ.สระบุรี 18140",
+   legacyAddressLines[2] || legacyCompany.nameEn || "",
    cfg.padding,
    headerTopY + cfg.lineHeight * 3
  );
@@ -30699,6 +33004,9 @@ function exportOrderPrint() {
   const today = order.createdAt
     ? new Date(order.createdAt).toLocaleDateString(printLocale)
     : new Date().toLocaleDateString(printLocale);
+  const documentBranding = getDocumentBranding(getDefaultBillingNoteLogoUrl());
+  const legacyCompany = documentBranding.company;
+  const legacyPhone = legacyCompany.phone ? `${t("phone", "โทรศัพท์")}: ${legacyCompany.phone}` : "";
 
   const total = Number(order.total || 0).toLocaleString();
   const totalAmountWords = printLang === "en"
@@ -30881,9 +33189,9 @@ function exportOrderPrint() {
       <div class="header section">
         <div>
           <h2>${printDocumentTitle}</h2>
-          <div>&nbsp;</div>
-           <div>&nbsp;</div>
-           <div>&nbsp;</div>
+          <div>${esc(legacyCompany.nameTh)}</div>
+          <div>${esc(legacyCompany.address)}</div>
+          <div>${esc(legacyPhone || legacyCompany.nameEn)}</div>
         </div>
 
         <div>
@@ -31290,6 +33598,7 @@ const __domReady = new Promise((resolve) => {
   try {
     // ✅ ADD: wait until #floatingBar / #btnTop / etc are in DOM
     await __domReady;
+    void loadBrandingSettingsForLiveUi();
     // 🔴 CHANGED (STEP A5): Reload ต้องกลับ Viewer เสมอ (แม้ restore admin สำเร็จ)
     state.mode = "viewer";
     state.search = "";
