@@ -9768,6 +9768,43 @@ function buildBrandingSettingsPatch(draft) {
   return patch;
 }
 
+function isAmbiguousBrandingSaveFailure(err) {
+  const code = String(err?.code || "").trim();
+  const name = String(err?.name || "").trim();
+  const message = String(err?.message || err || "").trim();
+  if (code === "REQUEST_TIMEOUT" || name === "AbortError") return true;
+  if (/^HTTP\s+\d+:/i.test(message)) return false;
+  if (/forbidden|not authenticated|missing admin token|missing token|invalid token|session expired/i.test(message)) return false;
+  if (/invalid branding|unknown branding|branding setting too long|invalid branding settings payload/i.test(message)) return false;
+  return /failed to fetch|network\s*error|networkerror|load failed|connection.*(lost|reset|interrupted)|offline/i.test(message);
+}
+
+function getBrandingReadbackExpectedValue(key, value) {
+  const clean = sanitizeBrandingDraftValue(key, value);
+  return clean || String(BRANDING_SETTINGS_DEFAULTS[key] || "");
+}
+
+function brandingSettingsReadbackMatchesPatch(settings, patch) {
+  const normalized = normalizeBrandingSettingsForUi(settings || {});
+  return BRANDING_SETTINGS_FIELDS.every(key => {
+    return String(normalized[key] || "") === getBrandingReadbackExpectedValue(key, patch?.[key]);
+  });
+}
+
+async function verifyBrandingSaveByReadback(patch) {
+  const settings = await fetchBrandSettingsForAdmin();
+  return brandingSettingsReadbackMatchesPatch(settings, patch) ? settings : null;
+}
+
+function finishBrandingSettingsSaveSuccess(settings) {
+  const brandingState = state.admin.brandingSettings;
+  state.brandingSettings = normalizeBrandingSettingsForUi(settings || {});
+  brandingState.draft = createBrandingSettingsDraft(state.brandingSettings);
+  applyBrandingToLiveUi();
+  showToast(t("brandingSaveSuccess", "บันทึกตั้งค่าร้านแล้ว"), "success");
+  closeBrandingSettingsAfterSaveSuccess();
+}
+
 function getDefaultDocumentCompanyInfo() {
   return {
     nameTh: "บริษัท แอลยูโอพาริช จำกัด",
@@ -10361,13 +10398,22 @@ async function saveBrandingSettingsFromAdmin() {
     });
     const json = await postFormAction(form, { timeout: 30000 });
     const settings = normalizeBrandingSettingsForUi(json?.data || patch);
-    state.brandingSettings = settings;
-    brandingState.draft = createBrandingSettingsDraft(settings);
-    applyBrandingToLiveUi();
-    showToast(t("brandingSaveSuccess", "บันทึกตั้งค่าร้านแล้ว"), "success");
+    finishBrandingSettingsSaveSuccess(settings);
     saved = true;
-    closeBrandingSettingsAfterSaveSuccess();
   } catch (err) {
+    if (isAmbiguousBrandingSaveFailure(err)) {
+      try {
+        const recoveredSettings = await verifyBrandingSaveByReadback(patch);
+        if (recoveredSettings) {
+          console.warn("Branding settings save recovered after ambiguous failure");
+          finishBrandingSettingsSaveSuccess(recoveredSettings);
+          saved = true;
+          return;
+        }
+      } catch (readbackErr) {
+        console.warn("Branding settings save readback verification failed", readbackErr);
+      }
+    }
     console.error(err);
     brandingState.draft = { ...patch };
     brandingState.error = getUserFacingError(err, "brandingSaveFailed", "บันทึกตั้งค่าร้านไม่สำเร็จ");
