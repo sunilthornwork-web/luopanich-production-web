@@ -2632,6 +2632,29 @@ button:disabled {
   stroke-linejoin: round;
   opacity: .92;
 }
+
+.animated-close-icon{
+  width:18px;
+  height:18px;
+  display:block;
+  animation:closeIconGentlePulse 3s ease-in-out infinite;
+  transform-origin:center;
+}
+
+@keyframes closeIconGentlePulse{
+  0%, 100%{
+    transform:scale(1);
+  }
+  50%{
+    transform:scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .animated-close-icon{
+    animation:none;
+  }
+}
  /* ================= FILTER ICON DROPDOWN ================= */
  .filter-wrap{ position:relative; }
 
@@ -11652,7 +11675,7 @@ function openImageViewer(url){
       class="close-btn image-viewer-close"
       aria-label="${escAttr(t("closeImagePreview", "ปิดตัวอย่างรูปภาพ"))}"
       onclick="closeImageViewer(event)">
-      ×
+      ${renderAnimatedCloseIcon()}
     </button>
 
     <!-- product image -->
@@ -12173,6 +12196,22 @@ async function copyViewerProductInfo(type, event) {
   }
 }
 
+function renderAnimatedCloseIcon() {
+  return `
+    <svg
+      class="animated-close-icon"
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path d="M16.19 2H7.81C4.17 2 2 4.17 2 7.81V16.18C2 19.83 4.17 22 7.81 22H16.18C19.82 22 21.99 19.83 21.99 16.19V7.81C22 4.17 19.83 2 16.19 2ZM15.36 14.3C15.65 14.59 15.65 15.07 15.36 15.36C15.21 15.51 15.02 15.58 14.83 15.58C14.64 15.58 14.45 15.51 14.3 15.36L12 13.06L9.7 15.36C9.55 15.51 9.36 15.58 9.17 15.58C8.98 15.58 8.79 15.51 8.64 15.36C8.35 15.07 8.35 14.59 8.64 14.3L10.94 12L8.64 9.7C8.35 9.41 8.35 8.93 8.64 8.64C8.93 8.35 9.41 8.35 9.7 8.64L12 10.94L14.3 8.64C14.59 8.35 15.07 8.35 15.36 8.64C15.65 8.93 15.65 9.41 15.36 9.7L13.06 12L15.36 14.3Z" fill="currentColor"/>
+    </svg>
+  `;
+}
+
 function renderViewerCopyIcon(type) {
   const icons = {
     name: `
@@ -12244,7 +12283,7 @@ function renderViewerCopyInfoSection() {
             <div class="viewer-copy-title">${t("copyProductInfo", "คัดลอกข้อมูลสินค้า")}</div>
             <div class="viewer-copy-subtitle">${t("copyProductInfoSubtitle", "เลือกข้อมูลที่ต้องการคัดลอก")}</div>
           </div>
-          <button class="viewer-copy-close" type="button" aria-label="${escAttr(t("copyMenuClose", "ปิดเมนูคัดลอก"))}" onclick="toggleViewerCopyInfoSection(event)">×</button>
+          <button class="viewer-copy-close" type="button" aria-label="${escAttr(t("copyMenuClose", "ปิดเมนูคัดลอก"))}" onclick="toggleViewerCopyInfoSection(event)">${renderAnimatedCloseIcon()}</button>
         </div>
         <div class="viewer-copy-grid">
           ${renderViewerCopyTile("name", t("copyProductName", "คัดลอกชื่อสินค้า"))}
@@ -13937,7 +13976,7 @@ function openQtySheet(){
     <div class="sheet-topbar">
       <button class="btn btn-outline sheet-nav-btn"
         onclick="closeQty()"
-        aria-label="${t("close", "ปิด")}">×</button>
+        aria-label="${t("close", "ปิด")}">${renderAnimatedCloseIcon()}</button>
       <h3 id="qtySheetTitle">${t("quantityTitle", "ระบุจำนวน")}</h3>
       <div aria-hidden="true"></div>
     </div>
@@ -14052,7 +14091,7 @@ function renderAdminLogin(){
     <div class="sheet-topbar">
       <button class="btn btn-outline sheet-nav-btn"
         onclick="cancelAdminLogin()"
-        aria-label="${t("closeAdminLogin", "ปิดหน้าเข้าสู่ระบบ")}">×</button>
+        aria-label="${t("closeAdminLogin", "ปิดหน้าเข้าสู่ระบบ")}">${renderAnimatedCloseIcon()}</button>
       <h3 id="adminLoginSheetTitle">${t("adminLoginTitle", "เข้าสู่ระบบแอดมิน")}</h3>
       <div aria-hidden="true"></div>
     </div>
@@ -14482,7 +14521,7 @@ function renderAdminApplicationSheet() {
     <div class="sheet-topbar">
       <button class="btn btn-outline sheet-nav-btn"
         onclick="cancelAdminApplicationSheet()"
-        aria-label="${t("closeAdminApplication", "ปิดหน้าสมัครบัญชีแอดมิน")}">×</button>
+        aria-label="${t("closeAdminApplication", "ปิดหน้าสมัครบัญชีแอดมิน")}">${renderAnimatedCloseIcon()}</button>
       <h3 id="adminLoginSheetTitle">${t("applyAdminAccount", "สมัครบัญชีแอดมิน")}</h3>
       <div aria-hidden="true"></div>
     </div>
@@ -14877,7 +14916,7 @@ function renderAdminApplicationReviewSheet() {
       <h3 id="adminLoginSheetTitle">${t("adminApplicationRequests", "คำขอสมัครแอดมิน")}</h3>
       <button class="btn btn-outline sheet-nav-btn"
         onclick="closeAdminApplicationReviewSheet()"
-        aria-label="${t("close", "ปิด")}">×</button>
+        aria-label="${t("close", "ปิด")}">${renderAnimatedCloseIcon()}</button>
     </div>
 
     ${
@@ -17297,8 +17336,9 @@ async function openAdminOrder(orderId){
   adminOrderSheet.innerHTML = `
     <button
       class="sheet-close-btn"
-      onclick="closeAdminOrderSheet()">
-      ×
+      onclick="closeAdminOrderSheet()"
+      aria-label="${t("close", "ปิด")}">
+      ${renderAnimatedCloseIcon()}
     </button>
 
     <h3 id="adminOrderSheetTitle" title="${escAttr(order.orderId || "")}">${esc(formatOrderIdForDisplay(order.orderId))}</h3>
@@ -17458,8 +17498,9 @@ function closeAdminOrderSheet() {
       closeOverlay(
         bulkPendingDeliverySheet
       )
-    ">
-    ✕
+    "
+    aria-label="${t("close", "ปิด")}">
+    ${renderAnimatedCloseIcon()}
   </button>
 
 <h3 id="bulkPendingDeliverySheetTitle"
@@ -25303,6 +25344,7 @@ function renderAddCompareImagesPreview() {
            ">
       <button
         onclick="removeAddCompareImage(${idx})"
+        aria-label="${t("remove", "ลบ")}"
         style="
           position:absolute;
           top:-6px;
@@ -25316,7 +25358,7 @@ function renderAddCompareImagesPreview() {
           font-size:12px;
           cursor:pointer;
         "
-      >×</button>
+      >${renderAnimatedCloseIcon()}</button>
     </div>
   `).join("");
 }
@@ -25897,6 +25939,7 @@ function openProductEdit(p, options = {}){
              ">
         <button
           onclick="removeCompareImage(${idx})"
+          aria-label="${t("remove", "ลบ")}"
           style="
             position:absolute;
             top:-6px;
@@ -25910,7 +25953,7 @@ function openProductEdit(p, options = {}){
             font-size:12px;
             cursor:pointer;
           "
-        >×</button>
+        >${renderAnimatedCloseIcon()}</button>
       </div>
     `).join("")
   }
@@ -26002,6 +26045,7 @@ function removeCompareImage(index){
            ">
       <button
         onclick="removeCompareImage(${idx})"
+        aria-label="${t("remove", "ลบ")}"
         style="
           position:absolute;
           top:-6px;
@@ -26015,7 +26059,7 @@ function removeCompareImage(index){
           font-size:12px;
           cursor:pointer;
         "
-      >×</button>
+      >${renderAnimatedCloseIcon()}</button>
     </div>
   `).join("");
 }
@@ -26100,7 +26144,7 @@ async function handleCompareImagesUpload(input){
              font-size:12px;
              cursor:pointer;
            "
-         >×</button>
+         >${renderAnimatedCloseIcon()}</button>
        </div>
      `).join("");
    }
@@ -27038,7 +27082,7 @@ function renderMultiSizeProductSheet() {
     <div class="sheet-topbar">
       <button class="btn btn-outline sheet-nav-btn"
         onclick="closeMultiSizeProductSheet()"
-        aria-label="${t("multiSizeCloseAria", "ปิดหน้าเพิ่มสินค้าแบบหลายไซส์")}">×</button>
+        aria-label="${t("multiSizeCloseAria", "ปิดหน้าเพิ่มสินค้าแบบหลายไซส์")}">${renderAnimatedCloseIcon()}</button>
       <h3 id="adminMultiSizeProductSheetTitle">${t("addMultiSizeProduct", "เพิ่มสินค้าแบบหลายไซส์")}</h3>
       <div aria-hidden="true"></div>
     </div>
@@ -30532,7 +30576,7 @@ function renderPartnerAdminSheet() {
       ${partnerState.view === "detail" ? "" : `
         <button class="btn btn-outline sheet-nav-btn"
           onclick="closePartnerAdminSheet()"
-          aria-label="${t("close", "ปิด")}">×</button>
+          aria-label="${t("close", "ปิด")}">${renderAnimatedCloseIcon()}</button>
       `}
     </div>
 
@@ -32662,7 +32706,7 @@ function renderPartnerRequestsSheet() {
       <h3 id="adminPartnerRequestsSheetTitle">${isDetail ? t("partnerRequestDetails", "รายละเอียดคำขอคู่ค้า") : t("partnerRequests", "คำขอคู่ค้า")}</h3>
       <button class="btn btn-outline sheet-nav-btn"
         onclick="closePartnerRequestsSheet()"
-        aria-label="${t("close", "ปิด")}">×</button>
+        aria-label="${t("close", "ปิด")}">${renderAnimatedCloseIcon()}</button>
     </div>
 
     <div class="helper-text" style="margin-bottom:10px">
