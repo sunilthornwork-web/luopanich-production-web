@@ -18929,10 +18929,6 @@ function renderBatchStockInSheet() {
       ${
         batchState.reviewOpen
           ? `
-            <button class="app-back-btn" type="button" onclick="editBatchStockIn()">
-              <span class="app-back-btn-icon" aria-hidden="true">‹</span>
-              <span>${t("back", "กลับ")}</span>
-            </button>
             <button class="btn btn-success" type="button"
               ${canSubmit ? "" : "disabled"}
               onclick="submitBatchStockIn()">
@@ -22529,7 +22525,6 @@ function buildDeliveryNotePrintHtml(data, options = {}) {
               '<div class="doc-header">' +
                 '<div>' +
                   '<img class="delivery-note-logo" src="' + escapePrintHtml(cfg.logoUrl) + '" alt="Luopanich" loading="eager" decoding="sync" onerror="this.remove();">' +
-                  '<div class="shop-name">' + escapePrintHtml(cfg.shopName) + '</div>' +
                   '<h1>' + escapePrintHtml(cfg.title) + '</h1>' +
                 '</div>' +
                 '<div class="doc-meta">' +
