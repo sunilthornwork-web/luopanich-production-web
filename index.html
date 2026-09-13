@@ -4659,6 +4659,12 @@ body[data-theme="cute"] #loading-overlay {
   cursor:pointer;
 }
 
+.mobile-icon-btn > svg{
+  width:18px;
+  height:18px;
+  display:block;
+}
+
 .product-detail-hero{
   display:grid;
   gap:12px;
@@ -12792,12 +12798,29 @@ function renderProductSheet(){
         </button>
         <h3 id="productSheetTitle" class="mobile-detail-title">${t("productDetails", "รายละเอียดสินค้า")}</h3>
         <div class="mobile-detail-actions">
-          <button class="mobile-icon-btn" type="button" onclick="toggleProductDetailCopySection(event)" aria-label="${t("copyProductInfo", "คัดลอกข้อมูลสินค้า")}">⧉</button>
+          <button class="mobile-icon-btn" type="button" onclick="toggleProductDetailCopySection(event)" aria-label="${t("copyProductInfo", "คัดลอกข้อมูลสินค้า")}">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path d="M 13.04 4.2933 L 10.3733 1.6267 c -0.188 -0.188 -0.4427 -0.2933 -0.7067 -0.2933 H 4.3333 c -1.2867 0 -2.3333 1.0467 -2.3333 2.3333 v 9.3333 c 0 1.2867 1.0467 2.3333 2.3333 2.3333 h 4 c 0.552 0 1 -0.448 1 -1 s -0.448 -1 -1 -1 H 4.3333 c -0.184 0 -0.3333 -0.1493 -0.3333 -0.3333 V 3.6667 c 0 -0.184 0.1493 -0.3333 0.3333 -0.3333 h 4.3333 v 1.6667 c 0 0.552 0.448 1 1 1 h 1.6667 v 0.3333 c 0 0.552 0.448 1 1 1 s 1 -0.448 1 -1 v -1.3333 c 0 -0.2653 -0.1053 -0.52 -0.2933 -0.7067 Z" fill="currentColor"></path>
+              <path d="M 21.7066 11.6266 l -2.6667 -2.6667 c -0.188 -0.188 -0.4427 -0.2933 -0.7067 -0.2933 h -5.3333 c -1.2867 0 -2.3333 1.0467 -2.3333 2.3333 v 9.3333 c 0 1.2867 1.0467 2.3333 2.3333 2.3333 h 6.6666 c 1.2867 0 2.3333 -1.0467 2.3333 -2.3333 v -8 c 0 -0.2653 -0.1053 -0.52 -0.2933 -0.7067 Z m -1.1213 1.7067 h -2.5853 c -0.368 0 -0.6667 -0.2987 -0.6667 -0.6667 v -2.5853 l 3.252 3.252 Z" fill="currentColor"></path>
+            </svg>
+          </button>
           <button class="mobile-icon-btn" type="button" onclick="openCartFromProductDetail()" aria-label="${t("cart", "ตะกร้า")}">
-            <svg class="icon-sf" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path d="M6 7h14l-1.4 8.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.7L5 4H3"></path>
-              <circle cx="9" cy="20" r="1"></circle>
-              <circle cx="17" cy="20" r="1"></circle>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path d="M2 1.25C1.58579 1.25 1.25 1.58579 1.25 2C1.25 2.41421 1.58579 2.75 2 2.75H3.18189C3.55884 2.75 3.87721 3.02977 3.92567 3.40358L5.28029 13.8535C5.32617 14.2075 5.43805 14.5384 5.60258 14.8346C4.53571 15.1199 3.75 16.0932 3.75 17.25C3.75 18.6307 4.86929 19.75 6.25 19.75H6.37803C6.29512 19.9846 6.25 20.237 6.25 20.5C6.25 21.7426 7.25736 22.75 8.5 22.75C9.74264 22.75 10.75 21.7426 10.75 20.5C10.75 20.237 10.7049 19.9846 10.622 19.75H16.378C16.2951 19.9846 16.25 20.237 16.25 20.5C16.25 21.7426 17.2574 22.75 18.5 22.75C19.7426 22.75 20.75 21.7426 20.75 20.5C20.75 20.237 20.7049 19.9846 20.622 19.75H21C21.4142 19.75 21.75 19.4142 21.75 19C21.75 18.5858 21.4142 18.25 21 18.25H6.25C5.69772 18.25 5.25 17.8023 5.25 17.25C5.25 16.6977 5.69772 16.25 6.25 16.25H18.7396C20.4081 16.25 21.8056 14.9864 21.9732 13.3263L22.7452 5.6757C22.8492 4.64496 22.04 3.75 21.004 3.75H5.48313L5.41322 3.21075C5.26785 2.08931 4.31272 1.25 3.18189 1.25H2Z" fill="currentColor"/>
             </svg>
             ${renderCartBadge()}
           </button>
@@ -12896,12 +12919,29 @@ function renderProductSheet(){
       </button>
       <h3 id="productSheetTitle" class="mobile-detail-title">${t("productDetails", "รายละเอียดสินค้า")}</h3>
       <div class="mobile-detail-actions">
-        <button class="mobile-icon-btn" type="button" onclick="toggleProductDetailCopySection(event)" aria-label="${t("copyProductInfo", "คัดลอกข้อมูลสินค้า")}">⧉</button>
+        <button class="mobile-icon-btn" type="button" onclick="toggleProductDetailCopySection(event)" aria-label="${t("copyProductInfo", "คัดลอกข้อมูลสินค้า")}">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path d="M 13.04 4.2933 L 10.3733 1.6267 c -0.188 -0.188 -0.4427 -0.2933 -0.7067 -0.2933 H 4.3333 c -1.2867 0 -2.3333 1.0467 -2.3333 2.3333 v 9.3333 c 0 1.2867 1.0467 2.3333 2.3333 2.3333 h 4 c 0.552 0 1 -0.448 1 -1 s -0.448 -1 -1 -1 H 4.3333 c -0.184 0 -0.3333 -0.1493 -0.3333 -0.3333 V 3.6667 c 0 -0.184 0.1493 -0.3333 0.3333 -0.3333 h 4.3333 v 1.6667 c 0 0.552 0.448 1 1 1 h 1.6667 v 0.3333 c 0 0.552 0.448 1 1 1 s 1 -0.448 1 -1 v -1.3333 c 0 -0.2653 -0.1053 -0.52 -0.2933 -0.7067 Z" fill="currentColor"></path>
+              <path d="M 21.7066 11.6266 l -2.6667 -2.6667 c -0.188 -0.188 -0.4427 -0.2933 -0.7067 -0.2933 h -5.3333 c -1.2867 0 -2.3333 1.0467 -2.3333 2.3333 v 9.3333 c 0 1.2867 1.0467 2.3333 2.3333 2.3333 h 6.6666 c 1.2867 0 2.3333 -1.0467 2.3333 -2.3333 v -8 c 0 -0.2653 -0.1053 -0.52 -0.2933 -0.7067 Z m -1.1213 1.7067 h -2.5853 c -0.368 0 -0.6667 -0.2987 -0.6667 -0.6667 v -2.5853 l 3.252 3.252 Z" fill="currentColor"></path>
+            </svg>
+          </button>
         <button class="mobile-icon-btn" type="button" onclick="openCartFromProductDetail()" aria-label="${t("cart", "ตะกร้า")}">
-          <svg class="icon-sf" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M6 7h14l-1.4 8.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.7L5 4H3"></path>
-            <circle cx="9" cy="20" r="1"></circle>
-            <circle cx="17" cy="20" r="1"></circle>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path d="M2 1.25C1.58579 1.25 1.25 1.58579 1.25 2C1.25 2.41421 1.58579 2.75 2 2.75H3.18189C3.55884 2.75 3.87721 3.02977 3.92567 3.40358L5.28029 13.8535C5.32617 14.2075 5.43805 14.5384 5.60258 14.8346C4.53571 15.1199 3.75 16.0932 3.75 17.25C3.75 18.6307 4.86929 19.75 6.25 19.75H6.37803C6.29512 19.9846 6.25 20.237 6.25 20.5C6.25 21.7426 7.25736 22.75 8.5 22.75C9.74264 22.75 10.75 21.7426 10.75 20.5C10.75 20.237 10.7049 19.9846 10.622 19.75H16.378C16.2951 19.9846 16.25 20.237 16.25 20.5C16.25 21.7426 17.2574 22.75 18.5 22.75C19.7426 22.75 20.75 21.7426 20.75 20.5C20.75 20.237 20.7049 19.9846 20.622 19.75H21C21.4142 19.75 21.75 19.4142 21.75 19C21.75 18.5858 21.4142 18.25 21 18.25H6.25C5.69772 18.25 5.25 17.8023 5.25 17.25C5.25 16.6977 5.69772 16.25 6.25 16.25H18.7396C20.4081 16.25 21.8056 14.9864 21.9732 13.3263L22.7452 5.6757C22.8492 4.64496 22.04 3.75 21.004 3.75H5.48313L5.41322 3.21075C5.26785 2.08931 4.31272 1.25 3.18189 1.25H2Z" fill="currentColor"/>
           </svg>
           ${renderCartBadge()}
         </button>
