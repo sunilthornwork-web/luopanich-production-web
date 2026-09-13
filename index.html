@@ -326,24 +326,22 @@ body[data-theme="cute"] {
   }
 
 #vanta-bg {
+  display:none;
+}
+
+#dark-star-background {
   position: fixed;
-  top: 0;
-  right: 0;
-  bottom: auto;
-  left: 0;
+  inset: 0;
   width: 100%;
-  height: 100vh;
-  height: 100lvh;
-  min-height: 100vh;
+  height: 100%;
   z-index: 0;
   pointer-events: none;
-  overflow: hidden;
-  background: var(--bg);
+  background: #060810;
   contain: layout paint size;
   transform: translateZ(0);
 }
 
-body[data-theme="cute"] #vanta-bg {
+body[data-theme="cute"] #dark-star-background {
   display: none;
 }
 
@@ -5757,6 +5755,7 @@ textarea.input{
 <body>
 
 <div id="vanta-bg" aria-hidden="true"></div>
+<canvas id="dark-star-background" aria-hidden="true"></canvas>
 
 <!-- 🔴 HEADER (Mode-Based Controlled) -->
 <header id="appHeader"></header>
@@ -8897,12 +8896,185 @@ function initVantaWavesBackground() {
   }
 }
 
-function syncVantaWavesForTheme() {
-  if (getCurrentTheme() === "dark" && !isReducedMotion()) {
-    initVantaWavesBackground();
+const DARK_STAR_BACKGROUND_CONFIG = Object.freeze({
+  SPEED: 0.75,
+  STAR_COUNT: 160,
+  FPS_INTERVAL: 1000 / 30,
+  DPR_CAP: 1.5
+});
+
+const darkStarBackgroundState = {
+  initialized: false,
+  canvas: null,
+  ctx: null,
+  rafId: 0,
+  lastFrameAt: 0,
+  width: 0,
+  height: 0,
+  dpr: 1,
+  stars: [],
+  particles: [],
+  motionQuery: null
+};
+
+function randomDarkStarRange(min, max) {
+  return min + Math.random() * (max - min);
+}
+
+function buildDarkStarBackgroundField() {
+  const state = darkStarBackgroundState;
+  const width = Math.max(1, state.width);
+  const height = Math.max(1, state.height);
+  state.stars = Array.from({ length: DARK_STAR_BACKGROUND_CONFIG.STAR_COUNT }, () => ({
+    x: Math.random() * width,
+    y: Math.random() * height,
+    radius: randomDarkStarRange(0.45, 1.65),
+    alpha: randomDarkStarRange(0.28, 0.95),
+    phase: Math.random() * Math.PI * 2,
+    twinkle: randomDarkStarRange(0.35, 1.15),
+    drift: randomDarkStarRange(-0.05, 0.08)
+  }));
+  state.particles = Array.from({ length: 22 }, () => ({
+    x: Math.random() * width,
+    y: Math.random() * height,
+    radius: randomDarkStarRange(18, 64),
+    alpha: randomDarkStarRange(0.035, 0.105),
+    hue: Math.random() > 0.5 ? 220 : 270,
+    phase: Math.random() * Math.PI * 2,
+    speed: randomDarkStarRange(0.08, 0.22)
+  }));
+}
+
+function resizeDarkStarBackground() {
+  const state = darkStarBackgroundState;
+  if (!state.canvas || !state.ctx) return;
+  state.dpr = Math.min(window.devicePixelRatio || 1, DARK_STAR_BACKGROUND_CONFIG.DPR_CAP);
+  state.width = Math.max(1, window.innerWidth || document.documentElement.clientWidth || 1);
+  state.height = Math.max(1, window.innerHeight || document.documentElement.clientHeight || 1);
+  state.canvas.width = Math.ceil(state.width * state.dpr);
+  state.canvas.height = Math.ceil(state.height * state.dpr);
+  state.ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+  buildDarkStarBackgroundField();
+}
+
+function drawDarkStarBackground(time) {
+  const state = darkStarBackgroundState;
+  const ctx = state.ctx;
+  if (!ctx) return;
+  const width = state.width;
+  const height = state.height;
+  const speed = DARK_STAR_BACKGROUND_CONFIG.SPEED;
+  const t = (time || 0) * 0.001 * speed;
+
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = "#060810";
+  ctx.fillRect(0, 0, width, height);
+
+  const glowX = width * (0.52 + Math.sin(t * 0.42) * 0.22);
+  const glowY = height * (0.34 + Math.cos(t * 0.35) * 0.18);
+  const glow = ctx.createRadialGradient(glowX, glowY, 0, glowX, glowY, Math.max(width, height) * 0.82);
+  glow.addColorStop(0, "rgba(82, 151, 255, 0.24)");
+  glow.addColorStop(0.35, "rgba(116, 91, 255, 0.13)");
+  glow.addColorStop(1, "rgba(6, 8, 16, 0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  for (const particle of state.particles) {
+    const x = particle.x + Math.sin(t * particle.speed + particle.phase) * 28;
+    const y = particle.y + Math.cos(t * particle.speed + particle.phase) * 18;
+    const blur = ctx.createRadialGradient(x, y, 0, x, y, particle.radius);
+    blur.addColorStop(0, `hsla(${particle.hue}, 100%, 72%, ${particle.alpha})`);
+    blur.addColorStop(1, `hsla(${particle.hue}, 100%, 72%, 0)`);
+    ctx.fillStyle = blur;
+    ctx.beginPath();
+    ctx.arc(x, y, particle.radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  for (const star of state.stars) {
+    const twinkle = 0.55 + Math.sin(t * star.twinkle + star.phase) * 0.45;
+    const x = (star.x + t * star.drift * 24 + width) % width;
+    const alpha = Math.max(0.08, star.alpha * twinkle);
+    ctx.fillStyle = `rgba(235, 244, 255, ${alpha})`;
+    ctx.beginPath();
+    ctx.arc(x, star.y, star.radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const vignette = ctx.createRadialGradient(width * 0.5, height * 0.45, 0, width * 0.5, height * 0.45, Math.max(width, height) * 0.72);
+  vignette.addColorStop(0.55, "rgba(6, 8, 16, 0)");
+  vignette.addColorStop(1, "rgba(0, 0, 0, 0.48)");
+  ctx.fillStyle = vignette;
+  ctx.fillRect(0, 0, width, height);
+}
+
+function shouldRunDarkStarBackground() {
+  return getCurrentTheme() === "dark" && !document.hidden && !isReducedMotion();
+}
+
+function stopDarkStarBackground() {
+  const state = darkStarBackgroundState;
+  if (state.rafId) {
+    cancelAnimationFrame(state.rafId);
+    state.rafId = 0;
+  }
+  state.lastFrameAt = 0;
+}
+
+function runDarkStarBackgroundFrame(timestamp) {
+  const state = darkStarBackgroundState;
+  if (!shouldRunDarkStarBackground()) {
+    stopDarkStarBackground();
     return;
   }
+  if (!state.lastFrameAt || timestamp - state.lastFrameAt >= DARK_STAR_BACKGROUND_CONFIG.FPS_INTERVAL) {
+    drawDarkStarBackground(timestamp);
+    state.lastFrameAt = timestamp;
+  }
+  state.rafId = requestAnimationFrame(runDarkStarBackgroundFrame);
+}
+
+function startDarkStarBackground() {
+  const state = darkStarBackgroundState;
+  if (!state.canvas || !state.ctx || state.rafId || !shouldRunDarkStarBackground()) return;
+  state.rafId = requestAnimationFrame(runDarkStarBackgroundFrame);
+}
+
+function syncDarkStarBackgroundForTheme() {
+  initDarkStarBackground();
+  const state = darkStarBackgroundState;
+  if (!state.canvas) return;
+  const darkThemeActive = getCurrentTheme() === "dark";
+  state.canvas.hidden = !darkThemeActive;
+  state.canvas.style.display = darkThemeActive ? "block" : "none";
+  if (!darkThemeActive || isReducedMotion() || document.hidden) {
+    stopDarkStarBackground();
+    if (darkThemeActive && state.ctx) drawDarkStarBackground(0);
+    return;
+  }
+  startDarkStarBackground();
+}
+
+function initDarkStarBackground() {
+  const state = darkStarBackgroundState;
+  if (state.initialized) return;
+  state.canvas = document.getElementById("dark-star-background");
+  state.ctx = state.canvas?.getContext?.("2d") || null;
+  if (!state.canvas || !state.ctx) return;
+  state.initialized = true;
+  resizeDarkStarBackground();
+  window.addEventListener("resize", () => {
+    resizeDarkStarBackground();
+    syncDarkStarBackgroundForTheme();
+  }, { passive: true });
+  document.addEventListener("visibilitychange", syncDarkStarBackgroundForTheme);
+}
+function syncVantaWavesForTheme() {
   destroyVantaWavesBackground();
+  syncDarkStarBackgroundForTheme();
 }
 
 function bindVantaWavesMotionPreference() {
