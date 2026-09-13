@@ -8912,6 +8912,9 @@ const darkStarBackgroundState = {
   width: 0,
   height: 0,
   dpr: 1,
+  orientation: "",
+  lastCanvasWidth: 0,
+  lastCanvasHeight: 0,
   stars: [],
   particles: [],
   motionQuery: null
@@ -8945,16 +8948,57 @@ function buildDarkStarBackgroundField() {
   }));
 }
 
+function scaleDarkStarBackgroundField(previousWidth, previousHeight) {
+  const state = darkStarBackgroundState;
+  const xScale = state.width / Math.max(1, previousWidth);
+  const yScale = state.height / Math.max(1, previousHeight);
+  state.stars.forEach((star) => {
+    star.x = Math.max(0, Math.min(state.width, star.x * xScale));
+    star.y = Math.max(0, Math.min(state.height, star.y * yScale));
+  });
+  state.particles.forEach((particle) => {
+    particle.x = Math.max(0, Math.min(state.width, particle.x * xScale));
+    particle.y = Math.max(0, Math.min(state.height, particle.y * yScale));
+  });
+}
+
+function getDarkStarViewportSize() {
+  const width = Math.max(1, window.innerWidth || document.documentElement.clientWidth || 1);
+  const height = Math.max(1, window.innerHeight || document.documentElement.clientHeight || 1);
+  return {
+    width,
+    height,
+    orientation: width > height ? "landscape" : "portrait"
+  };
+}
+
 function resizeDarkStarBackground() {
   const state = darkStarBackgroundState;
   if (!state.canvas || !state.ctx) return;
+  const next = getDarkStarViewportSize();
+  const previousWidth = state.width || next.width;
+  const previousHeight = state.height || next.height;
+  const previousOrientation = state.orientation || next.orientation;
+  const isInitialResize = !state.lastCanvasWidth || !state.lastCanvasHeight;
+  const widthChanged = Math.abs(next.width - state.lastCanvasWidth) > 8;
+  const orientationChanged = previousOrientation !== next.orientation;
+  if (!isInitialResize && !widthChanged && !orientationChanged) return;
   state.dpr = Math.min(window.devicePixelRatio || 1, DARK_STAR_BACKGROUND_CONFIG.DPR_CAP);
-  state.width = Math.max(1, window.innerWidth || document.documentElement.clientWidth || 1);
-  state.height = Math.max(1, window.innerHeight || document.documentElement.clientHeight || 1);
+  state.width = next.width;
+  state.height = next.height;
+  state.orientation = next.orientation;
+  state.lastCanvasWidth = next.width;
+  state.lastCanvasHeight = next.height;
+  state.canvas.style.width = `${state.width}px`;
+  state.canvas.style.height = `${state.height}px`;
   state.canvas.width = Math.ceil(state.width * state.dpr);
   state.canvas.height = Math.ceil(state.height * state.dpr);
   state.ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
-  buildDarkStarBackgroundField();
+  if (state.stars.length && state.particles.length) {
+    scaleDarkStarBackgroundField(previousWidth, previousHeight);
+  } else {
+    buildDarkStarBackgroundField();
+  }
 }
 
 function drawDarkStarBackground(time) {
