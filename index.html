@@ -10071,6 +10071,26 @@ function getDefaultDocumentCompanyInfo() {
   };
 }
 
+function getPurchaseOrderCompanyHeaderLines(company = {}) {
+  const address = String(company.address || "").trim();
+  const explicitLines = address
+    .split(/\n+/)
+    .map(line => line.trim())
+    .filter(Boolean);
+  const districtBreak = explicitLines.length <= 1
+    ? address.search(/\s+(?=(?:อำเภอ|เขต|อ\.)\S*)/)
+    : -1;
+  const addressLines = districtBreak > 0
+    ? [address.slice(0, districtBreak).trim(), address.slice(districtBreak).trim()].filter(Boolean)
+    : explicitLines;
+
+  return {
+    nameTh: String(company.nameTh || "").trim(),
+    addressLines,
+    nameEn: String(company.nameEn || "").trim()
+  };
+}
+
 function resolveDocumentBrandingFromSettings(settings = {}, defaultLogoUrl = getDefaultBillingNoteLogoUrl()) {
   const source = normalizeBrandingSettingsForUi(settings || BRANDING_SETTINGS_DEFAULTS);
   const defaultCompany = getDefaultDocumentCompanyInfo();
@@ -16502,6 +16522,7 @@ function buildAdminPoPrintHtml(order) {
   const displayOrderId = formatOrderIdForDisplay(order?.orderId);
   const documentBranding = getDocumentBranding(getDefaultBillingNoteLogoUrl());
   const company = documentBranding.company;
+  const poCompanyHeader = getPurchaseOrderCompanyHeaderLines(company);
   const logoUrl = documentBranding.logoUrl;
   const totalLabel = t("total", "รวม");
   const itemRows = items.length
@@ -16838,10 +16859,9 @@ function buildAdminPoPrintHtml(order) {
             <div class="po-header-main">
               <div class="company">
                 <div>
-                  <div class="company-name-th">${esc(company.nameTh)}</div>
-                  <div class="company-name-en">${esc(company.nameEn)}</div>
-                  <div class="company-small">${esc(company.taxId)}</div>
-                  <div class="company-small">${esc(company.address)}</div>
+                  <div class="company-name-th">${esc(poCompanyHeader.nameTh)}</div>
+                  ${poCompanyHeader.addressLines.map(line => `<div class="company-small">${esc(line)}</div>`).join("")}
+                  ${poCompanyHeader.nameEn ? `<div class="company-name-en">${esc(poCompanyHeader.nameEn)}</div>` : ""}
                 </div>
               </div>
               <div class="doc-title-block">
@@ -33208,26 +33228,22 @@ async function exportOrderPNG() {
   /* ===== COMPANY BLOCK ===== */
 const documentBranding = getDocumentBranding(getDefaultBillingNoteLogoUrl());
 const legacyCompany = documentBranding.company;
-const legacyAddressLines = String(legacyCompany.address || "")
-  .split(/\n+/)
-  .map(line => line.trim())
-  .filter(Boolean)
-  .slice(0, 3);
+const poCompanyHeader = getPurchaseOrderCompanyHeaderLines(legacyCompany);
 ctx.font = `700 ${cfg.textSize + 4}px ${SARABUN_CANVAS_FONT_STACK}`;
-ctx.fillText(legacyCompany.nameTh || "Luopanich", cfg.padding, headerTopY);
+ctx.fillText(poCompanyHeader.nameTh || "Luopanich", cfg.padding, headerTopY);
 
 ctx.fillText(
-   legacyAddressLines[0] || "",
+   poCompanyHeader.addressLines[0] || "",
    cfg.padding,
    headerTopY + cfg.lineHeight
  );
  ctx.fillText(
-   legacyAddressLines[1] || legacyCompany.phone || "",
+   poCompanyHeader.addressLines[1] || "",
    cfg.padding,
    headerTopY + cfg.lineHeight * 2
  );
  ctx.fillText(
-   legacyAddressLines[2] || legacyCompany.nameEn || "",
+   poCompanyHeader.nameEn || "",
    cfg.padding,
    headerTopY + cfg.lineHeight * 3
  );
@@ -33398,7 +33414,7 @@ function exportOrderPrint() {
     : new Date().toLocaleDateString(printLocale);
   const documentBranding = getDocumentBranding(getDefaultBillingNoteLogoUrl());
   const legacyCompany = documentBranding.company;
-  const legacyPhone = legacyCompany.phone ? `${t("phone", "โทรศัพท์")}: ${legacyCompany.phone}` : "";
+  const poCompanyHeader = getPurchaseOrderCompanyHeaderLines(legacyCompany);
 
   const total = Number(order.total || 0).toLocaleString();
   const totalAmountWords = printLang === "en"
@@ -33581,9 +33597,9 @@ function exportOrderPrint() {
       <div class="header section">
         <div>
           <h2>${printDocumentTitle}</h2>
-          <div>${esc(legacyCompany.nameTh)}</div>
-          <div>${esc(legacyCompany.address)}</div>
-          <div>${esc(legacyPhone || legacyCompany.nameEn)}</div>
+          <div>${esc(poCompanyHeader.nameTh)}</div>
+          ${poCompanyHeader.addressLines.map(line => `<div>${esc(line)}</div>`).join("")}
+          ${poCompanyHeader.nameEn ? `<div>${esc(poCompanyHeader.nameEn)}</div>` : ""}
         </div>
 
         <div>
