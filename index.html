@@ -27760,6 +27760,15 @@ function clearVariantScanGroups() {
   renderVariantScanSheet();
 }
 
+function restartVariantScanSheet() {
+  const scanState = ensureVariantScanState();
+  scanState.selectedGroups = [];
+  scanState.message = "";
+  scanState.error = "";
+  scanState.appliedGroups = [];
+  renderVariantScanSheet();
+}
+
 async function applySelectedVariantScanGroups(btn) {
   if (!ensureAdminSessionForMultiSizeProduct()) return;
   if (state.admin.isSubmitting) return;
@@ -27967,11 +27976,7 @@ function renderVariantScanSheet() {
         ${selectedGroups.length && !state.admin.isSubmitting ? "" : "disabled"}>
         ${state.admin.isSubmitting ? t("saving", "กำลังบันทึก...") : t("variantScanApplyButton", "บันทึกข้อมูลกลุ่มไซส์ที่เลือก")}
       </button>
-      <button class="app-back-btn" type="button" onclick="backToAdminMenuFromVariantScan()">
-        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
-        <span>${t("back", "กลับ")}</span>
-      </button>
-      <button class="btn btn-outline" type="button" onclick="renderVariantScanSheet()">
+      <button class="btn btn-outline" type="button" onclick="restartVariantScanSheet()">
         ${t("variantScanRescan", "สแกนใหม่")}
       </button>
     </div>
