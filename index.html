@@ -133,7 +133,7 @@
   --shadow-floating:        0 10px 34px rgba(0,0,0,.60);
   --shadow-fab:             0 12px 34px rgba(0,0,0,.60);
   --shadow-canvas-card:     var(--shadow-card);
-
+ 
   /* legacy alias (keep old refs working + follow unified override) */
   --shadow-float:           var(--shadow-floating);  
    
@@ -557,88 +557,6 @@ body[data-theme="cute"] .shop-subtitle{
   flex-direction: column;
   min-width: 0;
 }
-.header-brand-task-slot{
-  position: relative;
-  display: grid;
-  align-items: center;
-  min-width: 0;
-  min-height: 34px;
-  overflow: hidden;
-}
-.header-brand-layer,
-.header-task-layer{
-  grid-area: 1 / 1;
-  min-width: 0;
-  transition:
-    transform 360ms ease-in-out,
-    opacity 360ms ease-in-out;
-}
-.header-brand-layer{
-  transform: translateX(0);
-  opacity: 1;
-}
-.header-task-layer{
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  max-width: min(280px, 48vw);
-  color: var(--text);
-  transform: translateX(115%);
-  opacity: 0;
-  pointer-events: none;
-}
-.header-brand-task-slot.has-background-task .header-brand-layer{
-  transform: translateX(-115%);
-  opacity: 0;
-}
-.header-brand-task-slot.has-background-task .header-task-layer{
-  transform: translateX(0);
-  opacity: 1;
-  pointer-events: auto;
-}
-.header-task-dot{
-  width: 8px;
-  height: 8px;
-  flex: 0 0 auto;
-  border-radius: 999px;
-  background: var(--primary);
-  box-shadow: 0 0 0 4px rgba(0,122,255,.14);
-}
-.header-task-layer[data-state="CONFIRMING"] .header-task-dot{
-  background: var(--warning);
-  box-shadow: 0 0 0 4px rgba(255,159,10,.16);
-}
-.header-task-layer[data-state="SUCCESS"] .header-task-dot{
-  background: var(--success);
-  box-shadow: 0 0 0 4px rgba(52,199,89,.16);
-}
-.header-task-layer[data-state="FAILED"] .header-task-dot{
-  background: var(--danger);
-  box-shadow: 0 0 0 4px rgba(255,59,48,.16);
-}
-.header-task-text{
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 13px;
-  font-weight: 800;
-  line-height: 1.2;
-}
-.header-task-dismiss{
-  min-width: 28px;
-  min-height: 28px;
-  flex: 0 0 auto;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--surface-2);
-  color: var(--text);
-  font: inherit;
-  font-size: 14px;
-  font-weight: 800;
-  line-height: 1;
-  cursor: pointer;
-}
 .header-action-stack{
   flex-shrink: 0;
   display: flex;
@@ -829,12 +747,6 @@ body[data-theme="cute"] .viewer-header-actions .language-switch button{
 body[data-theme="cute"] .admin-header-actions .language-switch button.active,
 body[data-theme="cute"] .viewer-header-actions .language-switch button.active{
   color: var(--primary);
-}
-
-@media (max-width: 640px) {
-  .header-task-layer{
-    max-width: calc(100vw - 160px);
-  }
 }
 
 body[data-theme="cute"] .admin-header-actions .language-switch button + button::before,
@@ -2386,7 +2298,7 @@ button:disabled {
   .dashboard-title-sub{
      font-size:15px;
    
-  }
+  } 
 }
  
   .cart-item{
@@ -4298,123 +4210,6 @@ textarea {
   }
 }
 
-/* ================= BACKGROUND TASK INDICATOR (BG1) ================= */
-
-#backgroundTaskIndicatorHost {
-  display: none !important;
-}
-
-.background-task-indicator {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: var(--surface-glass);
-  color: var(--text);
-  box-shadow: var(--shadow-floating);
-  backdrop-filter: blur(18px) saturate(160%);
-  -webkit-backdrop-filter: blur(18px) saturate(160%);
-  animation: background-task-enter var(--motion-duration-toast) var(--motion-ease-standard);
-}
-
-.background-task-indicator[data-state="SUCCESS"] {
-  border-color: var(--status-approved-border);
-}
-
-.background-task-indicator[data-state="FAILED"] {
-  border-color: var(--status-rejected-border);
-}
-
-.background-task-dot {
-  width: 9px;
-  height: 9px;
-  flex: 0 0 auto;
-  border-radius: 999px;
-  background: var(--primary);
-  box-shadow: 0 0 0 4px rgba(0,122,255,.14);
-}
-
-.background-task-indicator[data-state="CONFIRMING"] .background-task-dot {
-  background: var(--warning);
-  box-shadow: 0 0 0 4px rgba(255,159,10,.16);
-}
-
-.background-task-indicator[data-state="SUCCESS"] .background-task-dot {
-  background: var(--success);
-  box-shadow: 0 0 0 4px rgba(52,199,89,.16);
-}
-
-.background-task-indicator[data-state="FAILED"] .background-task-dot {
-  background: var(--danger);
-  box-shadow: 0 0 0 4px rgba(255,59,48,.16);
-}
-
-.background-task-copy {
-  min-width: 0;
-  flex: 1 1 auto;
-  line-height: 1.35;
-}
-
-.background-task-title {
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--text);
-}
-
-.background-task-label {
-  margin-top: 1px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-soft);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.background-task-dismiss {
-  flex: 0 0 auto;
-  min-height: 30px;
-  padding: 0 10px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--surface-2);
-  color: var(--text);
-  font: inherit;
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-  pointer-events: auto;
-}
-
-@keyframes background-task-enter {
-  from {
-    opacity: 0;
-    transform: translateY(-6px) scale(.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@media (max-width: 640px) {
-  #backgroundTaskIndicatorHost {
-    display: none !important;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .background-task-indicator {
-    animation: none;
-  }
-  .header-brand-layer,
-  .header-task-layer{
-    transition: opacity var(--motion-duration-fast) var(--motion-ease-standard);
-  }
-}
-
 .hidden {
   display: none;
 }
@@ -5836,20 +5631,6 @@ textarea.input{
   background:rgba(207,62,103,.10);
 }
 
-.batch-stock-selected-card{
-  display:grid;
-  grid-template-columns:56px minmax(0,1fr);
-  gap:12px;
-  align-items:start;
-}
-
-.batch-stock-selected-card .cart-thumb{
-  width:56px;
-  min-width:56px;
-  max-width:56px;
-  height:56px;
-}
-
 .bulk-preview-meta{
   margin-top:6px;
   font-size:12px;
@@ -5984,11 +5765,6 @@ textarea.input{
 
 <!-- 🔴 HEADER (Mode-Based Controlled) -->
 <header id="appHeader"></header>
-<div id="backgroundTaskIndicatorHost"
-  role="status"
-  aria-live="polite"
-  aria-atomic="true"
-  hidden></div>
 
 <section id="viewerHomeControls" class="home-controls" aria-label="หน้าร้าน"></section>
 
@@ -6354,7 +6130,6 @@ const state = {
     error: "",
     requestId: 0
   },
-  backgroundTasks: [],
   selectedProduct: null,
   addCompareImagesDraft: [],
   qty: 1,
@@ -9901,279 +9676,6 @@ function showToast(message, type = 'info', timeout = 2500) {
   }, timeout);
 }
 
-const BACKGROUND_TASK_STATES = Object.freeze({
-  SENDING: "SENDING",
-  CONFIRMING: "CONFIRMING",
-  SUCCESS: "SUCCESS",
-  FAILED: "FAILED"
-});
-const BACKGROUND_TASK_ACTIVE_STATES = new Set([
-  BACKGROUND_TASK_STATES.SENDING,
-  BACKGROUND_TASK_STATES.CONFIRMING
-]);
-const BACKGROUND_TASK_SUCCESS_DISMISS_MS = 1800;
-const backgroundTaskDismissTimers = new Map();
-let backgroundTaskSeq = 0;
-
-function getBackgroundTasks() {
-  if (!Array.isArray(state.backgroundTasks)) {
-    state.backgroundTasks = [];
-  }
-  return state.backgroundTasks;
-}
-
-function createBackgroundTaskId() {
-  backgroundTaskSeq += 1;
-  return `bg-${Date.now().toString(36)}-${backgroundTaskSeq}`;
-}
-
-function normalizeBackgroundTaskState(value) {
-  const stateName = String(value || "").trim().toUpperCase();
-  return BACKGROUND_TASK_STATES[stateName] || BACKGROUND_TASK_STATES.SENDING;
-}
-
-function isBackgroundTaskActive(task) {
-  return BACKGROUND_TASK_ACTIVE_STATES.has(String(task?.state || ""));
-}
-
-function findBackgroundTask(id) {
-  return getBackgroundTasks().find(task => task.id === id) || null;
-}
-
-function findActiveBackgroundTaskByIdentity(identity) {
-  const cleanIdentity = String(identity || "").trim();
-  if (!cleanIdentity) return null;
-  return getBackgroundTasks().find(task =>
-    task.identity === cleanIdentity &&
-    isBackgroundTaskActive(task)
-  ) || null;
-}
-
-function hasActiveBackgroundTask(identity) {
-  return !!findActiveBackgroundTaskByIdentity(identity);
-}
-
-function registerBackgroundTask(options = {}) {
-  const task = {
-    id: createBackgroundTaskId(),
-    identity: String(options.identity || "").trim(),
-    productIds: Array.isArray(options.productIds)
-      ? options.productIds.map(id => String(id || "").trim()).filter(Boolean)
-      : [],
-    label: String(options.label || t("operation", "รายการดำเนินการ")).trim(),
-    state: normalizeBackgroundTaskState(options.state || BACKGROUND_TASK_STATES.SENDING),
-    startedAt: Date.now(),
-    message: String(options.message || "").trim()
-  };
-  getBackgroundTasks().push(task);
-  renderBackgroundTaskIndicator();
-  return task;
-}
-
-function updateBackgroundTask(id, updates = {}) {
-  const task = findBackgroundTask(id);
-  if (!task) return null;
-  if (Object.prototype.hasOwnProperty.call(updates, "state")) {
-    task.state = normalizeBackgroundTaskState(updates.state);
-  }
-  if (Object.prototype.hasOwnProperty.call(updates, "label")) {
-    task.label = String(updates.label || "").trim();
-  }
-  if (Object.prototype.hasOwnProperty.call(updates, "message")) {
-    task.message = String(updates.message || "").trim();
-  }
-  renderBackgroundTaskIndicator();
-  return task;
-}
-
-function clearBackgroundTaskDismissTimer(id) {
-  const timer = backgroundTaskDismissTimers.get(id);
-  if (timer) {
-    clearTimeout(timer);
-    backgroundTaskDismissTimers.delete(id);
-  }
-}
-
-function scheduleBackgroundTaskSuccessDismiss(id) {
-  clearBackgroundTaskDismissTimer(id);
-  backgroundTaskDismissTimers.set(id, setTimeout(() => {
-    removeBackgroundTask(id);
-  }, BACKGROUND_TASK_SUCCESS_DISMISS_MS));
-}
-
-function completeBackgroundTask(id, message = "") {
-  const task = updateBackgroundTask(id, {
-    state: BACKGROUND_TASK_STATES.SUCCESS,
-    message
-  });
-  if (task) scheduleBackgroundTaskSuccessDismiss(id);
-  return task;
-}
-
-function failBackgroundTask(id, message = "") {
-  clearBackgroundTaskDismissTimer(id);
-  return updateBackgroundTask(id, {
-    state: BACKGROUND_TASK_STATES.FAILED,
-    message
-  });
-}
-
-function findActiveStockMutationTaskForProduct(productId) {
-  const cleanProductId = String(productId || "").trim();
-  if (!cleanProductId) return null;
-  return getBackgroundTasks().find(task =>
-    isBackgroundTaskActive(task) &&
-    (
-      task.identity === `stockIn:${cleanProductId}` ||
-      (Array.isArray(task.productIds) && task.productIds.indexOf(cleanProductId) > -1)
-    )
-  ) || null;
-}
-
-function removeBackgroundTask(id) {
-  clearBackgroundTaskDismissTimer(id);
-  const tasks = getBackgroundTasks();
-  const nextTasks = tasks.filter(task => task.id !== id);
-  state.backgroundTasks = nextTasks;
-  renderBackgroundTaskIndicator();
-}
-
-function getBackgroundTaskStatusText(task) {
-  const taskState = String(task?.state || "");
-  if (taskState === BACKGROUND_TASK_STATES.CONFIRMING) {
-    return t("backgroundTaskConfirming", "กำลังตรวจสอบผลการบันทึก...");
-  }
-  if (taskState === BACKGROUND_TASK_STATES.SUCCESS) {
-    return t("backgroundTaskSuccess", "ดำเนินการสำเร็จ");
-  }
-  if (taskState === BACKGROUND_TASK_STATES.FAILED) {
-    return t("backgroundTaskFailed", "ดำเนินการไม่สำเร็จ");
-  }
-  return t("backgroundTaskSending", "กำลังดำเนินการ...");
-}
-
-function getBackgroundTaskSummary(tasks) {
-  const failedCount = tasks.filter(task => task.state === BACKGROUND_TASK_STATES.FAILED).length;
-  const activeCount = tasks.filter(isBackgroundTaskActive).length;
-  if (tasks.length === 1) {
-    const task = tasks[0];
-    return {
-      state: task.state,
-      title: task.message || getBackgroundTaskStatusText(task),
-      label: task.label || task.identity || "",
-      dismissId: task.state === BACKGROUND_TASK_STATES.FAILED ? task.id : ""
-    };
-  }
-  if (activeCount) {
-    return {
-      state: BACKGROUND_TASK_STATES.SENDING,
-      title: formatUiText("backgroundTaskMultipleSending", { count: activeCount }, "กำลังดำเนินการ {count} รายการ"),
-      label: tasks.map(task => task.label || task.identity).filter(Boolean).slice(0, 2).join(" · ")
-    };
-  }
-  if (failedCount) {
-    return {
-      state: BACKGROUND_TASK_STATES.FAILED,
-      title: formatUiText("backgroundTaskMultipleFailed", { count: failedCount }, "มีรายการไม่สำเร็จ {count} รายการ"),
-      label: t("backgroundTaskTapDismiss", "ตรวจสอบและปิดรายการที่ไม่สำเร็จ")
-    };
-  }
-  return {
-    state: BACKGROUND_TASK_STATES.SUCCESS,
-    title: formatUiText("backgroundTaskMultipleSuccess", { count: tasks.length }, "ดำเนินการสำเร็จ {count} รายการ"),
-    label: ""
-  };
-}
-
-function getBackgroundTaskHeaderSummary(tasks = getBackgroundTasks()) {
-  const failedCount = tasks.filter(task => task.state === BACKGROUND_TASK_STATES.FAILED).length;
-  const activeCount = tasks.filter(isBackgroundTaskActive).length;
-  const successCount = tasks.filter(task => task.state === BACKGROUND_TASK_STATES.SUCCESS).length;
-  if (failedCount) {
-    const failedTask = tasks.find(task => task.state === BACKGROUND_TASK_STATES.FAILED);
-    return {
-      active: true,
-      state: BACKGROUND_TASK_STATES.FAILED,
-      text: t("backgroundTaskHeaderFailed", "มีรายการไม่สำเร็จ"),
-      dismissId: failedTask?.id || ""
-    };
-  }
-  if (activeCount) {
-    return {
-      active: true,
-      state: BACKGROUND_TASK_STATES.SENDING,
-      text: formatUiText("backgroundTaskHeaderActive", { count: activeCount }, "กำลังดำเนินการ {count} รายการ"),
-      dismissId: ""
-    };
-  }
-  if (successCount) {
-    return {
-      active: true,
-      state: BACKGROUND_TASK_STATES.SUCCESS,
-      text: t("backgroundTaskHeaderSuccess", "สำเร็จ"),
-      dismissId: ""
-    };
-  }
-  return {
-    active: false,
-    state: BACKGROUND_TASK_STATES.SENDING,
-    text: "",
-    dismissId: ""
-  };
-}
-
-function renderHeaderBackgroundTaskLayer() {
-  const summary = getBackgroundTaskHeaderSummary();
-  return `
-    <div class="header-task-layer"
-      data-state="${escAttr(summary.state)}"
-      role="${summary.state === BACKGROUND_TASK_STATES.FAILED ? "alert" : "status"}"
-      aria-live="${summary.state === BACKGROUND_TASK_STATES.FAILED ? "assertive" : "polite"}"
-      aria-atomic="true">
-      <span class="header-task-dot" aria-hidden="true"></span>
-      <span class="header-task-text">${esc(summary.text || "")}</span>
-      ${
-        summary.dismissId
-          ? `<button class="header-task-dismiss" type="button" onclick="removeBackgroundTask(${toInlineJsStringLiteral(summary.dismissId)})" aria-label="${escAttr(t("close", "ปิด"))}">×</button>`
-          : ""
-      }
-    </div>
-  `;
-}
-
-function updateHeaderBackgroundTaskPresentation() {
-  const slot = document.querySelector(".header-brand-task-slot");
-  const brand = slot?.querySelector(".header-brand-layer");
-  const layer = slot?.querySelector(".header-task-layer");
-  if (!slot || !layer) return;
-  const summary = getBackgroundTaskHeaderSummary();
-  slot.classList.toggle("has-background-task", summary.active);
-  if (brand) {
-    brand.setAttribute("aria-hidden", summary.active ? "true" : "false");
-  }
-  layer.dataset.state = summary.state;
-  layer.setAttribute("role", summary.state === BACKGROUND_TASK_STATES.FAILED ? "alert" : "status");
-  layer.setAttribute("aria-live", summary.state === BACKGROUND_TASK_STATES.FAILED ? "assertive" : "polite");
-  layer.innerHTML = `
-    <span class="header-task-dot" aria-hidden="true"></span>
-    <span class="header-task-text">${esc(summary.text || "")}</span>
-    ${
-      summary.dismissId
-        ? `<button class="header-task-dismiss" type="button" onclick="removeBackgroundTask(${toInlineJsStringLiteral(summary.dismissId)})" aria-label="${escAttr(t("close", "ปิด"))}">×</button>`
-        : ""
-    }
-  `;
-}
-
-function renderBackgroundTaskIndicator() {
-  updateHeaderBackgroundTaskPresentation();
-  const host = document.getElementById("backgroundTaskIndicatorHost");
-  if (!host) return;
-
-  host.hidden = false;
-  host.innerHTML = "";
-}
-
 // ---------- Central loading timer ----------
 let _loadingTimer = null;
 let _loadingShownAt = 0;
@@ -10252,206 +9754,16 @@ function safeHideLoading(fromTimeout = false) {
 
 
 // ---------- fetchWithTimeout ----------
-const FRONTEND_API_PERF_LOG_LIMIT = 200;
-const frontendApiPerfActiveRequests = new Map();
-const frontendApiResponsePerf = new WeakMap();
-
-function createFrontendDiagnosticRequestId(action = "api") {
-  const safeAction = String(action || "api").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 32) || "api";
-  if (window.crypto && typeof window.crypto.randomUUID === "function") {
-    return `diag-${safeAction}-${window.crypto.randomUUID()}`;
-  }
-  return `diag-${safeAction}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-}
-
-function resolveFetchAction(input, init = {}) {
-  try {
-    const url = typeof input === "string" ? new URL(input, window.location.href) : null;
-    const action = url ? String(url.searchParams.get("action") || "").trim() : "";
-    if (action) return action;
-  } catch (_) {}
-
-  const body = init && init.body;
-  if (body && typeof body.get === "function") {
-    return String(body.get("action") || "").trim() || "unknown";
-  }
-  return "unknown";
-}
-
-function cloneApiRequestBodyWithDiagnosticId(body, requestId) {
-  if (!requestId || !body) return body;
-  if (body instanceof URLSearchParams) {
-    const nextBody = new URLSearchParams(body.toString());
-    if (!nextBody.has("diagnosticRequestId")) {
-      nextBody.append("diagnosticRequestId", requestId);
-    }
-    return nextBody;
-  }
-  if (typeof FormData !== "undefined" && body instanceof FormData) {
-    const nextBody = new FormData();
-    body.forEach((value, key) => nextBody.append(key, value));
-    if (!nextBody.has("diagnosticRequestId")) {
-      nextBody.append("diagnosticRequestId", requestId);
-    }
-    return nextBody;
-  }
-  return body;
-}
-
-function attachDiagnosticRequestIdToApiRequest(input, init = {}, requestId = "") {
-  const nextInit = { ...init };
-  delete nextInit.diagnostic;
-  let nextInput = input;
-
-  if (requestId) {
-    try {
-      if (typeof nextInput === "string") {
-        const url = new URL(nextInput, window.location.href);
-        const apiUrl = new URL(API_URL);
-        if (url.origin === apiUrl.origin && url.pathname === apiUrl.pathname && !url.searchParams.has("diagnosticRequestId")) {
-          url.searchParams.set("diagnosticRequestId", requestId);
-          nextInput = url.toString();
-        }
-      }
-    } catch (_) {}
-
-    nextInit.body = cloneApiRequestBodyWithDiagnosticId(nextInit.body, requestId);
-  }
-
-  return { input: nextInput, init: nextInit };
-}
-
-function recordFrontendApiTiming(record = {}) {
-  const safe = {
-    perf: "api",
-    layer: "frontend",
-    action: String(record.action || "unknown"),
-    requestId: String(record.requestId || ""),
-    startedAt: String(record.startedAt || ""),
-    durationMs: Math.max(0, Math.round(Number(record.durationMs || 0))),
-    timeoutMs: Math.max(0, Math.round(Number(record.timeoutMs || 0))),
-    outcome: ["SUCCESS", "ERROR", "TIMEOUT", "ABORTED"].includes(record.outcome) ? record.outcome : "ERROR",
-    aborted: record.aborted === true,
-    httpStatus: Number.isFinite(Number(record.httpStatus)) ? Number(record.httpStatus) : null,
-    activeForAction: Math.max(0, Number(record.activeForAction || 0))
-  };
-  [
-    "fetchMs",
-    "bodyReadMs",
-    "jsonParseMs",
-    "postValidationMs",
-    "totalCallerMs",
-    "responseChars"
-  ].forEach(key => {
-    const value = Number(record[key]);
-    safe[key] = Number.isFinite(value) ? Math.max(0, Math.round(value)) : null;
-  });
-  window.__LUOPANICH_PERF_LOGS__ = Array.isArray(window.__LUOPANICH_PERF_LOGS__)
-    ? window.__LUOPANICH_PERF_LOGS__
-    : [];
-  window.__LUOPANICH_PERF_LOGS__.push(safe);
-  if (window.__LUOPANICH_PERF_LOGS__.length > FRONTEND_API_PERF_LOG_LIMIT) {
-    window.__LUOPANICH_PERF_LOGS__.shift();
-  }
-  console.info(JSON.stringify(safe));
-}
-
-function shouldMeasureFrontendResponsePhases(action) {
-  return ["products", "adminProducts", "orders", "adminBootstrap", "adminLogin", "getBrandSettings"].includes(String(action || "").trim());
-}
-
-async function readJsonWithFrontendPhaseTiming(res, validateJson) {
-  const meta = frontendApiResponsePerf.get(res) || {};
-  const callerStartMs = Number(meta.requestStartMs || Date.now());
-  let outcome = "SUCCESS";
-  let bodyReadMs = null;
-  let jsonParseMs = null;
-  let postValidationMs = null;
-  let responseChars = null;
-
-  try {
-    const bodyStartMs = Date.now();
-    const text = await res.text();
-    bodyReadMs = Date.now() - bodyStartMs;
-    responseChars = text.length;
-
-    const parseStartMs = Date.now();
-    const json = JSON.parse(text);
-    jsonParseMs = Date.now() - parseStartMs;
-
-    const validationStartMs = Date.now();
-    let output;
-    try {
-      output = typeof validateJson === "function" ? validateJson(json) : json;
-    } catch (err) {
-      if (err && typeof err === "object") {
-        err.__luopanichPhaseValidation = true;
-      }
-      throw err;
-    }
-    postValidationMs = Date.now() - validationStartMs;
-    return output;
-  } catch (err) {
-    outcome = "ERROR";
-    throw err;
-  } finally {
-    recordFrontendApiTiming({
-      action: meta.action || "unknown",
-      requestId: meta.requestId || "",
-      startedAt: meta.startedAt || "",
-      durationMs: Number(meta.fetchMs || 0),
-      timeoutMs: Number(meta.timeoutMs || 0),
-      outcome,
-      aborted: false,
-      httpStatus: meta.httpStatus,
-      activeForAction: meta.activeForAction,
-      fetchMs: meta.fetchMs,
-      bodyReadMs,
-      jsonParseMs,
-      postValidationMs,
-      totalCallerMs: Date.now() - callerStartMs,
-      responseChars
-    });
-  }
-}
-
 async function fetchWithTimeout(input, init = {}, ms = 30000) {
-  const action = String(init?.diagnostic?.action || resolveFetchAction(input, init) || "unknown");
-  const requestId = String(init?.diagnostic?.requestId || createFrontendDiagnosticRequestId(action));
-  const startedAt = new Date().toISOString();
-  const startMs = Date.now();
-  const currentActive = Number(frontendApiPerfActiveRequests.get(action) || 0) + 1;
-  frontendApiPerfActiveRequests.set(action, currentActive);
-
   const controller = new AbortController();
   const signal = controller.signal;
   const id = setTimeout(() => controller.abort(), ms);
-  const request = attachDiagnosticRequestIdToApiRequest(input, init, requestId);
-  let outcome = "SUCCESS";
-  let aborted = false;
-  let httpStatus = null;
-  let fetchResolvedMs = null;
 
   try {
-    const res = await fetch(request.input, { ...request.init, signal });
-    fetchResolvedMs = Date.now();
-    httpStatus = res.status;
-    if (shouldMeasureFrontendResponsePhases(action)) {
-      frontendApiResponsePerf.set(res, {
-        action,
-        requestId,
-        startedAt,
-        requestStartMs: startMs,
-        fetchMs: fetchResolvedMs - startMs,
-        timeoutMs: ms,
-        httpStatus,
-        activeForAction: currentActive
-      });
-    }
+    const res = await fetch(input, { ...init, signal });
 
     // 🔒 เช็ค HTTP status ชัดเจน
     if (!res.ok) {
-      outcome = "ERROR";
       const text = await res.text();
       throw new Error(`HTTP ${res.status}: ${text}`);
     }
@@ -10460,38 +9772,13 @@ async function fetchWithTimeout(input, init = {}, ms = 30000) {
 
   } catch (err) {
     if (err.name === "AbortError") {
-      outcome = "TIMEOUT";
-      aborted = true;
       const timeoutError = new Error(t("connectionSlowRetry", "การเชื่อมต่อช้าเกินไป กรุณาลองใหม่อีกครั้ง"));
       timeoutError.code = "REQUEST_TIMEOUT";
-      timeoutError.diagnosticRequestId = requestId;
       throw timeoutError;
-    }
-    outcome = outcome === "SUCCESS" ? "ERROR" : outcome;
-    if (err && typeof err === "object") {
-      err.diagnosticRequestId = err.diagnosticRequestId || requestId;
     }
     throw err;
   } finally {
     clearTimeout(id);
-    const nextActive = Math.max(0, Number(frontendApiPerfActiveRequests.get(action) || 1) - 1);
-    if (nextActive) {
-      frontendApiPerfActiveRequests.set(action, nextActive);
-    } else {
-      frontendApiPerfActiveRequests.delete(action);
-    }
-    recordFrontendApiTiming({
-      action,
-      requestId,
-      startedAt,
-      durationMs: Date.now() - startMs,
-      timeoutMs: ms,
-      outcome,
-      aborted,
-      httpStatus,
-      activeForAction: currentActive,
-      fetchMs: fetchResolvedMs === null ? Date.now() - startMs : fetchResolvedMs - startMs
-    });
   }
 }
 
@@ -10622,7 +9909,6 @@ function failLuopanichFrontendConfig(message) {
 }
 
  async function postFormAction(form, { timeout = 30000, returnFailure = false } = {}) {
-   const action = String(form && typeof form.get === "function" ? form.get("action") || "" : "").trim();
    const res = await fetchWithTimeout(API_URL, {
      method: "POST",
      body: form
@@ -10630,28 +9916,9 @@ function failLuopanichFrontendConfig(message) {
 
    let json;
    try {
-     json = shouldMeasureFrontendResponsePhases(action)
-       ? await readJsonWithFrontendPhaseTiming(res, payload => {
-           if (payload?.error || payload?.success === false) {
-             if (returnFailure) return payload || {};
-             if (isAuthError(payload.error)) {
-               showToast(t("sessionExpiredLoginAgain", "Session หมดอายุ กรุณา login ใหม่"), "warning");
-               exitAdmin({ silent: true });
-             }
-             throw new Error(payload.message || payload.error || "Request failed");
-           }
-           return payload;
-       })
-       : await res.json();
+     json = await res.json();
    } catch (err) {
-     if (err && err.__luopanichPhaseValidation) {
-       throw err;
-     }
      throw new Error("รูปแบบข้อมูลตอบกลับไม่ถูกต้อง");
-   }
-
-   if (shouldMeasureFrontendResponsePhases(action)) {
-     return json;
    }
 
    if (json?.error || json?.success === false) {
@@ -10663,76 +9930,8 @@ function failLuopanichFrontendConfig(message) {
      throw new Error(json.message || json.error || "Request failed");
    }
 
-    return json;
-  }
-
-async function postAdminLoginWithPhaseTiming(form) {
-  const action = "adminLogin";
-  const requestId = createFrontendDiagnosticRequestId(action);
-  const startedAt = new Date().toISOString();
-  const requestStartMs = Date.now();
-  let outcome = "SUCCESS";
-  let httpStatus = null;
-  let fetchMs = null;
-  let bodyReadMs = null;
-  let jsonParseMs = null;
-  let postValidationMs = null;
-  let responseChars = null;
-
-  if (form && typeof form.has === "function" && !form.has("diagnosticRequestId")) {
-    form.append("diagnosticRequestId", requestId);
-  }
-
-  try {
-    const res = await fetch(API_URL, {
-      method: "POST",
-      body: form
-    });
-    fetchMs = Date.now() - requestStartMs;
-    httpStatus = res.status;
-
-    const bodyStartMs = Date.now();
-    const text = await res.text();
-    bodyReadMs = Date.now() - bodyStartMs;
-    responseChars = text.length;
-
-    const parseStartMs = Date.now();
-    const json = JSON.parse(text);
-    jsonParseMs = Date.now() - parseStartMs;
-
-    const validationStartMs = Date.now();
-    if (!json || json.success === false || !json.token) {
-      outcome = "ERROR";
-    }
-    postValidationMs = Date.now() - validationStartMs;
-
-    return json;
-  } catch (err) {
-    outcome = err && err.name === "AbortError" ? "ABORTED" : "ERROR";
-    if (err && typeof err === "object") {
-      err.diagnosticRequestId = err.diagnosticRequestId || requestId;
-    }
-    throw err;
-  } finally {
-    recordFrontendApiTiming({
-      action,
-      requestId,
-      startedAt,
-      durationMs: Date.now() - requestStartMs,
-      timeoutMs: 0,
-      outcome,
-      aborted: outcome === "ABORTED",
-      httpStatus,
-      activeForAction: 1,
-      fetchMs: fetchMs === null ? Date.now() - requestStartMs : fetchMs,
-      bodyReadMs,
-      jsonParseMs,
-      postValidationMs,
-      totalCallerMs: Date.now() - requestStartMs,
-      responseChars
-    });
-  }
-}
+   return json;
+ } 
 
 function getBrandingFieldLabel(key) {
   return {
@@ -10939,12 +10138,10 @@ async function fetchBrandSettingsForAdmin() {
   const url = new URL(API_URL);
   url.searchParams.set("action", "getBrandSettings");
   const res = await fetchWithTimeout(url.toString(), {}, 30000);
-  const json = await readJsonWithFrontendPhaseTiming(res, payload => {
-    if (payload?.error || payload?.success === false) {
-      throw new Error(payload.message || payload.error || "Could not load brand settings");
-    }
-    return payload;
-  });
+  const json = await res.json();
+  if (json?.error || json?.success === false) {
+    throw new Error(json.message || json.error || "Could not load brand settings");
+  }
   return normalizeBrandingSettingsForUi(json?.data || json || {});
 }
 
@@ -11745,16 +10942,15 @@ const fetchProducts = async ({ attempt = 1 } = {}) => {
      {},
      PRODUCT_FETCH_TIMEOUT_MS
    );
-    const json = await readJsonWithFrontendPhaseTiming(res, payload => {
-      // 🔒 enforce standard response
-      if (!payload || payload.success !== true || !Array.isArray(payload.data)) {
-        console.error("fetchProducts invalid response:", payload);
-        throw new Error(
-          payload?.error || payload?.message || t("productLoadFailedRetry", "โหลดสินค้าไม่สำเร็จ กรุณากดโหลดใหม่อีกครั้ง")
-        );
-      }
-      return payload;
-    });
+    const json = await res.json();
+
+    // 🔒 enforce standard response
+    if (!json || json.success !== true || !Array.isArray(json.data)) {
+      console.error("fetchProducts invalid response:", json);
+      throw new Error(
+        json?.error || json?.message || t("productLoadFailedRetry", "โหลดสินค้าไม่สำเร็จ กรุณากดโหลดใหม่อีกครั้ง")
+      );
+    }
 
     logProductsLatencyDiagnostic({
       attempt: actualAttempt,
@@ -11797,7 +10993,7 @@ const fetchAdminProducts = async ({ attempt = 1 } = {}) => {
       15000
     );
 
-    const json = await readJsonWithFrontendPhaseTiming(res, payload => payload);
+    const json = await res.json();
 
     if (!json || json.success !== true || !Array.isArray(json.data)) {
       throw new Error(json?.error || t("loadProductsFailed", "ไม่สามารถโหลดข้อมูลสินค้าได้"));
@@ -11824,45 +11020,6 @@ const fetchAdminProducts = async ({ attempt = 1 } = {}) => {
     throw err;
   }
 };  
-
-async function fetchAdminBootstrap() {
-  const requestStartMs = Date.now();
-  try {
-    if (!state.admin?.token) {
-      throw new Error("Not authenticated");
-    }
-
-    const form = new URLSearchParams();
-    form.append("action", "adminBootstrap");
-    form.append("token", state.admin.token);
-
-    const json = await postFormAction(form, { timeout: 15000 });
-    const data = json?.data || {};
-    if (!data.products || !data.orders) {
-      throw new Error(t("loadProductsFailed", "ไม่สามารถโหลดข้อมูลสินค้าได้"));
-    }
-
-    logAdminPreloadLatencyDiagnostic({
-      phase: "adminBootstrap",
-      attempt: 1,
-      startMs: requestStartMs,
-      endMs: Date.now(),
-      elapsedMs: Date.now() - requestStartMs,
-      result: "success"
-    });
-    return data;
-  } catch (err) {
-    logAdminPreloadLatencyDiagnostic({
-      phase: "adminBootstrap",
-      attempt: 1,
-      startMs: requestStartMs,
-      endMs: Date.now(),
-      elapsedMs: Date.now() - requestStartMs,
-      result: classifyAdminPreloadError(err)
-    });
-    throw err;
-  }
-}
 
 async function fetchPendingDeliveries() {
 
@@ -11913,19 +11070,6 @@ function isActivePendingDelivery(item) {
     String(item?.status || "").toUpperCase() === "OPEN" &&
     getPendingDeliveryRemainingQty(item) > 0
   );
-}
-
-function getPendingDeliveryQtyForProduct(productId) {
-  const normalizedId = normalizeProductId(productId);
-  if (!normalizedId || !Array.isArray(state.admin.pendingDeliveries)) {
-    return 0;
-  }
-  return state.admin.pendingDeliveries
-    .filter(item =>
-      normalizeProductId(item?.productId || "") === normalizedId &&
-      isActivePendingDelivery(item)
-    )
-    .reduce((sum, item) => sum + getPendingDeliveryRemainingQty(item), 0);
 }
 
 function getPendingDeliveryInitialQty(item) {
@@ -12154,21 +11298,11 @@ function generateCreateOrderRequestId() {
   throw new Error("CREATE_REQUEST_ID_UNAVAILABLE");
 }
 
-async function createOrder(createRequestId, snapshot = null) {
-  const orderItems = Array.isArray(snapshot?.items) ? snapshot.items : state.cart;
-  const orderPoNumber = Object.prototype.hasOwnProperty.call(snapshot || {}, "poNumber")
-    ? String(snapshot.poNumber || "").trim()
-    : String(state.poNumber || "").trim();
-  const orderPartnerId = Object.prototype.hasOwnProperty.call(snapshot || {}, "partnerId")
-    ? String(snapshot.partnerId || "").trim()
-    : String(state.createOrderPartnerId || "").trim();
-  const orderAdminToken = Object.prototype.hasOwnProperty.call(snapshot || {}, "adminToken")
-    ? String(snapshot.adminToken || "")
-    : String(state.admin.token || "");
+async function createOrder(createRequestId) {
   // 🔴 HARDENING: reload stock snapshot before submit
   const latestProducts = await fetchProducts();
 
-  for (const item of orderItems) {
+  for (const item of state.cart) {
     const product = latestProducts.find(
       p => p.productId === item.productId
     );
@@ -12185,22 +11319,22 @@ async function createOrder(createRequestId, snapshot = null) {
     }
   }
 
-  const total = orderItems.reduce(
+  const total = state.cart.reduce(
    (s,i)=> s + Number(i.price) * Number(i.qty),
    0
  );
 
   const form = new URLSearchParams();
   form.append("action", "createOrder");
-  form.append("items", JSON.stringify(orderItems));
+  form.append("items", JSON.stringify(state.cart));
   form.append("total", total);
-  form.append("poNumber", orderPoNumber);
+  form.append("poNumber", String(state.poNumber || "").trim());
   form.append("createRequestId", String(createRequestId || "").trim());
   const selectedPartnerId = isAdminCreateOrderPartnerSelectorEnabled()
-    ? orderPartnerId
+    ? String(state.createOrderPartnerId || "").trim()
     : "";
   if (selectedPartnerId) {
-    form.append("token", orderAdminToken);
+    form.append("token", state.admin.token);
     form.append("partnerId", selectedPartnerId);
   }
  
@@ -12321,84 +11455,7 @@ function syncOverlayBackdropState() {
   }
 }
 
-function createStockMutationRequestId(prefix, productId) {
-  const safePrefix = String(prefix || "stock").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 24) || "stock";
-  const safeProductId = String(productId || "product").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 32) || "product";
-  if (window.crypto && typeof window.crypto.randomUUID === "function") {
-    return `${safePrefix}:${safeProductId}:${window.crypto.randomUUID()}`;
-  }
-  return `${safePrefix}:${safeProductId}:${Date.now().toString(36)}:${Math.random().toString(36).slice(2, 10)}`;
-}
-
-function createSingleStockRequestId(productId) {
-  return createStockMutationRequestId("stockIn", productId);
-}
-
-function createBatchStockRequestId() {
-  return createStockMutationRequestId("batchStockIn", "batch");
-}
-
-function isAmbiguousStockMutationFailure(err) {
-  const code = String(err?.code || "").trim();
-  const name = String(err?.name || "").trim();
-  const message = String(err?.message || err || "").trim();
-  if (code === "REQUEST_TIMEOUT" || name === "AbortError") return true;
-  if (/^HTTP\s+\d+:/i.test(message)) return false;
-  if (/forbidden|not authenticated|missing admin token|missing token|invalid token|session expired/i.test(message)) return false;
-  if (/invalid stock|product not found|invalid product|invalid qty|invalid quantity/i.test(message)) return false;
-  return /failed to fetch|network\s*error|networkerror|load failed|connection.*(lost|reset|interrupted)|offline/i.test(message);
-}
-
-function isAmbiguousBackgroundMutationFailure(err) {
-  return isAmbiguousStockMutationFailure(err);
-}
-
-async function refreshAfterApproveOrder() {
-  await refreshAdminAuditSnapshot();
-  await refreshProducts();
-  state.admin.pendingDeliveries = await fetchPendingDeliveries();
-}
-
-async function finishApproveOrderBackgroundSuccess(orderId, task) {
-  try {
-    await refreshAfterApproveOrder();
-  } catch (refreshErr) {
-    console.error("post-approve refresh failed:", refreshErr);
-    showToast(t("approveRefreshWarning", "อนุมัติสำเร็จ แต่รีเฟรชข้อมูลย้อนหลังไม่สมบูรณ์"), "warning");
-  }
-
-  showToast(t("approveSuccess", "อนุมัติคำสั่งซื้อสำเร็จ"), "success");
-  completeBackgroundTask(task.id, t("approveSuccess", "อนุมัติคำสั่งซื้อสำเร็จ"));
-}
-
-async function readBackApprovedOrderStatus(orderId) {
-  state.admin.orders = await fetchOrders();
-  const order = (Array.isArray(state.admin.orders) ? state.admin.orders : [])
-    .find(item => String(item?.orderId || "") === String(orderId || ""));
-  return String(order?.status || "").toUpperCase() === "APPROVED";
-}
-
-async function readBackRejectedOrderStatus(orderId) {
-  state.admin.orders = await fetchOrders();
-  const order = (Array.isArray(state.admin.orders) ? state.admin.orders : [])
-    .find(item => String(item?.orderId || "") === String(orderId || ""));
-  return String(order?.status || "").toUpperCase() === "REJECTED";
-}
-
-async function finishRejectOrderBackgroundSuccess(orderId, task) {
-  try {
-    await refreshAdminAuditSnapshot();
-    await refreshProducts();
-  } catch (refreshErr) {
-    console.error("post-reject refresh failed:", refreshErr);
-    showToast(t("rejectRefreshWarning", "ปฏิเสธสำเร็จ แต่รีเฟรชข้อมูลย้อนหลังไม่สมบูรณ์"), "warning");
-  }
-
-  showToast(t("rejectSuccess", "ปฏิเสธคำสั่งซื้อเรียบร้อย"), "success");
-  completeBackgroundTask(task.id, t("rejectSuccess", "ปฏิเสธคำสั่งซื้อเรียบร้อย"));
-}
-
-async function adminStockIn(productId, qty, reason, stockRequestId = ""){
+async function adminStockIn(productId, qty, reason){
   if (!state.admin.token) {
     throw new Error("Not authenticated");
   }
@@ -12408,30 +11465,12 @@ async function adminStockIn(productId, qty, reason, stockRequestId = ""){
   form.append("productId", productId);
   form.append("qty", qty);
   form.append("reason", reason || "");
-  if (stockRequestId) {
-    form.append("stockRequestId", stockRequestId);
-  }
   form.append("token", state.admin.token); // ✅ สำคัญที่สุด
 
   return await postFormAction(form);
 }
 
-async function checkStockInRequestStatus(productId, qty, stockRequestId) {
-  if (!state.admin.token) {
-    throw new Error("Not authenticated");
-  }
-
-  const form = new URLSearchParams();
-  form.append("action", "checkStockInRequestStatus");
-  form.append("productId", productId);
-  form.append("qty", qty);
-  form.append("stockRequestId", stockRequestId);
-  form.append("token", state.admin.token);
-
-  return await postFormAction(form, { timeout: 10000 });
-}
-
-async function adminBatchStockIn(items, reason, batchStockRequestId = "") {
+async function adminBatchStockIn(items, reason) {
   if (!state.admin.token) {
     throw new Error("Not authenticated");
   }
@@ -12440,26 +11479,9 @@ async function adminBatchStockIn(items, reason, batchStockRequestId = "") {
   form.append("action", "batchStockIn");
   form.append("items", JSON.stringify(items));
   form.append("reason", reason || "");
-  if (batchStockRequestId) {
-    form.append("batchStockRequestId", batchStockRequestId);
-  }
   form.append("token", state.admin.token);
 
   return await postFormAction(form, { timeout: 45000 });
-}
-
-async function checkBatchStockInRequestStatus(items, batchStockRequestId) {
-  if (!state.admin.token) {
-    throw new Error("Not authenticated");
-  }
-
-  const form = new URLSearchParams();
-  form.append("action", "checkBatchStockInRequestStatus");
-  form.append("items", JSON.stringify(items));
-  form.append("batchStockRequestId", batchStockRequestId);
-  form.append("token", state.admin.token);
-
-  return await postFormAction(form, { timeout: 10000 });
 }
 
 
@@ -12495,161 +11517,77 @@ async function refreshAdminAuditSnapshot() {
 } 
 
 async function adminApproveOrder(orderId) {
-  if (state.admin.isSubmitting) return null;
+  if (state.admin.isSubmitting) return;
+  state.admin.isSubmitting = true;
 
   try {
     if (!state.admin.token) {
       throw new Error("Not authenticated");
     }
 
-    const cleanOrderId = String(orderId || "").trim();
-    if (!cleanOrderId) {
-      throw new Error("Order not found");
-    }
-
-    const taskIdentity = `approveOrder:${cleanOrderId}`;
-    if (hasActiveBackgroundTask(taskIdentity)) {
-      showToast(t("approveAlreadyRunning", "กำลังอนุมัติคำสั่งซื้อนี้อยู่"), "warning");
-      return null;
-    }
-
-    const task = registerBackgroundTask({
-      identity: taskIdentity,
-      label: t("approve", "อนุมัติ"),
-      state: BACKGROUND_TASK_STATES.SENDING,
-      message: t("approvingOrder", "กำลังอนุมัติคำสั่งซื้อ...")
-    });
-
-    closeOverlay(adminOrderSheet);
-    state.ui.backdropLocked = false;
-    syncOverlayBackdropState();
+    showLoading(t("approvingOrder", "กำลังอนุมัติคำสั่งซื้อ..."));
 
     const form = new URLSearchParams();
     form.append("action", "approveOrder");
-    form.append("orderId", cleanOrderId);
+    form.append("orderId", orderId);
     form.append("token", state.admin.token);
 
-    (async () => {
-      try {
-        const json = await postFormAction(form);
-        if (json?.success === false || json?.error) {
-          throw new Error(json?.error || json?.message || t("approveError", "ไม่สามารถอนุมัติคำสั่งซื้อได้"));
-        }
-        await finishApproveOrderBackgroundSuccess(cleanOrderId, task);
-      } catch (err) {
-        if (isAmbiguousBackgroundMutationFailure(err)) {
-          updateBackgroundTask(task.id, {
-            state: BACKGROUND_TASK_STATES.CONFIRMING,
-            message: t("approveBackgroundConfirming", "กำลังตรวจสอบผลการอนุมัติคำสั่งซื้อ...")
-          });
+    const json = await postFormAction(form);
 
-          try {
-            const approved = await readBackApprovedOrderStatus(cleanOrderId);
-            if (approved) {
-              await finishApproveOrderBackgroundSuccess(cleanOrderId, task);
-              return;
-            }
+    // 🔒 STEP 5: sync ข้อมูลตรวจสอบย้อนหลังทันที
+    try {
+      await refreshAdminAuditSnapshot();
+      await refreshProducts();
+    } catch (refreshErr) {
+      console.error("post-approve refresh failed:", refreshErr);
+      showToast(t("approveRefreshWarning", "อนุมัติสำเร็จ แต่รีเฟรชข้อมูลย้อนหลังไม่สมบูรณ์"), "warning");
+    }
 
-            const message = t("approveBackgroundUnconfirmed", "ยังยืนยันผลการอนุมัติไม่ได้ กรุณาตรวจสอบก่อนทำรายการซ้ำ");
-            failBackgroundTask(task.id, message);
-            showToast(message, "warning");
-          } catch (confirmErr) {
-            console.error(confirmErr);
-            failBackgroundTask(task.id, t("approveBackgroundConfirmFailed", "ตรวจสอบผลการอนุมัติไม่สำเร็จ"));
-            showToast(getUserFacingError(confirmErr, "approveError", "ไม่สามารถอนุมัติคำสั่งซื้อได้"), "error");
-          }
-          return;
-        }
-
-        console.error(err);
-        failBackgroundTask(task.id, getUserFacingError(err, "approveError", "ไม่สามารถอนุมัติคำสั่งซื้อได้"));
-        showToast(getUserFacingError(err, "approveError", "ไม่สามารถอนุมัติคำสั่งซื้อได้"), "error");
-      }
-    })();
-
-    return task;
+    // ✅ success
+    showToast(t("approveSuccess", "อนุมัติคำสั่งซื้อสำเร็จ"), "success");
+    return json.data;
 
   } catch (err) {
     console.error(err);
     showToast(getUserFacingError(err, "approveError", "ไม่สามารถอนุมัติคำสั่งซื้อได้"), "error");
     throw err;
-  }
+  } finally {
+  safeHideLoading();
+  state.admin.isSubmitting = false;
+ }
 }
 
 async function adminRejectOrder(orderId) {
   if (state.admin.isSubmitting) return;
+  state.admin.isSubmitting = true;
 
   try {
     if (!state.admin.token) {
       throw new Error("Not authenticated");
     }
 
-    const cleanOrderId = String(orderId || "").trim();
-    if (!cleanOrderId) {
-      throw new Error("Order not found");
-    }
-
-    const taskIdentity = `rejectOrder:${cleanOrderId}`;
-    if (hasActiveBackgroundTask(taskIdentity)) {
-      showToast(t("rejectAlreadyRunning", "กำลังปฏิเสธคำสั่งซื้อนี้อยู่"), "warning");
-      return null;
-    }
-
-    const task = registerBackgroundTask({
-      identity: taskIdentity,
-      label: t("reject", "ปฏิเสธ"),
-      state: BACKGROUND_TASK_STATES.SENDING,
-      message: t("rejectingOrder", "กำลังปฏิเสธคำสั่งซื้อ...")
-    });
+    showLoading(t("rejectingOrder", "กำลังปฏิเสธคำสั่งซื้อ..."));
 
     const form = new URLSearchParams();
     form.append("action", "rejectOrder");
-    form.append("orderId", cleanOrderId);
+    form.append("orderId", orderId);
     form.append("token", state.admin.token);
 
-    closeOverlay(adminOrderSheet);
-    state.ui.backdropLocked = false;
-    syncOverlayBackdropState();
+    const json = await postFormAction(form);
 
-    (async () => {
-      try {
-        const json = await postFormAction(form);
-        if (json?.success === false || json?.error) {
-          throw new Error(json?.error || json?.message || t("rejectError", "ไม่สามารถปฏิเสธคำสั่งซื้อได้"));
-        }
-        await finishRejectOrderBackgroundSuccess(cleanOrderId, task);
-      } catch (err) {
-        if (isAmbiguousBackgroundMutationFailure(err)) {
-          updateBackgroundTask(task.id, {
-            state: BACKGROUND_TASK_STATES.CONFIRMING,
-            message: t("rejectBackgroundConfirming", "กำลังตรวจสอบผลการปฏิเสธคำสั่งซื้อ...")
-          });
+    // 🔒 STEP 5: sync ข้อมูลตรวจสอบย้อนหลังทันที
+    try {
+      await refreshAdminAuditSnapshot();
+      await refreshProducts();
+    } catch (refreshErr) {
+      console.error("post-reject refresh failed:", refreshErr);
+      showToast(t("rejectRefreshWarning", "ปฏิเสธสำเร็จ แต่รีเฟรชข้อมูลย้อนหลังไม่สมบูรณ์"), "warning");
+    }
+   
 
-          try {
-            const rejected = await readBackRejectedOrderStatus(cleanOrderId);
-            if (rejected) {
-              await finishRejectOrderBackgroundSuccess(cleanOrderId, task);
-              return;
-            }
-
-            const message = t("rejectBackgroundUnconfirmed", "ยังยืนยันผลการปฏิเสธไม่ได้ กรุณาตรวจสอบก่อนทำรายการซ้ำ");
-            failBackgroundTask(task.id, message);
-            showToast(message, "warning");
-          } catch (confirmErr) {
-            console.error(confirmErr);
-            failBackgroundTask(task.id, t("rejectBackgroundConfirmFailed", "ตรวจสอบผลการปฏิเสธไม่สำเร็จ"));
-            showToast(getUserFacingError(confirmErr, "rejectError", "ไม่สามารถปฏิเสธคำสั่งซื้อได้"), "error");
-          }
-          return;
-        }
-
-        console.error(err);
-        failBackgroundTask(task.id, getUserFacingError(err, "rejectError", "ไม่สามารถปฏิเสธคำสั่งซื้อได้"));
-        showToast(getUserFacingError(err, "rejectError", "ไม่สามารถปฏิเสธคำสั่งซื้อได้"), "error");
-      }
-    })();
-
-    return task;
+    // ✅ success
+    showToast(t("rejectSuccess", "ปฏิเสธคำสั่งซื้อเรียบร้อย"), "success");
+    return json.data;
 
   } catch (err) {
     console.error(err);
@@ -12658,6 +11596,11 @@ async function adminRejectOrder(orderId) {
       "error"
     );
     throw err;
+
+  } finally {
+    // ✅ cleanup ถูกต้อง
+    safeHideLoading();
+    state.admin.isSubmitting = false;
   }
 }
 
@@ -13074,11 +12017,9 @@ function closeProductInfoSheet(){
 
 function getResolvedProductStatus(product) {
   const stockNum = Number(product?.stock);
-  if (Number.isFinite(stockNum) && stockNum <= 0) return "out";
-  const status = normalizeProductStatus(product?.status || "ready");
-  return Number.isFinite(stockNum) && stockNum > 0 && status === "out"
-    ? "ready"
-    : status;
+  return stockNum <= 0
+    ? "out"
+    : String(product?.status || "ready").trim().toLowerCase();
 }
 
 function isViewerVariantProduct(product) {
@@ -14746,28 +13687,21 @@ function bindStickyHeaderOffset(){
 function renderHeader(){
   const h = document.getElementById("appHeader");
   if(!h) return;
-  const taskSummary = getBackgroundTaskHeaderSummary();
-  const taskSlotClass = taskSummary.active ? " has-background-task" : "";
 
   if(state.mode === "viewer"){
     h.innerHTML = `
       <div class="header-left">
         <div class="header-stack">
-          <div class="header-brand-task-slot${taskSlotClass}">
-            <div class="header-brand-layer" aria-hidden="${taskSummary.active ? "true" : "false"}">
-              <div class="shop-title viewer-brand-title">
-                <img class="live-brand-logo" data-live-brand-logo alt="" aria-hidden="true" onload="handleLiveBrandLogoLoad(this)" onerror="handleLiveBrandLogoError(this)">
-                <dotlottie-player class="brand-lottie"
-                  src="assets/dog-wagging-tail.lottie"
-                  background="transparent"
-                  speed="1"
-                  loop
-                  autoplay
-                  aria-hidden="true"></dotlottie-player>
-                <span class="brand-title-text" data-live-brand-text>Luopanich</span>
-              </div>
-            </div>
-            ${renderHeaderBackgroundTaskLayer()}
+          <div class="shop-title viewer-brand-title">
+            <img class="live-brand-logo" data-live-brand-logo alt="" aria-hidden="true" onload="handleLiveBrandLogoLoad(this)" onerror="handleLiveBrandLogoError(this)">
+            <dotlottie-player class="brand-lottie"
+              src="assets/dog-wagging-tail.lottie"
+              background="transparent"
+              speed="1"
+              loop
+              autoplay
+              aria-hidden="true"></dotlottie-player>
+            <span class="brand-title-text" data-live-brand-text>Luopanich</span>
           </div>
         </div>
       </div>
@@ -14794,22 +13728,17 @@ function renderHeader(){
   h.innerHTML = `
     <div class="header-left">
       <div class="header-stack">
-        <div class="header-brand-task-slot${taskSlotClass}">
-          <div class="header-brand-layer" aria-hidden="${taskSummary.active ? "true" : "false"}">
-            <div class="admin-title admin-brand-title">
-              <img class="live-brand-logo" data-live-brand-logo alt="" aria-hidden="true" onload="handleLiveBrandLogoLoad(this)" onerror="handleLiveBrandLogoError(this)">
-              <dotlottie-player class="brand-lottie"
-                src="assets/dog-wagging-tail.lottie"
-                background="transparent"
-                speed="1"
-                loop
-                autoplay
-                aria-hidden="true"></dotlottie-player>
-              <span class="brand-title-text" data-live-brand-text>Luopanich</span>
-              <span class="badge">${t("adminBadge", "แอดมิน")}</span>
-            </div>
-          </div>
-          ${renderHeaderBackgroundTaskLayer()}
+        <div class="admin-title admin-brand-title">
+          <img class="live-brand-logo" data-live-brand-logo alt="" aria-hidden="true" onload="handleLiveBrandLogoLoad(this)" onerror="handleLiveBrandLogoError(this)">
+          <dotlottie-player class="brand-lottie"
+            src="assets/dog-wagging-tail.lottie"
+            background="transparent"
+            speed="1"
+            loop
+            autoplay
+            aria-hidden="true"></dotlottie-player>
+          <span class="brand-title-text" data-live-brand-text>Luopanich</span>
+          <span class="badge">${t("adminBadge", "แอดมิน")}</span>
         </div>
       </div>
     </div>
@@ -15031,65 +13960,58 @@ async function enterAdmin(){
     // 🔴 CHANGED: ล้าง selection เก่าจาก viewer/admin รอบก่อน
     state.selectedProduct = null;
 
-    const bootstrap = await fetchAdminBootstrap();
-    const productsResult = bootstrap.products || {};
-    const ordersResult = bootstrap.orders || {};
+    const productsStartMs = Date.now();
     let productsError = null;
+    const productsPromise = refreshProducts()
+      .then(() => {
+        logAdminPreloadLatencyDiagnostic({
+          phase: "enterAdmin.refreshProducts",
+          attempt: 1,
+          startMs: productsStartMs,
+          endMs: Date.now(),
+          elapsedMs: Date.now() - productsStartMs,
+          result: "success"
+        });
+      })
+      .catch(err => {
+        enterAdminResult = classifyAdminPreloadError(err);
+        logAdminPreloadLatencyDiagnostic({
+          phase: "enterAdmin.refreshProducts",
+          attempt: 1,
+          startMs: productsStartMs,
+          endMs: Date.now(),
+          elapsedMs: Date.now() - productsStartMs,
+          result: enterAdminResult
+        });
+        productsError = err;
+      });
 
-    if (productsResult.ok === true && Array.isArray(productsResult.data)) {
-      productRefreshRequestSeq += 1;
-      state.products = sortProducts(productsResult.data);
-      state.productLoad.status = "success";
-      state.productLoad.error = "";
-      renderProducts();
-      logAdminPreloadLatencyDiagnostic({
-        phase: "enterAdmin.refreshProducts",
-        attempt: 1,
-        startMs: enterAdminStartMs,
-        endMs: Date.now(),
-        elapsedMs: Date.now() - enterAdminStartMs,
-        result: "success"
+    const ordersStartMs = Date.now();
+    const ordersPromise = fetchOrders()
+      .then(orders => {
+        state.admin.orders = Array.isArray(orders) ? orders : [];
+        logAdminPreloadLatencyDiagnostic({
+          phase: "enterAdmin.orders",
+          attempt: 1,
+          startMs: ordersStartMs,
+          endMs: Date.now(),
+          elapsedMs: Date.now() - ordersStartMs,
+          result: "success"
+        });
+      })
+      .catch(err => {
+        logAdminPreloadLatencyDiagnostic({
+          phase: "enterAdmin.orders",
+          attempt: 1,
+          startMs: ordersStartMs,
+          endMs: Date.now(),
+          elapsedMs: Date.now() - ordersStartMs,
+          result: classifyAdminPreloadError(err)
+        });
+        console.warn("enterAdmin: preload orders failed", err);
       });
-    } else {
-      productsError = new Error(productsResult.error || t("loadProductsFailed", "ไม่สามารถโหลดข้อมูลสินค้าได้"));
-      enterAdminResult = classifyAdminPreloadError(productsError);
-      state.productLoad.status = "error";
-      state.productLoad.error = getUserFacingError(productsError, "loadProductsFailed", "ไม่สามารถโหลดข้อมูลสินค้าได้");
-      renderProducts();
-      logAdminPreloadLatencyDiagnostic({
-        phase: "enterAdmin.refreshProducts",
-        attempt: 1,
-        startMs: enterAdminStartMs,
-        endMs: Date.now(),
-        elapsedMs: Date.now() - enterAdminStartMs,
-        result: enterAdminResult
-      });
-    }
 
-    if (ordersResult.ok === true && Array.isArray(ordersResult.data)) {
-      state.admin.orders = ordersResult.data;
-      logAdminPreloadLatencyDiagnostic({
-        phase: "enterAdmin.orders",
-        attempt: 1,
-        startMs: enterAdminStartMs,
-        endMs: Date.now(),
-        elapsedMs: Date.now() - enterAdminStartMs,
-        result: "success"
-      });
-    } else {
-      state.admin.orders = [];
-      const ordersError = new Error(ordersResult.error || "Orders preload failed");
-      logAdminPreloadLatencyDiagnostic({
-        phase: "enterAdmin.orders",
-        attempt: 1,
-        startMs: enterAdminStartMs,
-        endMs: Date.now(),
-        elapsedMs: Date.now() - enterAdminStartMs,
-        result: classifyAdminPreloadError(ordersError)
-      });
-      console.warn("enterAdmin: preload orders failed", ordersError);
-    }
-
+    await Promise.all([productsPromise, ordersPromise]);
     if (productsError) {
       throw productsError;
     }
@@ -16607,7 +15529,12 @@ async function handleAdminLogin(btn){
     form.append("password", password);
 
     adminLoginRequestStartMs = Date.now();
-    const json = await postAdminLoginWithPhaseTiming(form);
+    const res = await fetch(API_URL, {
+      method: "POST",
+      body: form
+    });
+
+    const json = await res.json();
 
     if (!json.success || !json.token) {
       adminLoginRequestLogged = true;
@@ -19570,7 +18497,22 @@ async function handleApprove() {
   try {
     const o = state.admin.selectedOrder;
 
+    // ✅ CORE: ใช้ API เวอร์ชันใหม่ (มี loading + toast + guard)
     await adminApproveOrder(o.orderId);
+
+    // ✅ ปิดหน้า Order Detail ผ่าน Overlay Manager
+    closeOverlay(adminOrderSheet);
+
+    // 🔄 refresh stock + product list
+    await refreshProducts();
+    state.admin.pendingDeliveries =
+      await fetchPendingDeliveries();
+
+    // ✅ อนุญาตให้เปิด Orders (เฉพาะ flow นี้)
+    allowOpenOrders = true;
+
+    // ✅ กลับไปหน้า Pending Orders เพื่อทำรายการต่อได้ทันที
+    await openAdminDashboard("PENDING", true);
 
   } catch (err) {
     // ❌ ไม่ต้อง alert ซ้ำ
@@ -19588,6 +18530,18 @@ async function handleReject() {
 
     // ✅ CORE: ใช้ API เวอร์ชันใหม่ (มี loading + toast + guard)
     await adminRejectOrder(o.orderId);
+
+    // ✅ ปิดหน้า Order Detail ผ่าน Overlay Manager
+    closeOverlay(adminOrderSheet);
+
+    // 🔄 รีเฟรชสินค้า (แม้ reject จะไม่ตัด stock แต่ UI ต้อง sync)
+    await refreshProducts();
+
+    // ✅ อนุญาตให้เปิด Orders (เฉพาะ flow นี้)
+    allowOpenOrders = true;
+
+    // ✅ กลับไปหน้า Orders (รอดำเนินการ)
+    await openAdminDashboard("PENDING", true);
 
   } catch (err) {
     // ❌ ไม่ต้อง alert ซ้ำ
@@ -19695,20 +18649,6 @@ function resetBatchStockInState(seedProductId) {
   }
 }
 
-async function ensureBatchStockInPendingDeliverySnapshot() {
-  if (Array.isArray(state.admin.pendingDeliveries)) {
-    return;
-  }
-  try {
-    state.admin.pendingDeliveries = await fetchPendingDeliveries();
-    if (adminStockActionSheet.classList.contains("show")) {
-      renderBatchStockInSheet();
-    }
-  } catch (err) {
-    console.warn("load pending deliveries for batch stock in failed:", err);
-  }
-}
-
 function openBatchStockInSheet(seedProductId) {
   if (state.mode !== "admin" || !state.admin.loggedIn || !state.admin.token) {
     showToast(t("noPermission", "ไม่มีสิทธิ์ใช้งานส่วนนี้"), "error");
@@ -19718,7 +18658,6 @@ function openBatchStockInSheet(seedProductId) {
   resetBatchStockInState(seedProductId);
   renderBatchStockInSheet();
   openOverlay(adminStockActionSheet);
-  ensureBatchStockInPendingDeliverySnapshot();
 }
 
 function backToAdminMenuFromBatchStockIn() {
@@ -19880,45 +18819,32 @@ function renderBatchStockInSelectedItems() {
         const after = Number.isFinite(item.stock) && validQty
           ? item.stock + qty
           : "-";
-        const pendingQty = getPendingDeliveryQtyForProduct(item.productId);
         return `
-          <div class="bulk-preview-card batch-stock-selected-card" data-batch-stock-in-card="${escAttr(item.productId)}">
-            ${renderCartItemThumb({
-              productId: item.productId,
-              name: item.product.name || item.productId || "สินค้า",
-              image: item.product.image || ""
-            })}
-            <div class="cart-content">
-              <div class="name">${esc(item.product.name || item.productId || "-")}</div>
-              <div class="bulk-preview-meta">
-                <span>SKU: ${esc(item.productId || "-")}</span>
-                <span>${formatUiText("batchStockInBeforeQty", { qty: Number.isFinite(item.stock) ? item.stock : "-" }, "เดิม {qty}")}</span>
-                <span data-batch-stock-in-receive>${formatUiText("batchStockInReceiveQty", { qty: validQty ? `+${qty}` : "-" }, "รับเข้า {qty}")}</span>
-                <span data-batch-stock-in-after>${formatUiText("batchStockInAfterQty", { qty: esc(String(after)) }, "หลังรับเข้า {qty}")}</span>
-              </div>
-              ${pendingQty > 0 ? `
-                <div class="bulk-preview-meta" style="margin-top:8px">
-                  <span class="status-badge compact status-pending">${t("pendingDeliveryExists", "มีค้างส่งอยู่")} · ${t("pendingDeliveryShort", "ค้างส่ง")} ${pendingQty} ${t("pieceUnit", "ชิ้น")}</span>
-                </div>
-              ` : ""}
-              <div class="form-group" style="margin-top:10px">
-                <label for="batchStockInQty-${escAttr(item.productId)}">${t("batchStockInQty", "จำนวนรับเข้า")}</label>
-                <div class="qty-input">
-                  <input
-                    id="batchStockInQty-${escAttr(item.productId)}"
-                    type="number"
-                    min="1"
-                    step="1"
-                    value="${escAttr(item.qtyRaw || "")}"
-                    placeholder="${t("exampleQty", "เช่น 10")}"
-                    oninput="updateBatchStockInQty(${toInlineJsStringLiteral(item.productId)}, this.value)">
-                </div>
-              </div>
-              <button class="btn btn-outline" type="button"
-                onclick="removeBatchStockInProduct(${toInlineJsStringLiteral(item.productId)})">
-                ${t("remove", "ลบออก")}
-              </button>
+          <div class="bulk-preview-card" data-batch-stock-in-card="${escAttr(item.productId)}">
+            <div class="name">${esc(item.product.name || item.productId || "-")}</div>
+            <div class="bulk-preview-meta">
+              <span>SKU: ${esc(item.productId || "-")}</span>
+              <span>${formatUiText("batchStockInBeforeQty", { qty: Number.isFinite(item.stock) ? item.stock : "-" }, "เดิม {qty}")}</span>
+              <span data-batch-stock-in-receive>${formatUiText("batchStockInReceiveQty", { qty: validQty ? `+${qty}` : "-" }, "รับเข้า {qty}")}</span>
+              <span data-batch-stock-in-after>${formatUiText("batchStockInAfterQty", { qty: esc(String(after)) }, "หลังรับเข้า {qty}")}</span>
             </div>
+            <div class="form-group" style="margin-top:10px">
+              <label for="batchStockInQty-${escAttr(item.productId)}">${t("batchStockInQty", "จำนวนรับเข้า")}</label>
+              <div class="qty-input">
+                <input
+                  id="batchStockInQty-${escAttr(item.productId)}"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value="${escAttr(item.qtyRaw || "")}"
+                  placeholder="${t("exampleQty", "เช่น 10")}"
+                  oninput="updateBatchStockInQty(${toInlineJsStringLiteral(item.productId)}, this.value)">
+              </div>
+            </div>
+            <button class="btn btn-outline" type="button"
+              onclick="removeBatchStockInProduct(${toInlineJsStringLiteral(item.productId)})">
+              ${t("remove", "ลบออก")}
+            </button>
           </div>
         `;
       }).join("")}
@@ -20063,6 +18989,7 @@ function editBatchStockIn() {
 
 async function submitBatchStockIn() {
   const batchState = state.admin.batchStockIn;
+  if (batchState.submitting) return;
 
   const validation = validateBatchStockInItems();
   batchState.errors = validation.errors;
@@ -20072,94 +18999,38 @@ async function submitBatchStockIn() {
     return;
   }
 
-  const payload = validation.items.map(item => ({
-    productId: item.productId,
-    qty: item.qty
-  }));
-  const blockedItem = payload.find(item => findActiveStockMutationTaskForProduct(item.productId));
-  if (blockedItem) {
-    showToast(t("stockInAlreadyRunning", "กำลังรับสินค้าเข้ารายการนี้อยู่"), "warning");
-    return;
-  }
+  batchState.submitting = true;
+  renderBatchStockInSheet();
+  showLoading(t("batchStockInLoading", "กำลังรับสินค้าเข้า..."));
 
-  const batchStockRequestId = createBatchStockRequestId();
-  const task = registerBackgroundTask({
-    identity: `batchStockIn:${batchStockRequestId}`,
-    productIds: payload.map(item => item.productId),
-    label: t("receiveStock", "รับสินค้าเข้า"),
-    state: BACKGROUND_TASK_STATES.SENDING,
-    message: t("stockInBackgroundSending", "กำลังบันทึกรับสินค้าเข้า...")
-  });
+  try {
+    const payload = validation.items.map(item => ({
+      productId: item.productId,
+      qty: item.qty
+    }));
+    const result = await adminBatchStockIn(payload, batchState.reason);
+    if (!result?.success) {
+      throw new Error(result?.error || t("stockInError", "ไม่สามารถรับสต๊อกได้"));
+    }
 
-  const buttons = adminStockActionSheet.querySelectorAll("button");
-  buttons.forEach(b => b.disabled = true);
-  closeOverlay(adminStockActionSheet);
-  state.ui.backdropLocked = false;
-  syncOverlayBackdropState();
-  buttons.forEach(b => b.disabled = false);
-
-  const finishBatchStockInBackgroundSuccess = async () => {
     await refreshProducts();
     await refreshAdminAuditSnapshot();
 
     resetBatchStockInState();
+    closeOverlay(adminStockActionSheet);
     finishAdminAction({ refresh: true });
     showToast(t("stockInSuccess", "รับสต๊อกเข้าแล้ว"), "success");
-    completeBackgroundTask(task.id, t("stockInSuccess", "รับสต๊อกเข้าแล้ว"));
-  };
-
-  (async () => {
-    try {
-      const result = await adminBatchStockIn(payload, batchState.reason, batchStockRequestId);
-      if (!result?.success) {
-        throw new Error(result?.error || t("stockInError", "ไม่สามารถรับสต๊อกได้"));
-      }
-
-      await finishBatchStockInBackgroundSuccess();
-    } catch (err) {
-      if (isAmbiguousStockMutationFailure(err)) {
-        updateBackgroundTask(task.id, {
-          state: BACKGROUND_TASK_STATES.CONFIRMING,
-          message: t("stockInBackgroundConfirming", "กำลังตรวจสอบผลการรับสินค้าเข้า...")
-        });
-
-        try {
-          const statusResponse = await checkBatchStockInRequestStatus(payload, batchStockRequestId);
-          const status = statusResponse?.data || statusResponse || {};
-          if (
-            status.batchStockRequestId === batchStockRequestId &&
-            status.status === "SUCCESS" &&
-            status.applied === true &&
-            Number(status.expectedCount) === payload.length
-          ) {
-            await finishBatchStockInBackgroundSuccess();
-            return;
-          }
-
-          const partialMessage = t(
-            "batchStockInBackgroundUnconfirmed",
-            "ไม่สามารถยืนยันผลการรับสินค้าได้ครบ กรุณาตรวจสอบก่อนทำรายการซ้ำ"
-          );
-          failBackgroundTask(task.id, partialMessage);
-          showToast(partialMessage, "warning");
-        } catch (confirmErr) {
-          console.error(confirmErr);
-          failBackgroundTask(
-            task.id,
-            t("stockInBackgroundConfirmFailed", "ตรวจสอบผลการรับสินค้าเข้าไม่สำเร็จ")
-          );
-          showToast(getUserFacingError(confirmErr, "stockInError", "ไม่สามารถรับสต๊อกได้"), "error");
-        }
-        return;
-      }
-
-      console.error(err);
-      failBackgroundTask(task.id, getUserFacingError(err, "stockInError", "ไม่สามารถรับสต๊อกได้"));
-      showToast(getUserFacingError(err, "stockInError", "ไม่สามารถรับสต๊อกได้"), "error");
-    } finally {
-      batchState.submitting = false;
-    }
-  })();
+  } catch (err) {
+    console.error(err);
+    batchState.submitting = false;
+    batchState.reviewOpen = false;
+    showToast(getUserFacingError(err, "stockInError", "ไม่สามารถรับสต๊อกได้"), "error");
+    renderBatchStockInSheet();
+  } finally {
+    state.ui.backdropLocked = false;
+    safeHideLoading();
+    syncOverlayBackdropState();
+  }
 }
 
 async function submitStockIn(){
@@ -20182,32 +19053,21 @@ async function submitStockIn(){
     return;
   }
 
-  const product = state.selectedProduct;
-  const productId = String(product.productId || "").trim();
-  const taskIdentity = `stockIn:${productId}`;
-  const activeTask = findActiveStockMutationTaskForProduct(productId);
-  if (activeTask) {
-    showToast(t("stockInAlreadyRunning", "กำลังรับสินค้าเข้ารายการนี้อยู่"), "warning");
-    return;
-  }
-
-  const stockRequestId = createSingleStockRequestId(productId);
-  const task = registerBackgroundTask({
-    identity: taskIdentity,
-    label: t("receiveStock", "รับสินค้าเข้า"),
-    state: BACKGROUND_TASK_STATES.SENDING,
-    message: t("stockInBackgroundSending", "กำลังบันทึกรับสินค้าเข้า...")
-  });
-
-  // 🔒 disable ปุ่มกันกดซ้ำระหว่างปิดชีต
+  // 🔒 disable ปุ่มกันกดซ้ำ
   const buttons = adminStockActionSheet.querySelectorAll("button");
   buttons.forEach(b => b.disabled = true);
-  closeOverlay(adminStockActionSheet);
-  state.ui.backdropLocked = false;
-  syncOverlayBackdropState();
-  buttons.forEach(b => b.disabled = false);
 
-  const finishStockInBackgroundSuccess = async () => {
+  try {
+    const res = await adminStockIn(
+      state.selectedProduct.productId,
+      qty,
+      reason
+    );
+
+    if (res.error) {
+      throw new Error(res.error);
+    }
+
     showToast(t("stockInSuccess", "รับสต๊อกเข้าแล้ว"), "success");
 
     // 🔄 sync ข้อมูลหลัก + ข้อมูลย้อนหลังทันที
@@ -20218,62 +19078,19 @@ async function submitStockIn(){
     qtyInput.value = "";
     reasonInput.value = "";
 
+    // ✅ ปิด Stock Action ผ่าน Overlay Manager
+    closeOverlay(adminStockActionSheet);
+
     // ✅ กลับสู่หน้าแม่ของ admin แบบนิ่ง
     finishAdminAction({ refresh: true });
-    completeBackgroundTask(task.id, t("stockInSuccess", "รับสต๊อกเข้าแล้ว"));
-  };
 
-  (async () => {
-    try {
-      const res = await adminStockIn(
-        productId,
-        qty,
-        reason,
-        stockRequestId
-      );
-
-      if (res.error) {
-        throw new Error(res.error);
-      }
-
-      await finishStockInBackgroundSuccess();
-
-    } catch (err) {
-      if (isAmbiguousStockMutationFailure(err)) {
-        updateBackgroundTask(task.id, {
-          state: BACKGROUND_TASK_STATES.CONFIRMING,
-          message: t("stockInBackgroundConfirming", "กำลังตรวจสอบผลการรับสินค้าเข้า...")
-        });
-
-        try {
-          const statusResponse = await checkStockInRequestStatus(productId, qty, stockRequestId);
-          const status = statusResponse?.data || statusResponse || {};
-          if (status.applied === true && status.stockRequestId === stockRequestId) {
-            await finishStockInBackgroundSuccess();
-            return;
-          }
-
-          failBackgroundTask(
-            task.id,
-            t("stockInBackgroundUnconfirmed", "ยังยืนยันผลการรับสินค้าเข้าไม่ได้")
-          );
-          showToast(t("stockInBackgroundUnconfirmed", "ยังยืนยันผลการรับสินค้าเข้าไม่ได้"), "warning");
-        } catch (confirmErr) {
-          console.error(confirmErr);
-          failBackgroundTask(
-            task.id,
-            t("stockInBackgroundConfirmFailed", "ตรวจสอบผลการรับสินค้าเข้าไม่สำเร็จ")
-          );
-          showToast(getUserFacingError(confirmErr, "stockInError", "ไม่สามารถรับสต๊อกได้"), "error");
-        }
-        return;
-      }
-
-      console.error(err);
-      failBackgroundTask(task.id, getUserFacingError(err, "stockInError", "ไม่สามารถรับสต๊อกได้"));
-      showToast(getUserFacingError(err, "stockInError", "ไม่สามารถรับสต๊อกได้"), "error");
-    }
-  })();
+  } catch (err) {
+    console.error(err);
+    showToast(getUserFacingError(err, "stockInError", "ไม่สามารถรับสต๊อกได้"), "error");
+  } finally {
+    // 🔓 เปิดปุ่มกลับทุกกรณี
+    buttons.forEach(b => b.disabled = false);
+  }
 }
 
 
@@ -20345,7 +19162,7 @@ function openStockAction(p){
 
   state.selectedProduct = p;
   const stockQty = Number(p.stock) || 0;
-  const statusKey = getResolvedProductStatus(p);
+  const statusKey = normalizeProductStatus(p.status || (stockQty <= 0 ? "out" : "ready"));
   const statusBadgeClass = stockQty <= 0
     ? "status-rejected"
     : statusKey === "shipping"
@@ -26998,105 +25815,6 @@ function closeProduct(){
   closeOverlay(productSheet);
 }
 
-function getCreateOrderBackgroundTaskIdentity(createRequestId) {
-  return `createOrder:${String(createRequestId || "").trim()}`;
-}
-
-function cloneCreateOrderItems(items) {
-  return JSON.parse(JSON.stringify(Array.isArray(items) ? items : []));
-}
-
-function createCreateOrderSubmissionSnapshot(createRequestId, poNumber) {
-  return {
-    createRequestId: String(createRequestId || "").trim(),
-    poNumber: String(poNumber || "").trim(),
-    partnerId: isAdminCreateOrderPartnerSelectorEnabled()
-      ? String(state.createOrderPartnerId || "").trim()
-      : "",
-    adminToken: isAdminCreateOrderPartnerSelectorEnabled()
-      ? String(state.admin.token || "")
-      : "",
-    items: cloneCreateOrderItems(state.cart)
-  };
-}
-
-function createOrderItemsMatchSnapshot(currentItems, snapshotItems) {
-  const current = Array.isArray(currentItems) ? currentItems : [];
-  const snapshot = Array.isArray(snapshotItems) ? snapshotItems : [];
-  if (current.length !== snapshot.length) return false;
-  return current.every((item, index) => {
-    const expected = snapshot[index] || {};
-    return String(item?.productId || "").trim() === String(expected.productId || "").trim() &&
-      Number(item?.qty) === Number(expected.qty) &&
-      Number(item?.price) === Number(expected.price);
-  });
-}
-
-function isCreateOrderDraftUnchanged(snapshot) {
-  if (!snapshot) return false;
-  return String(state.createRequestId || "").trim() === String(snapshot.createRequestId || "").trim() &&
-    String(state.poNumber || "").trim() === String(snapshot.poNumber || "").trim() &&
-    String(state.createOrderPartnerId || "").trim() === String(snapshot.partnerId || "").trim() &&
-    createOrderItemsMatchSnapshot(state.cart, snapshot.items);
-}
-
-function resetCreateOrderDraftAfterBackgroundSuccess(snapshot) {
-  if (isCreateOrderDraftUnchanged(snapshot)) {
-    state.cart = [];
-    clearCartStorage();
-    state.poNumber = "";
-    state.createOrderPartnerId = "";
-  }
-  if (String(state.createRequestId || "").trim() === String(snapshot?.createRequestId || "").trim()) {
-    state.createRequestId = "";
-  }
-  if (typeof renderBadge === "function") renderBadge();
-  if (typeof renderFloatingBar === "function") renderFloatingBar();
-}
-
-async function finishCreateOrderBackgroundSuccess(res, snapshot, task) {
-  const localItems = cloneCreateOrderItems(snapshot?.items || []);
-  const localTotal = localItems.reduce(
-    (sum, item) => sum + Number(item.price) * Number(item.qty),
-    0
-  );
-  const backendItems = res?.data?.items;
-  const hasValidBackendItems =
-    Array.isArray(backendItems) &&
-    backendItems.length > 0 &&
-    backendItems.every(item =>
-      item &&
-      typeof item === "object" &&
-      String(item.productId || "").trim() &&
-      Number.isInteger(Number(item.qty)) &&
-      Number(item.qty) > 0 &&
-      Number.isFinite(Number(item.price))
-    );
-  const backendTotal = Number(res?.data?.total);
-  const hasValidBackendTotal =
-    res?.data?.total !== null &&
-    res?.data?.total !== "" &&
-    Number.isFinite(backendTotal) &&
-    backendTotal >= 0;
-
-  state.lastOrder = {
-    orderId: res.data.orderId,
-    items: (hasValidBackendItems ? backendItems : localItems)
-      .map(sanitizePublicOrderItemForViewer),
-    total: hasValidBackendTotal ? backendTotal : localTotal,
-    createdAt: new Date(),
-    poNumber: snapshot?.poNumber || ""
-  };
-
-  saveLastOrder();
-  renderLastOrderSheet();
-  resetCreateOrderDraftAfterBackgroundSuccess(snapshot);
-
-  showToast(t("orderCreated", "สร้างใบสั่งซื้อเรียบร้อยแล้ว"), "success");
-  showToast(t("downloadOrderHint", "กดปุ่มเพื่อดาวน์โหลดใบสั่งซื้อ"), "info", 3000);
-  completeBackgroundTask(task.id, t("orderCreated", "สร้างใบสั่งซื้อเรียบร้อยแล้ว"));
-}
-
 async function submitOrder(){
   // ❌ ห้ามใช้ state.loading เป็น guard
   if (state.isSubmitting || state.cart.length === 0) return;
@@ -27109,15 +25827,6 @@ async function submitOrder(){
    if (poInput) poInput.focus();
    return;
  }
-
-  const activeCreateRequestId = String(state.createRequestId || "").trim();
-  if (
-    activeCreateRequestId &&
-    findActiveBackgroundTaskByIdentity(getCreateOrderBackgroundTaskIdentity(activeCreateRequestId))
-  ) {
-    showToast(t("createOrderAlreadyRunning", "กำลังสร้างใบสั่งซื้อรายการนี้อยู่"), "warning");
-    return;
-  }
 
   state.isSubmitting = true;
   state.ui.backdropLocked = true;
@@ -27170,72 +25879,75 @@ async function submitOrder(){
     const cartSnapshot = JSON.parse(JSON.stringify(state.cart));
     const createRequestId = state.createRequestId || generateCreateOrderRequestId();
     state.createRequestId = createRequestId;
-    const orderSnapshot = createCreateOrderSubmissionSnapshot(createRequestId, poNumber);
-    const taskIdentity = getCreateOrderBackgroundTaskIdentity(createRequestId);
-    if (findActiveBackgroundTaskByIdentity(taskIdentity)) {
-      showToast(t("createOrderAlreadyRunning", "กำลังสร้างใบสั่งซื้อรายการนี้อยู่"), "warning");
-      return;
+    let res;
+    try {
+      res = await createOrder(createRequestId);
+    } catch (createErr) {
+      if (createErr?.code !== "REQUEST_TIMEOUT") {
+        state.createRequestId = "";
+        throw createErr;
+      }
+      updateLoadingText(t("createOrderCheckingResult", "กำลังตรวจสอบผลลัพธ์คำสั่งซื้อ..."));
+      res = await reconcileCreateOrderTimeoutByRequestId(createRequestId, poNumber, cartSnapshot);
     }
 
-    const task = registerBackgroundTask({
-      identity: taskIdentity,
-      label: t("createOrder", "สร้างใบสั่งซื้อ"),
-      state: BACKGROUND_TASK_STATES.SENDING,
-      message: t("createOrderBackgroundSending", "กำลังสร้างใบสั่งซื้อ...")
-    });
+    if (!res || res.success !== true || !res.data?.orderId) {
+      throw new Error("Invalid order response");
+    }
 
-    closeOverlay(confirmSheet);
-    state.ui.backdropLocked = false;
-    syncOverlayBackdropState();
-    safeHideLoading();
+    // ================= SUCCESS =================
+    const localItems = JSON.parse(JSON.stringify(state.cart));
+    const localTotal = state.cart.reduce(
+      (sum, item) => sum + Number(item.price) * Number(item.qty),
+      0
+    );
+    const backendItems = res.data.items;
+    const hasValidBackendItems =
+      Array.isArray(backendItems) &&
+      backendItems.length > 0 &&
+      backendItems.every(item =>
+        item &&
+        typeof item === "object" &&
+        String(item.productId || "").trim() &&
+        Number.isInteger(Number(item.qty)) &&
+        Number(item.qty) > 0 &&
+        Number.isFinite(Number(item.price))
+      );
+    const backendTotal = Number(res.data.total);
+    const hasValidBackendTotal =
+      res.data.total !== null &&
+      res.data.total !== "" &&
+      Number.isFinite(backendTotal) &&
+      backendTotal >= 0;
 
-    (async () => {
-      try {
-        const res = await createOrder(createRequestId, orderSnapshot);
-        if (!res || res.success !== true || !res.data?.orderId) {
-          throw new Error("Invalid order response");
-        }
-        await finishCreateOrderBackgroundSuccess(res, orderSnapshot, task);
-      } catch (createErr) {
-        if (isAmbiguousBackgroundMutationFailure(createErr)) {
-          updateBackgroundTask(task.id, {
-            state: BACKGROUND_TASK_STATES.CONFIRMING,
-            message: t("createOrderCheckingResult", "กำลังตรวจสอบผลลัพธ์คำสั่งซื้อ...")
-          });
+    state.lastOrder = {
+      orderId: res.data.orderId,
+      items: (hasValidBackendItems ? backendItems : localItems)
+        .map(sanitizePublicOrderItemForViewer),
+      total: hasValidBackendTotal ? backendTotal : localTotal,
+ createdAt: new Date(),
+ poNumber: state.poNumber || ""
+    };
+   
+    saveLastOrder();
 
-          try {
-            const reconciled = await reconcileCreateOrderTimeoutByRequestId(
-              createRequestId,
-              orderSnapshot.poNumber,
-              cartSnapshot
-            );
-            await finishCreateOrderBackgroundSuccess(reconciled, orderSnapshot, task);
-            return;
-          } catch (confirmErr) {
-            console.error(confirmErr);
-            failBackgroundTask(
-              task.id,
-              getUserFacingError(confirmErr, "createOrderUnconfirmed", "ไม่สามารถยืนยันผลการสร้างใบสั่งซื้อได้ กรุณาตรวจสอบเลข PO ก่อนส่งซ้ำ")
-            );
-            showToast(
-              getUserFacingError(confirmErr, "createOrderUnconfirmed", "ไม่สามารถยืนยันผลการสร้างใบสั่งซื้อได้ กรุณาตรวจสอบเลข PO ก่อนส่งซ้ำ"),
-              "warning"
-            );
-            return;
-          }
-        }
+    showToast(t("orderCreated", "สร้างใบสั่งซื้อเรียบร้อยแล้ว"), 'success');
+    showToast(t("downloadOrderHint", "กดปุ่มเพื่อดาวน์โหลดใบสั่งซื้อ"), "info", 3000);
 
-        if (String(state.createRequestId || "").trim() === createRequestId) {
-          state.createRequestId = "";
-        }
-        console.error(createErr);
-        failBackgroundTask(task.id, getUserFacingError(createErr, "createOrderError", "เกิดข้อผิดพลาดในการสร้างใบสั่งซื้อ"));
-        showToast(
-          getUserFacingError(createErr, "createOrderError", "เกิดข้อผิดพลาดในการสร้างใบสั่งซื้อ"),
-          "error"
-        );
-      }
-    })();
+    renderLastOrderSheet();
+   
+// confirmSheet เปิดอยู่แล้ว ไม่ต้อง reopen
+
+    state.cart = [];
+    clearCartStorage();
+    state.poNumber = "";
+    state.createOrderPartnerId = "";
+    state.createRequestId = "";
+    if (typeof renderBadge === "function") renderBadge();
+    // 🔴 CHANGED: เคลียร์ตะกร้าแล้วต้องซ่อน/รีเฟรช floating bar
+    if (typeof renderFloatingBar === "function") renderFloatingBar();
+    
+  // ❌ ห้าม auto reset หลังสร้าง order สำเร็จ
     
   } catch(err){
     console.error(err);
