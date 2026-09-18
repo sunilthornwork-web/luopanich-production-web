@@ -6422,6 +6422,7 @@ const state = {
     pendingDeliveryExpanded:{},
     pendingDeliverySubmitting:{},
     pendingDeliveryOrder: null,
+    pendingDeliveryFocus: null,
     bulkPendingItems: [],   
     loggedIn: false,
     user: null,
@@ -6925,7 +6926,7 @@ const UI_TEXT = {
     stockMovementHistory: "ประวัติความเคลื่อนไหวสต๊อก",
     stockTimelineSummary: "{items} รายการ · {qty} ชิ้น · {amount}",
     stockTimelineSold: "ขายออก",
-    stockTimelineStockIn: "รับสต๊อกเข้า",
+    stockTimelineStockIn: "รับสินค้าเข้า",
     stockTimelineCreated: "เพิ่มสินค้าใหม่",
     stockTimelineAdjusted: "ปรับสต๊อก",
     stockTimelineReduced: "ลดสต๊อก",
@@ -7129,6 +7130,7 @@ const UI_TEXT = {
     partner: "คู่ค้า",
     createdAt: "สร้างเมื่อ",
     approvedAt: "อนุมัติเมื่อ",
+    rejectedAt: "ปฏิเสธเมื่อ",
     copyPoSummary: "คัดลอกสรุป PO",
     printPo: "พิมพ์ PO",
     poSummaryTitle: "ใบสรุป PO",
@@ -7517,7 +7519,7 @@ const UI_TEXT = {
     latestClosed: "ปิดล่าสุด",
     multipleOrderWarning: "PO นี้มีหลาย Order",
     allPendingOpen: "ทั้งหมดยังค้างส่ง",
-    allPendingClosed: "ปิดครบแล้ว",
+    allPendingClosed: "ส่งครบแล้ว",
     mixedPendingClosed: "บางรายการปิดแล้ว",
     copyPendingDeliverySummary: "คัดลอกสรุปค้างส่ง",
     pendingCopied: "คัดลอกสรุปค้างส่งแล้ว",
@@ -7566,8 +7568,8 @@ const UI_TEXT = {
     batchStockInInvalidStock: "ข้อมูลสต๊อกไม่ถูกต้อง",
     batchStockInSelectAtLeastOne: "กรุณาเลือกสินค้าอย่างน้อย 1 รายการ",
     batchStockInDuplicateSku: "SKU {sku} ซ้ำในรายการ",
-    statusOpen: "เปิด",
-    statusClosed: "ปิดแล้ว",
+    statusOpen: "ค้างส่ง",
+    statusClosed: "ส่งครบแล้ว",
     statusPending: "รออนุมัติ",
     statusApproved: "อนุมัติแล้ว",
     statusRejected: "ปฏิเสธแล้ว",
@@ -11647,6 +11649,125 @@ function getPendingDeliveryQtyForProduct(productId) {
       isActivePendingDelivery(item)
     )
     .reduce((sum, item) => sum + getPendingDeliveryRemainingQty(item), 0);
+}
+
+function getAdminProductById(productId) {
+  const normalizedId = normalizeProductId(productId);
+  if (!normalizedId || !Array.isArray(state.products)) return null;
+  return state.products.find(product =>
+    normalizeProductId(product?.productId || "") === normalizedId
+  ) || null;
+}
+
+async function openAdminProductFromContext(productId) {
+  const normalizedId = normalizeProductId(productId);
+  if (!normalizedId) return;
+  let product = getAdminProductById(normalizedId);
+  if (!product) {
+    try {
+      await refreshProducts({ retry: false });
+      product = getAdminProductById(normalizedId);
+    } catch (err) {
+      console.warn("openAdminProductFromContext: product refresh failed", err);
+    }
+  }
+  if (!product) {
+    showToast(t("productNotFound", "ไม่พบสินค้า"), "warning");
+    return;
+  }
+  closeOverlay(adminOrderSheet);
+  closeOverlay(adminStockSheet);
+  closeOverlay(pendingDeliverySheet);
+  closeOverlay(adminProductActionSheet);
+  openAdminProductAction(product);
+}
+
+async function openRelatedOrderFromContext(orderId) {
+  const cleanOrderId = String(orderId || "").trim();
+  if (!cleanOrderId) return;
+  if (!Array.isArray(state.admin.orders) || !state.admin.orders.length) {
+    try {
+      state.admin.orders = await fetchOrders();
+    } catch (err) {
+      console.warn("openRelatedOrderFromContext: orders refresh failed", err);
+      showToast(t("loadDataFailed", "โหลดข้อมูลไม่สำเร็จ"), "error");
+      return;
+    }
+  }
+  const order = state.admin.orders.find(item =>
+    String(item?.orderId || "").trim() === cleanOrderId
+  );
+  if (!order) {
+    showToast(t("orderNotFound", "ไม่พบข้อมูลออเดอร์"), "warning");
+    return;
+  }
+  closeOverlay(adminStockSheet);
+  closeOverlay(pendingDeliverySheet);
+  closeOverlay(adminProductActionSheet);
+  allowOpenOrders = true;
+  openAdminOrder(cleanOrderId);
+}
+
+function openStockTimelineForProduct(productId) {
+  const normalizedId = normalizeProductId(productId);
+  if (!normalizedId) return;
+  closeOverlay(adminProductActionSheet);
+  allowOpenStockTimeline = true;
+  openStockTimeline(false, { focusProductId: normalizedId });
+}
+
+function openPendingDeliveryForProduct(productId) {
+  const normalizedId = normalizeProductId(productId);
+  if (!normalizedId) return;
+  closeOverlay(adminProductActionSheet);
+  openPendingDeliverySheet({ productId: normalizedId });
+}
+
+function openPendingDeliveryForOrder(orderId) {
+  const cleanOrderId = String(orderId || "").trim();
+  if (!cleanOrderId) return;
+  closeOverlay(adminOrderSheet);
+  openPendingDeliverySheet({ orderId: cleanOrderId });
+}
+
+function getAdminOrderById(orderId) {
+  const cleanOrderId = String(orderId || "").trim();
+  if (!cleanOrderId || !Array.isArray(state.admin.orders)) return null;
+  return state.admin.orders.find(order =>
+    String(order?.orderId || "").trim() === cleanOrderId
+  ) || null;
+}
+
+function openDeliveryNoteForOrder(orderId) {
+  const order = getAdminOrderById(orderId);
+  const poNumber = String(order?.poNumber || "").trim();
+  if (!poNumber) {
+    showToast(t("orderNotFound", "ไม่พบข้อมูลออเดอร์"), "warning");
+    return;
+  }
+  closeOverlay(adminOrderSheet);
+  openDeliveryNoteSheet();
+  const noteState = getDeliveryNoteState();
+  noteState.poInput = poNumber;
+  noteState.poPickerRange = "all";
+  noteState.selectedPoNumbers = [poNumber];
+  renderDeliveryNoteSheet();
+  setTimeout(() => prepareDeliveryNoteSearch(), 0);
+}
+
+function openBillingNoteForOrder(orderId) {
+  const order = getAdminOrderById(orderId);
+  const poNumber = String(order?.poNumber || "").trim();
+  if (!poNumber) {
+    showToast(t("orderNotFound", "ไม่พบข้อมูลออเดอร์"), "warning");
+    return;
+  }
+  closeOverlay(adminOrderSheet);
+  openBillingNoteSheet();
+  const billingState = getBillingNoteState();
+  billingState.poInput = poNumber;
+  renderBillingNoteSheet();
+  setTimeout(() => searchBillingNotePo(), 0);
 }
 
 function getPendingDeliveryInitialQty(item) {
@@ -17799,6 +17920,9 @@ function renderAdminOrderSummary(order) {
   const createdAt = getOrderDateValue(order);
   const approvedAt = order?.approvedAt || "";
   const status = String(order?.status || "-").trim();
+  const decisionTimestampLabel = String(status || "").toUpperCase() === "REJECTED"
+    ? t("rejectedAt", "ปฏิเสธเมื่อ")
+    : t("approvedAt", "อนุมัติเมื่อ");
 
   return `
     <div class="admin-detail-section">
@@ -17856,7 +17980,7 @@ function renderAdminOrderSummary(order) {
           approvedAt
             ? `
               <div class="summary-row">
-                <span>${t("approvedAt", "อนุมัติเมื่อ")}</span>
+                <span>${decisionTimestampLabel}</span>
                 <strong>${esc(formatThaiDate(approvedAt))}</strong>
               </div>
             `
@@ -17876,6 +18000,27 @@ function renderAdminOrderSummary(order) {
         style="margin-top:8px;width:100%"
         onclick="printAdminPoOrder(${toInlineJsStringLiteral(order?.orderId || "")})">
         ${t("printPo", "พิมพ์ PO")}
+      </button>
+      <button
+        class="btn btn-outline"
+        type="button"
+        style="margin-top:8px;width:100%"
+        onclick="openPendingDeliveryForOrder(${toInlineJsStringLiteral(order?.orderId || "")})">
+        ${t("viewRelatedPendingDelivery", "ดูค้างส่งของออเดอร์นี้")}
+      </button>
+      <button
+        class="btn btn-outline"
+        type="button"
+        style="margin-top:8px;width:100%"
+        onclick="openDeliveryNoteForOrder(${toInlineJsStringLiteral(order?.orderId || "")})">
+        ${t("openDeliveryNoteForOrder", "เปิดใบส่งของของ PO นี้")}
+      </button>
+      <button
+        class="btn btn-outline"
+        type="button"
+        style="margin-top:8px;width:100%"
+        onclick="openBillingNoteForOrder(${toInlineJsStringLiteral(order?.orderId || "")})">
+        ${t("openBillingNoteForOrder", "เปิดใบวางบิลของ PO นี้")}
       </button>
     </div>
   `;
@@ -17930,6 +18075,7 @@ async function openStockTimeline(force = false, options = {}) {
 
   const targetSheet = adminStockSheet;
   const returnToAdminMenu = options.returnToAdminMenu === true;
+  const focusProductId = normalizeProductId(options.focusProductId || "");
   const backAction = returnToAdminMenu
     ? "closeStockTimelineToAdminMenu()"
     : "closeStockTimelineSheet()";
@@ -18099,6 +18245,17 @@ async function openStockTimeline(force = false, options = {}) {
     // 🕒 latest first (safe)
     timeline.sort((a, b) => b.time.getTime() - a.time.getTime());
 
+    const visibleTimeline = focusProductId
+      ? timeline.filter(item => {
+          if (item.kind === "ORDER") {
+            return (Array.isArray(item.items) ? item.items : []).some(product =>
+              normalizeProductId(product?.productId || "") === focusProductId
+            );
+          }
+          return normalizeProductId(item?.productId || "") === focusProductId;
+        })
+      : timeline;
+
     /* ================= RENDER ================= */
     targetSheet.innerHTML = `
       <div class="admin-sheet-topbar">
@@ -18108,12 +18265,13 @@ async function openStockTimeline(force = false, options = {}) {
         </button>
         <h3 id="${stockTimelineTitleId}">
           <span class="dashboard-title-main">${stockTimelineTitle}</span>
+          ${focusProductId ? `<span class="dashboard-title-sub">SKU ${esc(focusProductId)}</span>` : ""}
         </h3>
       </div>
 
       ${
-        timeline.length
-          ? timeline.map((t, timelineIndex) => {
+        visibleTimeline.length
+          ? visibleTimeline.map((t, timelineIndex) => {
 
               if (t.kind === "ORDER") {
                 const detailId = `stock-detail-${timelineIndex}`;
@@ -18208,6 +18366,14 @@ async function openStockTimeline(force = false, options = {}) {
                       </div>
                     </div>                    
 
+                    <button
+                      class="btn btn-outline"
+                      type="button"
+                      style="margin-top:10px;width:100%"
+                      onclick="openRelatedOrderFromContext(${toInlineJsStringLiteral(t.orderId)})">
+                      ${tr("viewRelatedOrder", "ดูออเดอร์ที่เกี่ยวข้อง")}
+                    </button>
+
                     <div style="font-size:12px;color:var(--muted);margin-top:6px">
                       ${t.time.toLocaleDateString("th-TH")}
                       ${t.time.toLocaleTimeString("th-TH")}
@@ -18294,6 +18460,20 @@ async function openStockTimeline(force = false, options = {}) {
                             </div>
                           </div>
                         </div>
+                      `
+                      : ""
+                  }
+
+                  ${
+                    t.type === "OUT" && t.orderId
+                      ? `
+                        <button
+                          class="btn btn-outline"
+                          type="button"
+                          style="margin-top:10px;width:100%"
+                          onclick="openRelatedOrderFromContext(${toInlineJsStringLiteral(t.orderId)})">
+                          ${tr("viewRelatedOrder", "ดูออเดอร์ที่เกี่ยวข้อง")}
+                        </button>
                       `
                       : ""
                   }
@@ -18419,6 +18599,19 @@ async function openAdminOrder(orderId){
        <div class="cart-meta">SKU: ${esc(i.productId || "-")}</div>
        <div class="cart-qty">${t("quantity", "จำนวน")} ${Number(i.qty) || 0}</div>
        ${renderOrderItemFulfillmentMeta(order, i)}
+       ${
+         i.productId
+           ? `
+             <button
+               class="btn btn-outline"
+               type="button"
+               style="margin-top:8px;width:auto;padding:8px 12px"
+               onclick="openAdminProductFromContext(${toInlineJsStringLiteral(i.productId)})">
+               ${t("viewProduct", "ดูสินค้า")}
+             </button>
+           `
+           : ""
+       }
 
      </div>
    <div class="price">
@@ -25053,7 +25246,15 @@ function renderDeliveryNoteSheet() {
   renderDeliveryNoteImageWarningPopupRoot();
 }
 
-function openPendingDeliverySheet() {
+function openPendingDeliverySheet(options = {}) {
+  const focusProductId = normalizeProductId(options.productId || "");
+  const focusOrderId = String(options.orderId || "").trim();
+  state.admin.pendingDeliveryFocus = focusProductId || focusOrderId
+    ? {
+        productId: focusProductId,
+        orderId: focusOrderId
+      }
+    : null;
   pendingDeliverySheet.innerHTML = `
     <div class="admin-sheet-topbar">
       <button
@@ -25391,13 +25592,41 @@ function renderPendingDeliveries(list) {
 
   if (!container) return;
 
+  const focus = state.admin.pendingDeliveryFocus || null;
+  const focusProductId = normalizeProductId(focus?.productId || "");
+  const focusOrderId = String(focus?.orderId || "").trim();
   const activeList = (Array.isArray(list) ? list : [])
-    .filter(isActivePendingDelivery);
+    .filter(isActivePendingDelivery)
+    .filter(item => {
+      if (focusProductId) {
+        return normalizeProductId(item?.productId || "") === focusProductId;
+      }
+
+      if (focusOrderId) {
+        return String(item?.orderId || "").trim() === focusOrderId;
+      }
+
+      return true;
+    });
 
   if (!activeList.length) {
+    const emptyMessage = focusProductId
+      ? formatUiText(
+          "noPendingDeliveryForProduct",
+          { productId: focusProductId },
+          "ไม่พบรายการค้างส่งของสินค้า {productId}"
+        )
+      : focusOrderId
+        ? formatUiText(
+            "noPendingDeliveryForOrder",
+            { orderId: formatOrderIdForDisplay(focusOrderId) },
+            "ไม่พบรายการค้างส่งของออเดอร์ {orderId}"
+          )
+        : t("noPendingDeliveries", "ยังไม่มีรายการค้างส่ง");
+
     container.innerHTML = `
       <div class="card admin-card">
-        ${renderEmptyStateLottie(t("noPendingDeliveries", "ยังไม่มีรายการค้างส่ง"), "", {
+        ${renderEmptyStateLottie(emptyMessage, "", {
           className: "pending-deliveries-empty-state",
           size: 118
         })}
@@ -25437,7 +25666,22 @@ activeList.forEach(item => {
 
 prunePendingDeliveryExpandedPoGroups(activeList);
 
+const focusNote = focusProductId
+  ? `
+    <div class="helper-text" style="margin-bottom:12px">
+      ${t("focusedProduct", "สินค้า")}: ${esc(focusProductId)}
+    </div>
+  `
+  : focusOrderId
+    ? `
+      <div class="helper-text" style="margin-bottom:12px">
+        ${t("focusedOrder", "ออเดอร์")}: ${esc(formatOrderIdForDisplay(focusOrderId))}
+      </div>
+    `
+    : "";
+
 container.innerHTML =
+  focusNote +
   Object.entries(grouped)
     .map(([po, items]) => `
 
@@ -25604,6 +25848,33 @@ ${renderPendingDeliveryPoSummary(po, items)}
                   <span>${t("note", "หมายเหตุ")}</span>
                   <strong>${esc(item.note || "-")}</strong>
                 </div>
+              </div>
+
+              <div class="action-row" style="margin-top:12px;gap:8px;flex-wrap:wrap">
+                ${
+                  item.orderId
+                    ? `
+                      <button
+                        class="btn btn-outline"
+                        type="button"
+                        onclick="openRelatedOrderFromContext(${toInlineJsStringLiteral(item.orderId)})">
+                        ${t("viewRelatedOrder", "ดูออเดอร์ที่เกี่ยวข้อง")}
+                      </button>
+                    `
+                    : ""
+                }
+                ${
+                  item.productId
+                    ? `
+                      <button
+                        class="btn btn-outline"
+                        type="button"
+                        onclick="openAdminProductFromContext(${toInlineJsStringLiteral(item.productId)})">
+                        ${t("viewProduct", "ดูสินค้า")}
+                      </button>
+                    `
+                    : ""
+                }
               </div>
 
               ${
@@ -34045,6 +34316,18 @@ function openAdminProductAction(p){
         openStockAction(state.selectedProduct);
       ">
       ${t("adjustStock", "ปรับสต๊อก")}
+    </button>
+
+    <button class="btn btn-outline"
+      style="width:100%;margin-bottom:10px"
+      onclick="openStockTimelineForProduct(state.selectedProduct?.productId)">
+      ${t("viewStockTimelineForProduct", "ดูไทม์ไลน์สต๊อกของสินค้านี้")}
+    </button>
+
+    <button class="btn btn-outline"
+      style="width:100%;margin-bottom:16px"
+      onclick="openPendingDeliveryForProduct(state.selectedProduct?.productId)">
+      ${t("viewPendingDeliveryForProduct", "ดูค้างส่งของสินค้านี้")}
     </button>
 
     <!-- ❌ CANCEL -->
