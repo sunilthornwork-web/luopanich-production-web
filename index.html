@@ -1638,6 +1638,65 @@ header.scrolled + .home-controls.show{
     color:var(--muted);
   }
 
+  #adminProductActionSheet .product-action-sheet-layout{
+    display:grid;
+    gap:14px;
+  }
+
+  #adminProductActionSheet .product-action-stock-card{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:12px 14px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:var(--panel);
+  }
+
+  #adminProductActionSheet .product-action-stock-label,
+  #adminProductActionSheet .product-action-section-title{
+    color:var(--muted);
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+
+  #adminProductActionSheet .product-action-stock-value{
+    color:var(--text);
+    font-size:18px;
+    font-weight:900;
+  }
+
+  #adminProductActionSheet .product-action-section{
+    display:grid;
+    gap:10px;
+  }
+
+  #adminProductActionSheet .product-action-primary-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+  }
+
+  #adminProductActionSheet .product-action-primary-grid .btn{
+    min-width:0;
+    white-space:normal;
+    line-height:1.2;
+  }
+
+  #adminProductActionSheet .product-action-view-stack{
+    display:grid;
+    gap:8px;
+  }
+
+  @media (max-width:359px){
+    #adminProductActionSheet .product-action-primary-grid{
+      grid-template-columns:1fr;
+    }
+  }
+
   .info-card{
     margin-top:12px;
     display:grid;
@@ -34276,65 +34335,79 @@ function openAdminProductAction(p){
   if (state.mode !== "admin") return;
 
   state.selectedProduct = p;
+  const productId = String(p?.productId || "");
+  const productName = String(p?.name || "");
+  const productStock = Number(p?.stock) || 0;
+  const productPrice = formatBillingNoteDocumentMoney(p?.price);
 
   adminProductActionSheet.innerHTML = `
     <h3 id="adminProductActionSheetTitle">${t("manageProduct", "จัดการสินค้า")}</h3>
 
-    <div class="name">
-      ${esc(p.name)}
+    <div class="product-action-sheet-layout">
+      <div class="admin-product-summary">
+        ${renderCartItemThumb(p)}
+        <div class="admin-product-summary-main">
+          <div class="admin-detail-title">${esc(productName)}</div>
+          <div class="admin-product-summary-meta">
+            <span>${t("productCode", "รหัส")}: ${esc(productId)}</span>
+            <span>${t("price", "ราคา")}: ${esc(productPrice)}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-action-stock-card">
+        <div class="product-action-stock-label">STOCK</div>
+        <div class="product-action-stock-value">${productStock.toLocaleString("th-TH")} ${t("pieceUnit", "ชิ้น")}</div>
+      </div>
+
+      <section class="product-action-section" aria-label="Stock actions">
+        <div class="product-action-section-title">STOCK</div>
+        <div class="product-action-primary-grid">
+          <button class="btn btn-success"
+            onclick="
+              closeAdminProductAction();
+              openBatchStockInSheet(state.selectedProduct?.productId);
+            ">
+            ${t("receiveStock", "รับสินค้าเข้า")}
+          </button>
+
+          <button class="btn btn-secondary"
+            onclick="
+              closeAdminProductAction();
+              openStockAction(state.selectedProduct);
+            ">
+            ${t("adjustStock", "ปรับสต็อก")}
+          </button>
+        </div>
+        <div class="product-action-view-stack">
+          <button class="btn btn-outline"
+            onclick="openStockTimelineForProduct(state.selectedProduct?.productId)">
+            ${t("viewStockTimelineForProduct", "ดูไทม์ไลน์สต็อก")}
+          </button>
+
+          <button class="btn btn-outline"
+            onclick="openPendingDeliveryForProduct(state.selectedProduct?.productId)">
+            ${t("viewPendingDeliveryForProduct", "ดูค้างส่ง")}
+          </button>
+        </div>
+      </section>
+
+      <section class="product-action-section" aria-label="Product actions">
+        <div class="product-action-section-title">PRODUCT</div>
+        <button class="btn btn-primary"
+          onclick="
+            closeAdminProductAction();
+            openProductEditById(${toInlineJsStringLiteral(productId)});
+          ">
+          ${t("editProduct", "แก้ไขข้อมูลสินค้า")}
+        </button>
+      </section>
+
+      <button class="btn btn-outline"
+        onclick="closeAdminProductAction()">
+        ${t("close", "ปิด")}
+      </button>
     </div>
-
-    <div class="cart-meta" style="margin-bottom:16px">
-      ${t("productCode", "รหัส")}: ${esc(p.productId)}
-    </div>
-
-    <!-- ✏️ EDIT PRODUCT -->
-    <button class="btn btn-primary"
-      style="width:100%;margin-bottom:10px"
-      onclick="
-        closeAdminProductAction();
-        openProductEditById(${toInlineJsStringLiteral(p.productId)});
-      ">
-      ${t("editProduct", "แก้ไขข้อมูลสินค้า")}
-    </button>
-
-    <!-- 📦 BATCH STOCK IN -->
-    <button class="btn btn-success"
-      style="width:100%;margin-bottom:10px"
-      onclick="
-        closeAdminProductAction();
-        openBatchStockInSheet(state.selectedProduct?.productId);
-      ">
-      ${t("receiveStock", "รับเข้าสินค้า")}
-    </button>
-
-    <!-- 📦 STOCK -->
-    <button class="btn btn-secondary"
-      style="width:100%;margin-bottom:16px"
-      onclick="
-        closeAdminProductAction();
-        openStockAction(state.selectedProduct);
-      ">
-      ${t("adjustStock", "ปรับสต๊อก")}
-    </button>
-
-    <button class="btn btn-outline"
-      style="width:100%;margin-bottom:10px"
-      onclick="openStockTimelineForProduct(state.selectedProduct?.productId)">
-      ${t("viewStockTimelineForProduct", "ดูไทม์ไลน์สต๊อกของสินค้านี้")}
-    </button>
-
-    <button class="btn btn-outline"
-      style="width:100%;margin-bottom:16px"
-      onclick="openPendingDeliveryForProduct(state.selectedProduct?.productId)">
-      ${t("viewPendingDeliveryForProduct", "ดูค้างส่งของสินค้านี้")}
-    </button>
-
-    <!-- ❌ CANCEL -->
-    <button class="btn btn-outline"
-      onclick="closeAdminProductAction()">
-      ${t("cancel", "ยกเลิก")}
-    </button>
   `;
 
   // ✅ เปิดผ่าน Overlay Manager
