@@ -2091,6 +2091,136 @@ button:disabled {
   width:auto;
 }
 
+#pendingDeliverySheet .pending-compact-list{
+  display:grid;
+  gap:12px;
+  margin-top:12px;
+}
+
+#pendingDeliverySheet .pending-compact-item{
+  display:grid;
+  gap:12px;
+  padding:12px 0;
+  border-top:1px solid var(--border);
+}
+
+#pendingDeliverySheet .pending-compact-header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+
+#pendingDeliverySheet .pending-compact-title{
+  display:grid;
+  gap:4px;
+  min-width:0;
+}
+
+#pendingDeliverySheet .pending-compact-product{
+  color:var(--text);
+  font-weight:900;
+  overflow-wrap:anywhere;
+}
+
+#pendingDeliverySheet .pending-compact-subtitle{
+  color:var(--muted);
+  font-size:13px;
+  overflow-wrap:anywhere;
+}
+
+#pendingDeliverySheet .pending-compact-metrics{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+
+#pendingDeliverySheet .pending-compact-metric,
+#pendingDeliverySheet .pending-compact-stock{
+  padding:10px 12px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--bg-soft);
+  min-width:0;
+}
+
+#pendingDeliverySheet .pending-compact-metric span,
+#pendingDeliverySheet .pending-compact-stock span{
+  display:block;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
+  line-height:1.2;
+}
+
+#pendingDeliverySheet .pending-compact-metric strong,
+#pendingDeliverySheet .pending-compact-stock strong{
+  display:block;
+  margin-top:4px;
+  color:var(--text);
+  font-size:18px;
+  font-weight:900;
+  line-height:1.1;
+}
+
+#pendingDeliverySheet .pending-compact-actions,
+#pendingDeliverySheet .pending-compact-fulfillment-actions{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+
+#pendingDeliverySheet .pending-compact-actions .btn,
+#pendingDeliverySheet .pending-compact-fulfillment-actions .btn{
+  min-width:0;
+  white-space:normal;
+  line-height:1.2;
+}
+
+#pendingDeliverySheet .pending-compact-more{
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--surface-2);
+  overflow:hidden;
+}
+
+#pendingDeliverySheet .pending-compact-more summary{
+  cursor:pointer;
+  padding:10px 12px;
+  color:var(--text);
+  font-size:13px;
+  font-weight:800;
+  list-style:none;
+}
+
+#pendingDeliverySheet .pending-compact-more summary::-webkit-details-marker{
+  display:none;
+}
+
+#pendingDeliverySheet .pending-compact-more summary::after{
+  content:" ▾";
+  color:var(--muted);
+}
+
+#pendingDeliverySheet .pending-compact-more[open] summary::after{
+  content:" ▴";
+}
+
+#pendingDeliverySheet .pending-compact-more-body{
+  display:grid;
+  gap:8px;
+  padding:0 12px 12px;
+}
+
+@media (max-width:359px){
+  #pendingDeliverySheet .pending-compact-header,
+  #pendingDeliverySheet .pending-compact-actions,
+  #pendingDeliverySheet .pending-compact-fulfillment-actions{
+    grid-template-columns:1fr;
+    flex-direction:column;
+  }
+}
+
 .sheet-topbar{
   position:sticky;
   top:-16px;
@@ -25811,25 +25941,21 @@ container.innerHTML =
    </div>
  ${
    state.admin.pendingDeliveryExpanded[po]
-     ? `
-${renderPendingDeliveryPoSummary(po, items)}
-<button
-  class="btn btn-outline"
-  type="button"
-  style="margin-top:12px"
-  onclick="copyPendingDeliveryPoSummary(${toInlineJsStringLiteral(po)})">
-  ${t("copyPendingDeliverySummary", "คัดลอกสรุปค้างส่ง")}
-</button>
+      ? `
+ <button
+   class="btn btn-outline"
+   type="button"
+   style="margin-top:12px"
+   onclick="copyPendingDeliveryPoSummary(${toInlineJsStringLiteral(po)})">
+   ${t("copyPendingDeliverySummary", "คัดลอกสรุปค้างส่ง")}
+ </button>
 
-    <div
-      style="
-        margin-top:12px;
-      ">
+     <div class="pending-compact-list">
 
-      ${items.map(item => {
-        const pendingRemainingQty =
-          getPendingDeliveryRemainingQty(item);
-        const pendingFulfilledQty =
+       ${items.map(item => {
+         const pendingRemainingQty =
+           getPendingDeliveryRemainingQty(item);
+         const pendingFulfilledQty =
           getPendingDeliveryFulfilledQty(item);
         const pendingSource =
           String(item.source || "").toUpperCase();
@@ -25844,72 +25970,60 @@ ${renderPendingDeliveryPoSummary(po, items)}
           getFulfillPendingQtyInputId(item.pendingId);
         const sendMoreButtonId =
           getFulfillPendingActionButtonId(item.pendingId, "SendMore");
-        const sendAllButtonId =
-          getFulfillPendingActionButtonId(item.pendingId, "SendAll");
-        const stockDisplay =
-          getPendingDeliveryStockDisplay(item);
-        return `
+         const sendAllButtonId =
+           getFulfillPendingActionButtonId(item.pendingId, "SendAll");
+         const stockDisplay =
+           getPendingDeliveryStockDisplay(item);
+         const product = Array.isArray(state.products)
+           ? state.products.find(productItem =>
+               normalizeProductId(productItem?.productId || "") ===
+               normalizeProductId(item.productId || "")
+             )
+           : null;
+         const productName =
+           String(product?.name || item.productName || item.name || item.productId || "-").trim() || "-";
+         return `
 
-      <div
-        style="
-          padding:12px 0;
-          border-top:
-            1px solid
-            var(--border);
-        ">
-
-        <div class="admin-card-meta">
-          <span>PO: ${esc(item.poNumber || po || "-")}</span>
-          <span>SKU: ${esc(item.productId || "-")}</span>
-          <span>${t("pendingInPo", "ใน PO")}: ${Number(item.orderedQty || 0)}</span>
-          <span>${t("pendingDeliveryShort", "ค้างส่ง")}: ${pendingRemainingQty}</span>
-          <span>${t("source", "ที่มา")}: ${esc(pendingSource || "-")}</span>
+      <div class="pending-compact-item">
+        <div class="pending-compact-header">
+          <div class="pending-compact-title">
+            <div class="pending-compact-product">
+              ${esc(item.productId || "-")} · ${esc(productName)}
+            </div>
+            <div class="pending-compact-subtitle">
+              ${t("orderNumber", "เลขออเดอร์")}: ${esc(formatOrderIdForDisplay(item.orderId))}
+            </div>
+          </div>
+          <div class="status-badge ${
+            pendingStatus === "OPEN"
+              ? "status-open"
+              : "status-closed"
+          }">
+            ${esc(statusLabel)}
+          </div>
         </div>
 
-        <div class="status-badge ${
-          pendingStatus === "OPEN"
-            ? "status-open"
-            : "status-closed"
-        }" style="margin-top:10px">
-          ${esc(statusLabel)}
+        <div class="pending-compact-metrics">
+          <div class="pending-compact-metric">
+            <span>${t("pendingInPo", "ใน PO")}</span>
+            <strong>${Number(item.orderedQty || 0)}</strong>
+          </div>
+          <div class="pending-compact-metric">
+            <span>${t("deliveredQty", "ส่งแล้ว")}</span>
+            <strong>${pendingFulfilledQty}</strong>
+          </div>
+          <div class="pending-compact-metric">
+            <span>${t("pendingDeliveryShort", "ค้างส่ง")}</span>
+            <strong>${pendingRemainingQty}</strong>
+          </div>
         </div>
 
-              <div class="cart-summary" style="margin-top:12px">
-                <div class="summary-row">
-                  <span>${t("orderNumber", "เลขออเดอร์")}</span>
-                  <strong title="${escAttr(item.orderId || "")}">${esc(formatOrderIdForDisplay(item.orderId))}</strong>
-                </div>
-                <div class="summary-row">
-                  <span>${t("source", "ที่มา")}</span>
-                  <strong>${esc(pendingSource || "-")}</strong>
-                </div>
-                <div class="summary-row">
-                  <span>${t("latestCreated", "สร้างล่าสุด")}</span>
-                  <strong>${esc(item.createdAt ? formatThaiDate(item.createdAt) : "-")}</strong>
-                </div>
-                <div class="summary-row">
-                  <span>${t("latestClosed", "ปิดล่าสุด")}</span>
-                  <strong>${esc(item.closedAt ? formatThaiDate(item.closedAt) : "-")}</strong>
-                </div>
-                <div class="summary-row">
-                  <span>${t("pendingInPo", "ใน PO")}</span>
-                  <strong>${Number(item.orderedQty || 0)}</strong>
-                </div>
-                <div class="summary-row">
-                  <span>${t("deliveredQty", "ส่งแล้ว")}</span>
-                  <strong>${pendingFulfilledQty}</strong>
-                </div>
-                <div class="summary-row">
-                  <span>${t("pendingDeliveryShort", "ค้างส่ง")}</span>
-                  <strong>${pendingRemainingQty}</strong>
-                </div>
-                <div class="summary-row">
-                  <span>${t("note", "หมายเหตุ")}</span>
-                  <strong>${esc(item.note || "-")}</strong>
-                </div>
-              </div>
+        <div class="pending-compact-stock">
+          <span>${t("stock", "สต๊อก")}</span>
+          <strong>${esc(stockDisplay)} ${t("pieceUnit", "ชิ้น")}</strong>
+        </div>
 
-              <div class="action-row" style="margin-top:12px;gap:8px;flex-wrap:wrap">
+              <div class="pending-compact-actions">
                 ${
                   item.orderId
                     ? `
@@ -25936,31 +26050,57 @@ ${renderPendingDeliveryPoSummary(po, items)}
                 }
               </div>
 
+              <details class="pending-compact-more">
+                <summary>${t("moreInfo", "ข้อมูลเพิ่มเติม")}</summary>
+                <div class="pending-compact-more-body">
+                  <div class="summary-row">
+                    <span>PO</span>
+                    <strong>${esc(item.poNumber || po || "-")}</strong>
+                  </div>
+                  <div class="summary-row">
+                    <span>${t("source", "ที่มา")}</span>
+                    <strong>${esc(pendingSource || "-")}</strong>
+                  </div>
+                  ${
+                    item.createdAt
+                      ? `
+                        <div class="summary-row">
+                          <span>${t("latestCreated", "สร้างล่าสุด")}</span>
+                          <strong>${esc(formatThaiDate(item.createdAt))}</strong>
+                        </div>
+                      `
+                      : ""
+                  }
+                  ${
+                    item.note
+                      ? `
+                        <div class="summary-row">
+                          <span>${t("note", "หมายเหตุ")}</span>
+                          <strong>${esc(item.note)}</strong>
+                        </div>
+                      `
+                      : ""
+                  }
+                  ${
+                    item.closedAt
+                      ? `
+                        <div class="summary-row">
+                          <span>${t("latestClosed", "ปิดล่าสุด")}</span>
+                          <strong>${esc(formatThaiDate(item.closedAt))}</strong>
+                        </div>
+                      `
+                      : ""
+                  }
+                </div>
+              </details>
+
               ${
                 pendingStatus === "OPEN"
                   ? `
                     ${
                       isAutoPending
                         ? `
-                          <div class="cart-summary" style="margin-top:12px">
-                            <div class="summary-row">
-                              <span>${t("pendingInPo", "ใน PO")}</span>
-                              <strong>${Number(item.orderedQty || 0)}</strong>
-                            </div>
-                            <div class="summary-row">
-                              <span>${t("deliveredQty", "ส่งแล้ว")}</span>
-                              <strong>${pendingFulfilledQty}</strong>
-                            </div>
-                            <div class="summary-row">
-                              <span>${t("pendingDeliveryShort", "ค้างส่ง")}</span>
-                              <strong>${pendingRemainingQty}</strong>
-                            </div>
-                            <div class="summary-row">
-                              <span>${t("stock", "สต๊อก")}</span>
-                              <strong>${esc(stockDisplay)}</strong>
-                            </div>
-                          </div>
-                          <div class="form-group" style="margin-top:12px">
+                          <div class="form-group">
                             <label for="${escAttr(fulfillInputId)}">${t("additionalDeliveryQty", "จำนวนที่จะส่งเพิ่ม")}</label>
                             <input
                               id="${escAttr(fulfillInputId)}"
@@ -25973,7 +26113,7 @@ ${renderPendingDeliveryPoSummary(po, items)}
                               ${pendingSubmitting ? "disabled" : ""}
                             />
                           </div>
-                          <div class="confirm-complete-actions" style="margin-top:10px">
+                          <div class="pending-compact-fulfillment-actions">
                             <button
                               id="${escAttr(sendMoreButtonId)}"
                               class="btn btn-success"
