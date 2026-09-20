@@ -11435,7 +11435,7 @@ function closeBrandingSettingsSheetToReturn() {
   resetBrandingLogoUploadState();
   closeOverlay(adminBrandingSettingsSheet);
   if (returnTo === "stockMenu") {
-    renderAdminMenuInStockSheet();
+    openMainMenu(document.querySelector(".menu-btn"));
   } else {
     openMainMenu(document.querySelector(".menu-btn"));
   }
@@ -11453,6 +11453,26 @@ function closeBrandingSettingsAfterSaveSuccess() {
     syncOverlayBackdropState();
   }
   resetAdminRootAfterSheetClose();
+}
+
+function markAdminMainMenuReturn() {
+  state.admin.ui.returnToMainMenu = true;
+}
+
+function closeAdminFeatureToReturn(closeAction) {
+  const shouldReturnToMainMenu = state.admin.ui.returnToMainMenu === true;
+  state.admin.ui.returnToMainMenu = false;
+  if (typeof closeAction === "function") closeAction();
+  if (shouldReturnToMainMenu) {
+    requestAnimationFrame(() => {
+      openMainMenu(document.querySelector(".menu-btn"));
+      syncOverlayBackdropState();
+    });
+  }
+}
+
+function closeChangePasswordSheet() {
+  closeOverlay(adminLoginSheet);
 }
 
 async function saveBrandingSettingsFromAdmin() {
@@ -16542,7 +16562,7 @@ function openChangePasswordSheet(){
   adminLoginSheet.innerHTML = `
     <div class="sheet-topbar">
       <button class="app-back-btn" type="button"
-        onclick="closeOverlay(adminLoginSheet)"
+        onclick="closeAdminFeatureToReturn(closeChangePasswordSheet)"
         aria-label="${t("back", "กลับ")}">
         <span class="app-back-btn-icon" aria-hidden="true">‹</span>
         <span>${t("back", "กลับ")}</span>
@@ -16573,7 +16593,7 @@ function openChangePasswordSheet(){
       </button>
 
       <button class="btn btn-outline"
-        onclick="closeOverlay(adminLoginSheet)">
+        onclick="closeAdminFeatureToReturn(closeChangePasswordSheet)">
         ${t("cancel", "ยกเลิก")}
       </button>
     </div>
@@ -17359,7 +17379,14 @@ function resetAdminRootAfterSheetClose() {
 }
 
 function closeStockTimelineToAdminMenu() {
-  renderAdminMenuInStockSheet();
+  state.admin.ui.activeSheet = null;
+  closeOverlay(adminStockSheet);
+  adminStockSheet.classList.remove("stock-menu-return-side");
+  scheduleAdminSheetViewportRepair();
+  requestAnimationFrame(() => {
+    openMainMenu(document.querySelector(".menu-btn"));
+    syncOverlayBackdropState();
+  });
 }
 
 function closeStockMenuSheetThen(action) {
@@ -17503,8 +17530,7 @@ function renderAdminMenuInStockSheet() {
 
 function closeStockTimelineSheet() {
   if (state.admin.ui.activeSheet === "stockTimelineReturnToMenu") {
-    renderAdminMenuInStockSheet();
-    scheduleAdminSheetViewportRepair();
+    closeStockTimelineToAdminMenu();
     return;
   }
 
@@ -19891,7 +19917,7 @@ function openBatchStockInSheet(seedProductId) {
 
 function backToAdminMenuFromBatchStockIn() {
   closeOverlay(adminStockActionSheet);
-  renderAdminMenuInStockSheet();
+  requestAnimationFrame(() => openMainMenu(document.querySelector(".menu-btn")));
 }
 
 function setBatchStockInSearch(value) {
@@ -22819,7 +22845,7 @@ function renderBillingNoteSheet() {
   const hasActiveDocument = getBillingNoteActiveDocument(billingState);
   adminBillingNoteSheet.innerHTML = `
     <div class="admin-sheet-topbar">
-      <button class="app-back-btn" type="button" onclick="closeBillingNoteSheet()">
+      <button class="app-back-btn" type="button" onclick="backToAdminMenuFromBillingNote()">
         <span class="app-back-btn-icon" aria-hidden="true">‹</span>
         <span>${t("back", "กลับ")}</span>
       </button>
@@ -22879,6 +22905,10 @@ function openBillingNoteSheet() {
 function closeBillingNoteSheet() {
   closeOverlay(adminBillingNoteSheet);
   scheduleAdminSheetViewportRepair();
+}
+
+function backToAdminMenuFromBillingNote() {
+  closeAdminFeatureToReturn(closeBillingNoteSheet);
 }
 
 function getDeliveryNoteState() {
@@ -22943,6 +22973,10 @@ function closeDeliveryNoteSheet() {
   }
   closeOverlay(adminDeliveryNoteSheet);
   scheduleAdminSheetViewportRepair();
+}
+
+function backToAdminMenuFromDeliveryNote() {
+  closeAdminFeatureToReturn(closeDeliveryNoteSheet);
 }
 
 function parseDeliveryNotePoInput(value) {
@@ -25461,7 +25495,7 @@ function renderDeliveryNoteSheet() {
   const noteState = getDeliveryNoteState();
   adminDeliveryNoteSheet.innerHTML = `
     <div class="admin-sheet-topbar">
-      <button class="app-back-btn" type="button" onclick="closeDeliveryNoteSheet()">
+      <button class="app-back-btn" type="button" onclick="backToAdminMenuFromDeliveryNote()">
         <span class="app-back-btn-icon" aria-hidden="true">‹</span>
         <span>${t("back", "กลับ")}</span>
       </button>
@@ -25511,7 +25545,7 @@ function openPendingDeliverySheet(options = {}) {
       <button
         class="app-back-btn"
         type="button"
-        onclick="closePendingDeliverySheet()">
+        onclick="backToAdminMenuFromPendingDelivery()">
         <span class="app-back-btn-icon" aria-hidden="true">‹</span>
         <span>${t("back", "กลับ")}</span>
       </button>
@@ -26590,8 +26624,13 @@ function closePendingDeliverySheet() {
   closeOverlay(pendingDeliverySheet);
   scheduleAdminSheetViewportRepair();
 } 
+
+function backToAdminMenuFromPendingDelivery() {
+  closeAdminFeatureToReturn(closePendingDeliverySheet);
+}
  
 function openMainMenu(triggerEl){
+  state.admin.ui.returnToMainMenu = false;
   const adminValid =
     state.admin.loggedIn &&
     state.admin.token &&
@@ -26647,17 +26686,17 @@ function openMainMenu(triggerEl){
                 </button>
 
                  <button class="btn btn-secondary"
-                   onclick="closeMainMenu(); openPendingDeliverySheet();">
+                   onclick="closeMainMenu(); markAdminMainMenuReturn(); openPendingDeliverySheet();">
                    ${t("pendingDelivery", "ค้างส่ง")}
                  </button>
 
                  <button class="btn btn-secondary"
-                   onclick="closeMainMenu(); openDeliveryNoteSheet();">
+                   onclick="closeMainMenu(); markAdminMainMenuReturn(); openDeliveryNoteSheet();">
                    ${t("deliveryNote", "ใบส่งของ")}
                  </button>
 
                  <button class="btn btn-secondary"
-                   onclick="closeMainMenu(); openBillingNoteSheet();">
+                   onclick="closeMainMenu(); markAdminMainMenuReturn(); openBillingNoteSheet();">
                    ${t("billingNote", "ใบวางบิล")}
                  </button>
 
@@ -26676,23 +26715,28 @@ function openMainMenu(triggerEl){
               <div class="menu-group">
                 <div class="menu-section-label">${t("products", "สินค้า")}</div>
                 <button class="btn btn-secondary"
-                  onclick="closeMainMenu(); handleOpenAddProduct();">
+                  onclick="closeMainMenu(); markAdminMainMenuReturn(); handleOpenAddProduct();">
                   ${t("addProduct", "เพิ่มสินค้าใหม่")}
                 </button>
 
                 <button class="btn btn-secondary"
-                  onclick="closeMainMenu(); openVariantScanSheet();">
+                  onclick="closeMainMenu(); markAdminMainMenuReturn(); openVariantScanSheet();">
                   ${t("scanVariantGroups", "สแกนสินค้าเก่าเป็นกลุ่มไซส์")}
                 </button>
                 
                 <button class="btn btn-secondary"
-                  onclick="closeMainMenu(); openBulkProductImportSheet();">
+                  onclick="closeMainMenu(); markAdminMainMenuReturn(); openBulkProductImportSheet();">
                   ${t("bulkImportProducts", "นำเข้าสินค้าหลายรายการ")}
                 </button>
 
                 <button class="btn btn-secondary"
-                  onclick="closeMainMenu(); openBulkProductUpdateSheet();">
+                  onclick="closeMainMenu(); markAdminMainMenuReturn(); openBulkProductUpdateSheet();">
                   ${t("bulkUpdateProducts", "อัปเดตราคา/สถานะหลายรายการ")}
+                </button>
+
+                <button class="btn btn-secondary"
+                  onclick="closeMainMenu(); openProductMasterBulkSheet();">
+                  ${t("productMasterBulk", "Product Master Excel")}
                 </button>
               </div>
 
@@ -26704,7 +26748,7 @@ function openMainMenu(triggerEl){
                 </button>
 
                 <button class="btn btn-secondary"
-                  onclick="closeMainMenu(); openPartnerCatalogSheet();">
+                  onclick="closeMainMenu(); markAdminMainMenuReturn(); openPartnerCatalogSheet();">
                   ${t("partnerLinks", "ลิงก์คู่ค้า")}
                 </button>
 
@@ -26727,7 +26771,7 @@ function openMainMenu(triggerEl){
                 </button>
 
                 <button class="btn btn-secondary"
-                  onclick="closeMainMenu(); openChangePasswordSheet();">
+                  onclick="closeMainMenu(); markAdminMainMenuReturn(); openChangePasswordSheet();">
                   ${t("changePassword", "เปลี่ยนรหัสผ่าน")}
                 </button>
 
@@ -26842,7 +26886,7 @@ function openAddProduct(force = false, options = {}){
   adminAddProductSheet.innerHTML = `
     <div class="sheet-topbar">
       <button class="app-back-btn" type="button"
-        onclick="closeAddProduct()"
+        onclick="backToAdminMenuFromAddProduct()"
         aria-label="${t("back", "กลับ")}">
         <span class="app-back-btn-icon" aria-hidden="true">‹</span>
         <span>${t("back", "กลับ")}</span>
@@ -26989,7 +27033,7 @@ function openAddProduct(force = false, options = {}){
     </button>
 
       <button class="btn btn-outline"
-        onclick="closeAddProduct()">
+        onclick="backToAdminMenuFromAddProduct()">
         ${t("cancel", "ยกเลิก")}
       </button>
     </div>
@@ -27168,6 +27212,10 @@ function closeAddProduct(){
  } 
 
   closeOverlay(adminAddProductSheet);
+}
+
+function backToAdminMenuFromAddProduct() {
+  closeAdminFeatureToReturn(closeAddProduct);
 }
   
 function closeMainMenu(){
@@ -29482,7 +29530,7 @@ function renderVariantScanSheet() {
   adminVariantScanSheet.innerHTML = `
     <div class="sheet-topbar">
       <button class="app-back-btn" type="button"
-        onclick="closeVariantScanSheet()"
+        onclick="backToAdminMenuFromVariantScan()"
         aria-label="${t("back", "กลับ")}">
         <span class="app-back-btn-icon" aria-hidden="true">‹</span>
         <span>${t("back", "กลับ")}</span>
@@ -30138,7 +30186,7 @@ function renderBulkProductImportSheet() {
   adminBulkProductImportSheet.innerHTML = `
     <div class="sheet-topbar">
       <button class="app-back-btn" type="button"
-        onclick="closeBulkProductImportSheet()"
+        onclick="backToAdminMenuFromBulkImport()"
         aria-label="${t("back", "กลับ")}">
         <span class="app-back-btn-icon" aria-hidden="true">‹</span>
         <span>${t("back", "กลับ")}</span>
@@ -30242,7 +30290,7 @@ function renderBulkProductImportSheet() {
         onclick="submitBulkProductImport(this)">
         ${state.admin.isSubmitting ? t("importingProducts", "กำลังนำเข้า...") : t("importProducts", "นำเข้าสินค้า")}
       </button>
-      <button class="btn btn-outline" onclick="closeBulkProductImportSheet()">
+      <button class="btn btn-outline" onclick="backToAdminMenuFromBulkImport()">
         ${t("cancel", "ยกเลิก")}
       </button>
     </div>
@@ -31586,7 +31634,7 @@ function renderBulkProductUpdateSheet() {
   adminBulkProductUpdateSheet.innerHTML = `
     <div class="sheet-topbar">
       <button class="app-back-btn" type="button"
-        onclick="closeBulkProductUpdateSheet()"
+        onclick="backToAdminMenuFromBulkProductUpdate()"
         aria-label="${t("back", "กลับ")}">
         <span class="app-back-btn-icon" aria-hidden="true">‹</span>
         <span>${t("back", "กลับ")}</span>
@@ -31649,7 +31697,7 @@ function renderBulkProductUpdateSheet() {
         onclick="submitBulkProductUpdate(this)">
         ${state.admin.isSubmitting ? t("updatingProducts", "กำลังอัปเดต...") : t("updateProducts", "อัปเดตสินค้า")}
       </button>
-      <button class="btn btn-outline" onclick="closeBulkProductUpdateSheet()">
+      <button class="btn btn-outline" onclick="backToAdminMenuFromBulkProductUpdate()">
         ${t("cancel", "ยกเลิก")}
       </button>
     </div>
@@ -32615,7 +32663,7 @@ function renderProductMasterBulkSheet() {
 
   adminProductMasterBulkSheet.innerHTML = `
     <div class="sheet-topbar">
-      <button class="app-back-btn" type="button" onclick="closeProductMasterBulkSheet()" aria-label="${t("back", "กลับ")}">
+      <button class="app-back-btn" type="button" onclick="backToAdminMenuFromProductMasterBulk()" aria-label="${t("back", "กลับ")}">
         <span class="app-back-btn-icon" aria-hidden="true">‹</span>
         <span>${t("back", "กลับ")}</span>
       </button>
@@ -34034,7 +34082,7 @@ function renderPartnerCatalogSheet() {
         </button>
       ` : `
         <button class="app-back-btn" type="button"
-          onclick="closePartnerCatalogSheet()"
+          onclick="backToAdminMenuFromPartnerCatalog()"
           aria-label="${t("back", "กลับ")}">
           <span class="app-back-btn-icon" aria-hidden="true">‹</span>
           <span>${t("back", "กลับ")}</span>
@@ -34115,7 +34163,7 @@ function renderPartnerCatalogSheet() {
           onclick="createPartnerCatalogLink(this)">
           ${state.admin.isSubmitting ? t("creatingLink", "กำลังสร้างลิงก์...") : `${t("createPartnerLink", "สร้างลิงก์คู่ค้า")} (${selectedCount})`}
         </button>
-        <button class="btn btn-outline" type="button" onclick="closePartnerCatalogSheet()">
+        <button class="btn btn-outline" type="button" onclick="backToAdminMenuFromPartnerCatalog()">
           ${t("cancel", "ยกเลิก")}
         </button>
       </div>
