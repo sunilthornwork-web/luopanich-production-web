@@ -5980,6 +5980,33 @@ textarea.input{
   }
 }
 
+#adminProductMasterBulkSheet .product-master-workflow{
+  display:grid;
+  gap:12px;
+  margin:12px 0;
+}
+
+#adminProductMasterBulkSheet .product-master-step{
+  display:grid;
+  gap:8px;
+  min-width:0;
+}
+
+#adminProductMasterBulkSheet .product-master-step-title{
+  font-size:13px;
+  font-weight:700;
+  color:var(--text);
+}
+
+#adminProductMasterBulkSheet .product-master-step .btn{
+  width:100%;
+}
+
+#adminProductMasterBulkSheet .bulk-import-file-input{
+  max-width:100%;
+  min-width:0;
+}
+
 .bulk-paste-actions{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -6298,6 +6325,7 @@ textarea.input{
  <div id="adminVariantScanSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="adminVariantScanSheetTitle" tabindex="-1"></div>
  <div id="adminBulkProductImportSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="adminBulkProductImportSheetTitle" tabindex="-1"></div>
  <div id="adminBulkProductUpdateSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="adminBulkProductUpdateSheetTitle" tabindex="-1"></div>
+ <div id="adminProductMasterBulkSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="adminProductMasterBulkSheetTitle" tabindex="-1"></div>
  <div id="adminDeliveryNoteSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="adminDeliveryNoteSheetTitle" tabindex="-1"></div>
  <div id="adminBillingNoteSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="adminBillingNoteSheetTitle" tabindex="-1"></div>
  <div id="deliveryNoteImageWarningPopupRoot"></div>
@@ -6357,6 +6385,8 @@ const adminBulkProductImportSheet =
   document.getElementById("adminBulkProductImportSheet");
 const adminBulkProductUpdateSheet =
   document.getElementById("adminBulkProductUpdateSheet");
+const adminProductMasterBulkSheet =
+  document.getElementById("adminProductMasterBulkSheet");
 const adminDeliveryNoteSheet =
   document.getElementById("adminDeliveryNoteSheet");
 const adminBillingNoteSheet =
@@ -6388,6 +6418,7 @@ const ADMIN_SHEETS = Object.freeze({
   variantScan: adminVariantScanSheet,
   bulkProductImport: adminBulkProductImportSheet,
   bulkProductUpdate: adminBulkProductUpdateSheet,
+  productMasterBulk: adminProductMasterBulkSheet,
   deliveryNote: adminDeliveryNoteSheet,
   billingNote: adminBillingNoteSheet,
   partners: adminPartnersSheet,
@@ -6414,6 +6445,16 @@ Object.assign(window, {
   submitBulkProductUpdate,
   resetBulkProductUpdate,
   backToAdminMenuFromBulkProductUpdate,
+  openProductMasterBulkSheet,
+  closeProductMasterBulkSheet,
+  downloadProductMasterExport,
+  handleProductMasterBulkFileUpload,
+  previewProductMasterBulk,
+  submitProductMasterBulk,
+  resetProductMasterBulk,
+  setProductMasterBulkRawText,
+  setProductMasterBulkXlsxSheet,
+  backToAdminMenuFromProductMasterBulk,
   setBulkProductUpdatePickerSearch,
   setBulkProductUpdatePickerStatus,
   toggleBulkProductUpdateProduct,
@@ -6723,6 +6764,22 @@ const state = {
       backendErrors: [],
       summary: "",
       updatedCount: 0,
+      hasPreview: false,
+      previewValid: false
+    },
+    productMasterBulk: {
+      sourceType: "text",
+      rawText: "",
+      xlsxWorkbook: null,
+      xlsxFileName: "",
+      xlsxSheetName: "",
+      xlsxSheetOptions: [],
+      rows: [],
+      results: [],
+      errors: [],
+      backendRows: [],
+      backendError: "",
+      summary: null,
       hasPreview: false,
       previewValid: false
     },
@@ -17403,6 +17460,11 @@ function renderAdminMenuInStockSheet() {
       <button class="btn btn-secondary"
         onclick="closeStockMenuSheetThen(openBulkProductUpdateSheet)">
         ${t("bulkUpdateProducts", "อัปเดตราคา/สถานะหลายรายการ")}
+      </button>
+
+      <button class="btn btn-secondary"
+        onclick="closeStockMenuSheetThen(openProductMasterBulkSheet)">
+        ${t("productMasterBulk", "Product Master Excel")}
       </button>
     </div>
 
@@ -31680,6 +31742,1004 @@ async function submitBulkProductUpdate(btn) {
     state.ui.backdropLocked = false;
     state.admin.isSubmitting = false;
     renderBulkProductUpdateSheet();
+    requestAnimationFrame(syncOverlayBackdropState);
+  }
+}
+
+const PRODUCT_MASTER_COLUMNS = Object.freeze([
+  { field: "productId", header: "SKU", group: "identity" },
+  { field: "name", header: "ชื่อสินค้า", group: "editable" },
+  { field: "price", header: "ราคาขาย", group: "editable" },
+  { field: "costPrice", header: "ราคาทุน", group: "editable" },
+  { field: "stock", header: "จำนวนคงเหลือ", group: "reference" },
+  { field: "displayExtraQty", header: "จำนวนที่แสดงเพิ่ม", group: "editable" },
+  { field: "status", header: "สถานะสินค้า", group: "editable" },
+  { field: "active", header: "เปิดใช้งาน", group: "editable" },
+  { field: "note", header: "หมายเหตุ", group: "editable" },
+  { field: "detailsText", header: "รายละเอียดสินค้า", group: "editable" },
+  { field: "image", header: "URL รูปสินค้า", group: "reference" }
+]);
+const PRODUCT_MASTER_FIELDS = PRODUCT_MASTER_COLUMNS.map(column => column.field);
+const PRODUCT_MASTER_EDITABLE_FIELDS = Object.freeze([
+  "name",
+  "price",
+  "costPrice",
+  "displayExtraQty",
+  "status",
+  "active",
+  "note",
+  "detailsText"
+]);
+const PRODUCT_MASTER_CREATE_REQUIRED_FIELDS = Object.freeze([
+  "productId",
+  "name",
+  "price",
+  "costPrice",
+  "stock",
+  "status"
+]);
+const PRODUCT_MASTER_MAX_REQUEST_ROWS = 100;
+
+function ensureAdminSessionForProductMasterBulk() {
+  if (
+    state.mode !== "admin" ||
+    !state.admin.loggedIn ||
+    !state.admin.token ||
+    isAdminSessionExpired()
+  ) {
+    showToast(t("sessionExpiredLoginAgain", "เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง"), "warning");
+    exitAdmin();
+    return false;
+  }
+  return true;
+}
+
+function openProductMasterBulkSheet() {
+  if (!ensureAdminSessionForProductMasterBulk()) return;
+  clearProductMasterBulkWorkingState();
+  renderProductMasterBulkSheet();
+  openOverlay(adminProductMasterBulkSheet);
+}
+
+function closeProductMasterBulkSheet() {
+  closeOverlay(adminProductMasterBulkSheet);
+}
+
+function returnToProductMasterParentMenu() {
+  closeProductMasterBulkSheet();
+  if (mainMenuSheet && mainMenuSheet.classList.contains("show")) {
+    closeMainMenu();
+  }
+  if (adminStockSheet && adminStockSheet.classList.contains("show")) {
+    closeOverlay(adminStockSheet);
+  }
+  state.admin.ui.activeSheet = null;
+  resetAdminRootAfterSheetClose();
+  scheduleAdminSheetViewportRepair();
+  syncOverlayBackdropState();
+}
+
+function backToAdminMenuFromProductMasterBulk() {
+  clearProductMasterBulkWorkingState();
+  closeProductMasterBulkSheet();
+  syncOverlayBackdropState();
+  requestAnimationFrame(() => {
+    openMainMenu();
+    syncOverlayBackdropState();
+  });
+}
+
+function resetProductMasterBulkXlsxState() {
+  const bulkState = state.admin.productMasterBulk;
+  bulkState.xlsxWorkbook = null;
+  bulkState.xlsxFileName = "";
+  bulkState.xlsxSheetName = "";
+  bulkState.xlsxSheetOptions = [];
+}
+
+function invalidateProductMasterBulkPreview() {
+  const bulkState = state.admin.productMasterBulk;
+  bulkState.rows = [];
+  bulkState.results = [];
+  bulkState.errors = [];
+  bulkState.backendRows = [];
+  bulkState.backendError = "";
+  bulkState.summary = null;
+  bulkState.hasPreview = false;
+  bulkState.previewValid = false;
+}
+
+function clearProductMasterBulkWorkingState(options = {}) {
+  const bulkState = state.admin.productMasterBulk;
+  const keepBackend = options.keepBackend === true;
+  const preservedRows = keepBackend ? bulkState.backendRows : [];
+  const preservedSummary = keepBackend ? bulkState.summary : null;
+  const preservedError = keepBackend ? bulkState.backendError : "";
+
+  bulkState.sourceType = "text";
+  bulkState.rawText = "";
+  resetProductMasterBulkXlsxState();
+  bulkState.rows = [];
+  bulkState.results = [];
+  bulkState.errors = [];
+  bulkState.backendRows = preservedRows;
+  bulkState.backendError = preservedError;
+  bulkState.summary = preservedSummary;
+  bulkState.hasPreview = false;
+  bulkState.previewValid = false;
+}
+
+function getProductMasterColumn(field) {
+  return PRODUCT_MASTER_COLUMNS.find(column => column.field === field) || null;
+}
+
+function getProductMasterFieldLabel(field) {
+  const column = getProductMasterColumn(field);
+  if (column) return column.header;
+  return getBulkProductImportFieldLabel(field);
+}
+
+function normalizeProductMasterHeader(value) {
+  const key = String(value || "").trim().toLowerCase();
+  const map = {
+    sku: "productId",
+    productid: "productId",
+    product_id: "productId",
+    "รหัสสินค้า": "productId",
+    "รหัสสินค้า (sku)": "productId",
+    name: "name",
+    "ชื่อสินค้า": "name",
+    price: "price",
+    "ราคาขาย": "price",
+    costprice: "costPrice",
+    cost: "costPrice",
+    "ราคาทุน": "costPrice",
+    stock: "stock",
+    qty: "stock",
+    "จำนวนคงเหลือ": "stock",
+    "สต๊อก": "stock",
+    "สต็อก": "stock",
+    displayextraqty: "displayExtraQty",
+    displayextra: "displayExtraQty",
+    "จำนวนที่แสดงเพิ่ม": "displayExtraQty",
+    "จำนวนแสดงเพิ่ม": "displayExtraQty",
+    status: "status",
+    "สถานะสินค้า": "status",
+    "สถานะ": "status",
+    active: "active",
+    "เปิดใช้งาน": "active",
+    note: "note",
+    "หมายเหตุ": "note",
+    detailstext: "detailsText",
+    details: "detailsText",
+    "รายละเอียดสินค้า": "detailsText",
+    image: "image",
+    "url รูปสินค้า": "image",
+    "รูปสินค้า": "image"
+  };
+  return map[key] || "";
+}
+
+function normalizeProductMasterRow(row) {
+  const normalized = {};
+  PRODUCT_MASTER_FIELDS.forEach(field => {
+    normalized[field] = String(row[field] ?? "").trim();
+  });
+  normalized.productId = normalizeProductId(normalized.productId);
+  normalized.status = normalizeBulkImportStatus(normalized.status);
+  return normalized;
+}
+
+function getProductMasterProductMap() {
+  return new Map(
+    (Array.isArray(state.products) ? state.products : []).map(product => [
+      normalizeProductId(product.productId),
+      product
+    ])
+  );
+}
+
+function productMasterValueForField(product, field) {
+  if (!product) return "";
+  if (field === "productId") return normalizeProductId(product.productId);
+  if (field === "price" || field === "costPrice" || field === "stock" || field === "displayExtraQty") {
+    const value = Number(product[field]);
+    return Number.isFinite(value) ? value : 0;
+  }
+  if (field === "active") {
+    return product.active === true || product.active === "TRUE" || product.active === 1 || product.active === "1";
+  }
+  return String(product[field] ?? "").trim();
+}
+
+function normalizeProductMasterComparable(field, value) {
+  if (field === "price" || field === "costPrice" || field === "stock" || field === "displayExtraQty") {
+    const numberValue = Number(value);
+    return Number.isFinite(numberValue) ? numberValue : 0;
+  }
+  if (field === "active") {
+    const parsed = parseBulkProductUpdateActive(value);
+    return parsed.valid ? parsed.value : value;
+  }
+  if (field === "status") return normalizeBulkImportStatus(value);
+  return String(value ?? "").trim();
+}
+
+async function downloadProductMasterExport() {
+  if (!ensureAdminSessionForProductMasterBulk()) return;
+  const XLSX = getBulkProductXlsx();
+  if (!XLSX) {
+    showBulkProductXlsxUnavailable();
+    return;
+  }
+  if (!Array.isArray(state.products) || !state.products.length) {
+    await refreshProducts();
+  }
+  const products = Array.isArray(state.products) ? state.products : [];
+  const rows = [
+    PRODUCT_MASTER_COLUMNS.map(column => column.header)
+  ].concat(products.map(product => PRODUCT_MASTER_FIELDS.map(field => {
+    const value = productMasterValueForField(product, field);
+    if (field === "active") return value ? "TRUE" : "FALSE";
+    return value;
+  })));
+  const workbook = XLSX.utils.book_new();
+  const worksheet = XLSX.utils.aoa_to_sheet(rows);
+  worksheet["!cols"] = [
+    { wch: 18 },
+    { wch: 32 },
+    { wch: 12 },
+    { wch: 12 },
+    { wch: 14 },
+    { wch: 18 },
+    { wch: 16 },
+    { wch: 12 },
+    { wch: 30 },
+    { wch: 42 },
+    { wch: 42 }
+  ];
+  rows.forEach((_, rowIndex) => {
+    const skuRef = XLSX.utils.encode_cell({ r: rowIndex, c: 0 });
+    if (worksheet[skuRef]) {
+      worksheet[skuRef].t = "s";
+      worksheet[skuRef].v = String(worksheet[skuRef].v || "");
+      worksheet[skuRef].z = "@";
+    }
+  });
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Product Master");
+  const output = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+  const blob = new Blob([output], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "product-master.xlsx";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  showToast(t("productMasterExported", "ดาวน์โหลด Product Master แล้ว"), "success");
+}
+
+function handleProductMasterBulkFileUpload(event) {
+  const file = event?.target?.files?.[0];
+  if (!file) return;
+  const fileName = String(file.name || "").toLowerCase();
+  if (!fileName.endsWith(".xlsx") && !fileName.endsWith(".tsv") && !fileName.endsWith(".txt")) {
+    showToast(t("unsupportedBulkImportFile", "รองรับเฉพาะไฟล์ .xlsx, .tsv หรือ .txt"), "warning");
+    event.target.value = "";
+    return;
+  }
+  if (fileName.endsWith(".xlsx")) {
+    handleProductMasterBulkXlsxFileUpload(file, event.target);
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    resetProductMasterBulkXlsxState();
+    state.admin.productMasterBulk.sourceType = "text";
+    state.admin.productMasterBulk.rawText = String(reader.result || "");
+    invalidateProductMasterBulkPreview();
+    renderProductMasterBulkSheet();
+    showToast(t("fileReadReviewBeforeImport", "อ่านไฟล์แล้ว กรุณาตรวจสอบข้อมูลก่อนนำเข้า"), "success");
+  };
+  reader.onerror = () => {
+    showToast(t("fileReadFailedRetry", "ไม่สามารถอ่านไฟล์ได้ กรุณาลองใหม่อีกครั้ง"), "error");
+  };
+  reader.readAsText(file, "UTF-8");
+}
+
+function handleProductMasterBulkXlsxFileUpload(file, input) {
+  const XLSX = getBulkProductXlsx();
+  if (!XLSX) {
+    showBulkProductXlsxUnavailable();
+    if (input) input.value = "";
+    return;
+  }
+  if (file.size > BULK_PRODUCT_XLSX_MAX_BYTES) {
+    showToast(t("xlsxFileTooLarge", "ไฟล์ Excel มีขนาดใหญ่เกินไป"), "warning");
+    if (input) input.value = "";
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const workbook = XLSX.read(reader.result, {
+        type: "array",
+        cellDates: true,
+        cellFormula: true,
+        cellText: true
+      });
+      const visibleSheets = getBulkProductXlsxVisibleSheetNames(workbook);
+      if (!visibleSheets.length) {
+        throw new Error(t("workbookSheetNotFound", "ไม่พบชีตที่อ่านได้ในไฟล์ Excel"));
+      }
+      const selectedSheet = visibleSheets.find(name => name === "Product Master") ||
+        visibleSheets.find(name => name === BULK_PRODUCT_XLSX_PREFERRED_SHEET) ||
+        visibleSheets[0];
+      const bulkState = state.admin.productMasterBulk;
+      bulkState.sourceType = "xlsx";
+      bulkState.rawText = "";
+      bulkState.xlsxWorkbook = workbook;
+      bulkState.xlsxFileName = file.name || "";
+      bulkState.xlsxSheetOptions = visibleSheets;
+      bulkState.xlsxSheetName = selectedSheet;
+      invalidateProductMasterBulkPreview();
+      bulkState.sourceType = "xlsx";
+      bulkState.xlsxWorkbook = workbook;
+      bulkState.xlsxFileName = file.name || "";
+      bulkState.xlsxSheetOptions = visibleSheets;
+      bulkState.xlsxSheetName = selectedSheet;
+      renderProductMasterBulkSheet();
+      showToast(t("xlsxFileReadReviewBeforeImport", "อ่านไฟล์ Excel แล้ว กรุณาตรวจสอบข้อมูลก่อนนำเข้า"), "success");
+    } catch (err) {
+      console.error(err);
+      resetProductMasterBulkXlsxState();
+      state.admin.productMasterBulk.sourceType = "text";
+      showToast(err?.message || t("invalidWorkbook", "ไฟล์ Excel ไม่ถูกต้องหรืออ่านไม่ได้"), "error");
+      if (input) input.value = "";
+    }
+  };
+  reader.onerror = () => {
+    showToast(t("fileReadFailedRetry", "ไม่สามารถอ่านไฟล์ได้ กรุณาลองใหม่อีกครั้ง"), "error");
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function setProductMasterBulkRawText(value) {
+  const bulkState = state.admin.productMasterBulk;
+  bulkState.sourceType = "text";
+  resetProductMasterBulkXlsxState();
+  bulkState.rawText = String(value || "");
+  invalidateProductMasterBulkPreview();
+  renderProductMasterBulkSheet();
+}
+
+function setProductMasterBulkXlsxSheet(sheetName) {
+  const bulkState = state.admin.productMasterBulk;
+  if (
+    bulkState.sourceType !== "xlsx" ||
+    !bulkState.xlsxWorkbook ||
+    !bulkState.xlsxSheetOptions.includes(sheetName)
+  ) {
+    return;
+  }
+  bulkState.xlsxSheetName = sheetName;
+  invalidateProductMasterBulkPreview();
+  bulkState.sourceType = "xlsx";
+  renderProductMasterBulkSheet();
+}
+
+function parseProductMasterBulkSource(bulkState) {
+  if (bulkState.sourceType === "xlsx") {
+    return parseProductMasterBulkXlsx(bulkState);
+  }
+  return parseProductMasterBulkText(bulkState.rawText || "");
+}
+
+function parseProductMasterBulkText(rawText) {
+  const text = String(rawText || "").replace(/\r/g, "").trimEnd();
+  const rows = text
+    ? text.split("\n").filter(line => line.trim()).map(splitTsvLine)
+    : [];
+  return parseProductMasterBulkTable(rows, []);
+}
+
+function parseProductMasterBulkXlsx(bulkState) {
+  const XLSX = getBulkProductXlsx();
+  if (!XLSX) {
+    return {
+      rows: [],
+      errors: [bulkImportError(0, "", "file", t("xlsxLibraryUnavailable", "ยังไม่สามารถอ่านไฟล์ Excel ได้ กรุณาลองใหม่อีกครั้งหรือใช้ TSV"))]
+    };
+  }
+  try {
+    const worksheet = bulkState.xlsxWorkbook?.Sheets?.[bulkState.xlsxSheetName];
+    if (!worksheet) {
+      return {
+        rows: [],
+        errors: [bulkImportError(0, "", "sheet", t("workbookSheetNotFound", "ไม่พบชีตที่อ่านได้ในไฟล์ Excel"))]
+      };
+    }
+    const rows = XLSX.utils.sheet_to_json(worksheet, {
+      header: 1,
+      defval: "",
+      blankrows: false,
+      raw: false
+    });
+    const tableRows = rows.map(row => Array.isArray(row) ? row.map(formatBulkProductImportCellValue) : []);
+    const formulaErrors = findProductMasterXlsxUnsafeCellErrors(worksheet, tableRows);
+    const parsed = parseProductMasterBulkTable(tableRows, formulaErrors);
+    return parsed;
+  } catch (err) {
+    return {
+      rows: [],
+      errors: [bulkImportError(0, "", "file", t("invalidWorkbook", "ไฟล์ Excel ไม่ถูกต้องหรืออ่านไม่ได้"))]
+    };
+  }
+}
+
+function isProductMasterHeaderRow(cells) {
+  const normalized = cells.map(normalizeProductMasterHeader).filter(Boolean);
+  return normalized.includes("productId") &&
+    normalized.includes("name") &&
+    normalized.includes("price");
+}
+
+function parseProductMasterBulkTable(tableRows, extraErrors = []) {
+  const errors = extraErrors.slice();
+  const rows = [];
+  const rawRows = (Array.isArray(tableRows) ? tableRows : [])
+    .map(row => (Array.isArray(row) ? row : []).map(formatBulkProductImportCellValue))
+    .filter(row => row.some(cell => String(cell || "").trim()));
+  if (!rawRows.length) return { rows, errors };
+
+  const firstCells = rawRows[0];
+  const hasHeader = isProductMasterHeaderRow(firstCells);
+  const dataRows = hasHeader ? rawRows.slice(1) : rawRows;
+  const columns = hasHeader
+    ? firstCells.map(normalizeProductMasterHeader)
+    : PRODUCT_MASTER_FIELDS;
+  const unknownColumns = hasHeader
+    ? firstCells.map((cell, index) => ({
+        index,
+        label: String(cell || "").trim(),
+        field: columns[index]
+      })).filter(column => column.label && !column.field)
+    : [];
+  const seenSkus = new Set();
+
+  if (dataRows.length > PRODUCT_MASTER_MAX_REQUEST_ROWS) {
+    errors.push(bulkImportError(0, "", "rows", t("bulkImportMaxRows", "นำเข้าได้สูงสุด 100 รายการต่อครั้ง")));
+    return { rows, errors };
+  }
+
+  dataRows.forEach((cells, index) => {
+    const rowNumber = index + 1;
+    const row = {};
+    columns.forEach((field, cellIndex) => {
+      if (!field || !PRODUCT_MASTER_FIELDS.includes(field)) return;
+      row[field] = String(cells[cellIndex] || "").trim();
+    });
+    const item = normalizeProductMasterRow(row);
+    unknownColumns.forEach(column => {
+      if (String(cells[column.index] || "").trim()) {
+        errors.push(bulkImportError(rowNumber, item.productId, column.label, t("bulkUpdateTypeInvalid", "ประเภทการอัปเดตไม่ถูกต้อง")));
+      }
+    });
+    if (!item.productId) {
+      errors.push(bulkImportError(rowNumber, "", "productId", t("bulkImportSkuRequired", "กรุณากรอกรหัสสินค้า")));
+    } else if (seenSkus.has(item.productId)) {
+      errors.push(bulkImportError(rowNumber, item.productId, "productId", t("bulkImportDuplicateSku", "รหัสสินค้าซ้ำในข้อมูลที่วาง")));
+    } else {
+      seenSkus.add(item.productId);
+    }
+    item.row = rowNumber;
+    rows.push(item);
+  });
+
+  if (!rows.length) {
+    errors.push(bulkImportError(1, "", "rows", t("bulkImportNeedOneRow", "กรุณาเพิ่มข้อมูลสินค้าอย่างน้อย 1 รายการ")));
+  }
+  return { rows, errors };
+}
+
+function findProductMasterXlsxUnsafeCellErrors(worksheet, rows) {
+  const XLSX = getBulkProductXlsx();
+  if (!XLSX || !worksheet || !rows.length) return [];
+  const firstCells = rows[0];
+  const hasHeader = isProductMasterHeaderRow(firstCells);
+  const dataStartIndex = hasHeader ? 1 : 0;
+  const columns = hasHeader
+    ? firstCells.map(normalizeProductMasterHeader)
+    : PRODUCT_MASTER_FIELDS;
+  const errors = [];
+  rows.slice(dataStartIndex, dataStartIndex + PRODUCT_MASTER_MAX_REQUEST_ROWS).forEach((row, dataIndex) => {
+    const rowNumber = dataIndex + 1;
+    columns.forEach((field, columnIndex) => {
+      if (!field) return;
+      const cell = worksheet[XLSX.utils.encode_cell({
+        r: dataStartIndex + dataIndex,
+        c: columnIndex
+      })];
+      if (!cell) return;
+      const columnLabel = firstCells[columnIndex] || getProductMasterFieldLabel(field);
+      if (cell.f) {
+        errors.push(bulkImportError(rowNumber, "", field, formatUiText("formulaCellNotAllowed", { row: rowNumber, column: columnLabel }, "ไม่รองรับสูตรในไฟล์ Excel: แถว {row}, คอลัมน์ {column}")));
+      } else if (isBulkProductXlsxDateCell(cell, XLSX)) {
+        errors.push(bulkImportError(rowNumber, "", field, formatUiText("xlsxDateCellNotAllowed", { row: rowNumber, column: columnLabel }, "ไม่รองรับวันที่ในช่องนี้: แถว {row}, คอลัมน์ {column}")));
+      }
+    });
+  });
+  return errors;
+}
+
+function validateProductMasterCreateRow(item, errors) {
+  PRODUCT_MASTER_CREATE_REQUIRED_FIELDS.forEach(field => {
+    if (!String(item[field] ?? "").trim()) {
+      errors.push(bulkImportError(item.row, item.productId, field, `${getProductMasterFieldLabel(field)} is required`));
+    }
+  });
+  const price = Number(item.price);
+  const costPrice = Number(item.costPrice);
+  const stock = Number(item.stock);
+  const displayExtraQty = Number(item.displayExtraQty);
+  const active = parseBulkProductUpdateActive(item.active || "true");
+  const status = normalizeBulkImportStatus(item.status);
+
+  if (item.price === "" || !Number.isInteger(price) || price < 0) {
+    errors.push(bulkImportError(item.row, item.productId, "price", t("bulkImportPriceInvalid", "ราคาต้องเป็นตัวเลขจำนวนเต็ม 0 ขึ้นไป")));
+  }
+  if (item.costPrice === "" || !Number.isInteger(costPrice) || costPrice < 0) {
+    errors.push(bulkImportError(item.row, item.productId, "costPrice", t("bulkImportCostInvalid", "ต้นทุนต้องเป็นตัวเลขจำนวนเต็ม 0 ขึ้นไป")));
+  }
+  if (item.stock === "" || !Number.isInteger(stock) || stock < 0) {
+    errors.push(bulkImportError(item.row, item.productId, "stock", t("bulkImportStockInvalid", "จำนวนสต๊อกต้องเป็นตัวเลขจำนวนเต็ม 0 ขึ้นไป")));
+  }
+  if (item.displayExtraQty !== "" && (!Number.isInteger(displayExtraQty) || displayExtraQty < 0)) {
+    errors.push(bulkImportError(item.row, item.productId, "displayExtraQty", t("bulkImportDisplayExtraQtyInvalid", "จำนวนที่แสดงเพิ่มต้องเป็นตัวเลขจำนวนเต็ม 0 ขึ้นไป")));
+  }
+  if (!["ready", "ready_plus", "shipping", "warehouse", "out"].includes(status)) {
+    errors.push(bulkImportError(item.row, item.productId, "status", t("bulkImportStatusInvalid", "สถานะสินค้าไม่ถูกต้อง")));
+  }
+  if (item.active !== "" && !active.valid) {
+    errors.push(bulkImportError(item.row, item.productId, "active", t("bulkUpdateActiveInvalid", "สถานะการขายต้องเป็น เปิดขาย/ปิดขาย หรือ true/false")));
+  }
+  if (item.image && !/^https?:\/\//i.test(item.image)) {
+    errors.push(bulkImportError(item.row, item.productId, "image", t("imageUrlInvalid", "รูปภาพต้องเป็น URL แบบ http/https")));
+  }
+  if (item.note.length > 2000) {
+    errors.push(bulkImportError(item.row, item.productId, "note", t("noteTooLong", "หมายเหตุยาวเกินไป")));
+  }
+  if (item.detailsText.length > 5000) {
+    errors.push(bulkImportError(item.row, item.productId, "detailsText", t("detailsTextTooLong", "รายละเอียดสินค้ายาวเกินไป")));
+  }
+}
+
+function buildProductMasterPreview(rows, parseErrors) {
+  const productMap = getProductMasterProductMap();
+  const errorsByRow = new Map();
+  const addError = error => {
+    const row = Number(error.row) || 0;
+    if (!errorsByRow.has(row)) errorsByRow.set(row, []);
+    errorsByRow.get(row).push(error);
+  };
+  parseErrors.forEach(addError);
+
+  const results = rows.map(item => {
+    const rowErrors = (errorsByRow.get(item.row) || []).slice();
+    const existing = productMap.get(item.productId) || null;
+    const changes = [];
+    const payload = { productId: item.productId };
+
+    if (existing) {
+      PRODUCT_MASTER_EDITABLE_FIELDS.forEach(field => {
+        const rawValue = String(item[field] ?? "").trim();
+        if (rawValue === "") return;
+        let valid = true;
+        let nextValue = rawValue;
+        if (field === "price" || field === "costPrice" || field === "displayExtraQty") {
+          const numeric = Number(rawValue);
+          if (!Number.isInteger(numeric) || numeric < 0) {
+            rowErrors.push(bulkImportError(item.row, item.productId, field, `${getProductMasterFieldLabel(field)} ${t("mustBeNonNegativeInteger", "ต้องเป็นตัวเลขจำนวนเต็ม 0 ขึ้นไป")}`));
+            valid = false;
+          }
+          nextValue = numeric;
+        } else if (field === "status") {
+          nextValue = normalizeBulkImportStatus(rawValue);
+          if (!["ready", "ready_plus", "shipping", "warehouse", "out"].includes(nextValue)) {
+            rowErrors.push(bulkImportError(item.row, item.productId, field, t("bulkImportStatusInvalid", "สถานะสินค้าไม่ถูกต้อง")));
+            valid = false;
+          }
+        } else if (field === "active") {
+          const active = parseBulkProductUpdateActive(rawValue);
+          if (!active.valid) {
+            rowErrors.push(bulkImportError(item.row, item.productId, field, t("bulkUpdateActiveInvalid", "สถานะการขายต้องเป็น เปิดขาย/ปิดขาย หรือ true/false")));
+            valid = false;
+          }
+          nextValue = active.value;
+        } else if (field === "note" && rawValue.length > 2000) {
+          rowErrors.push(bulkImportError(item.row, item.productId, field, t("noteTooLong", "หมายเหตุยาวเกินไป")));
+          valid = false;
+        } else if (field === "detailsText" && rawValue.length > 5000) {
+          rowErrors.push(bulkImportError(item.row, item.productId, field, t("detailsTextTooLong", "รายละเอียดสินค้ายาวเกินไป")));
+          valid = false;
+        }
+        if (!valid) return;
+        const before = productMasterValueForField(existing, field);
+        const beforeComparable = normalizeProductMasterComparable(field, before);
+        const afterComparable = normalizeProductMasterComparable(field, nextValue);
+        if (beforeComparable !== afterComparable) {
+          payload[field] = nextValue;
+          changes.push({ field, before, after: nextValue });
+        }
+      });
+
+      if (item.stock !== "") {
+        const stock = Number(item.stock);
+        const currentStock = productMasterValueForField(existing, "stock");
+        if (!Number.isInteger(stock) || stock < 0) {
+          rowErrors.push(bulkImportError(item.row, item.productId, "stock", t("bulkImportStockInvalid", "จำนวนสต๊อกต้องเป็นตัวเลขจำนวนเต็ม 0 ขึ้นไป")));
+        } else if (stock !== currentStock) {
+          rowErrors.push(bulkImportError(item.row, item.productId, "stock", t("productMasterStockReadOnly", "จำนวนคงเหลือเป็นข้อมูลอ้างอิง ห้ามแก้ผ่าน Product Master")));
+        }
+      }
+
+      if (item.image !== "") {
+        const currentImage = String(productMasterValueForField(existing, "image") || "").trim();
+        if (!/^https?:\/\//i.test(item.image)) {
+          rowErrors.push(bulkImportError(item.row, item.productId, "image", t("imageUrlInvalid", "รูปภาพต้องเป็น URL แบบ http/https")));
+        } else if (item.image !== currentImage) {
+          rowErrors.push(bulkImportError(item.row, item.productId, "image", t("productMasterImageReadOnly", "รูปสินค้าเป็นข้อมูลอ้างอิง ห้ามแก้ผ่าน Product Master")));
+        }
+      }
+
+      return {
+        row: item.row,
+        productId: item.productId,
+        action: rowErrors.length ? "ERROR" : (changes.length ? "UPDATE" : "NO_CHANGE"),
+        changes,
+        payload,
+        errors: rowErrors
+      };
+    }
+
+    validateProductMasterCreateRow(item, rowErrors);
+    PRODUCT_MASTER_FIELDS.forEach(field => {
+      if (field === "productId") return;
+      const value = String(item[field] ?? "").trim();
+      if (value === "") return;
+      if (field === "active") {
+        const active = parseBulkProductUpdateActive(value);
+        if (active.valid) payload.active = active.value;
+        return;
+      }
+      payload[field] = value;
+    });
+    return {
+      row: item.row,
+      productId: item.productId,
+      action: rowErrors.length ? "ERROR" : "CREATE",
+      changes: [],
+      payload,
+      errors: rowErrors
+    };
+  });
+
+  return {
+    results,
+    errors: results.flatMap(result => result.errors)
+  };
+}
+
+function productMasterSummary(results) {
+  return (results || []).reduce((summary, result) => {
+    summary.total += 1;
+    if (result.action === "CREATE") summary.create += 1;
+    if (result.action === "UPDATE") summary.update += 1;
+    if (result.action === "NO_CHANGE") summary.noChange += 1;
+    if (result.action === "ERROR") summary.error += 1;
+    return summary;
+  }, { total: 0, create: 0, update: 0, noChange: 0, error: 0 });
+}
+
+function renderProductMasterBulkStatus(results, errors) {
+  if (state.admin.isSubmitting) {
+    return renderBulkProductStatusCard(
+      t("productMasterApplying", "กำลังบันทึก Product Master..."),
+      t("bulkUpdateLoadingDetail", "กรุณารอสักครู่ ระบบกำลังส่งข้อมูลไปยังหลังบ้าน"),
+      "loading"
+    );
+  }
+  const bulkState = state.admin.productMasterBulk;
+  if (bulkState.summary) {
+    const summary = bulkState.summary;
+    return renderBulkProductStatusCard(
+      t("productMasterApplied", "บันทึก Product Master สำเร็จ"),
+      `CREATE ${summary.create || 0} / UPDATE ${summary.update || 0} / NO_CHANGE ${summary.noChange || 0}`,
+      "success"
+    );
+  }
+  if (errors.length) {
+    return renderBulkProductStatusCard(
+      formatUiText("bulkImportErrorCount", { count: errors.length }, "พบข้อผิดพลาด {count} รายการ"),
+      t("bulkImportErrorDetail", "กรุณาตรวจสอบรายการที่มีปัญหาก่อนนำเข้า"),
+      "error"
+    );
+  }
+  if (results.length) {
+    const summary = productMasterSummary(results);
+    return renderBulkProductStatusCard(
+      t("productMasterPreviewReady", "พร้อมตรวจสอบ Product Master"),
+      `CREATE ${summary.create} / UPDATE ${summary.update} / NO_CHANGE ${summary.noChange}`,
+      "ready"
+    );
+  }
+  return renderBulkProductStatusCard(
+    t("bulkImportIdle", "ยังไม่ได้ตรวจสอบข้อมูล"),
+    t("productMasterIdleDetail", "ดาวน์โหลด Product Master แก้ไข แล้วอัปโหลดกลับเพื่อตรวจสอบก่อนบันทึก"),
+    "idle"
+  );
+}
+
+function renderBulkProductStatusCard(label, detail, type) {
+  const badgeClass = type === "success" || type === "ready"
+    ? "status-approved"
+    : type === "error"
+      ? "status-rejected"
+      : "status-pending";
+  return `
+    <div class="bulk-import-status" role="status" aria-live="polite">
+      <span class="status-badge ${badgeClass} compact">${esc(label)}</span>
+      <div class="helper-text" style="margin-top:8px">${esc(detail)}</div>
+    </div>
+  `;
+}
+
+function renderProductMasterBulkXlsxSheetSelector(bulkState) {
+  if (bulkState.sourceType !== "xlsx" || !bulkState.xlsxWorkbook) return "";
+  const options = Array.isArray(bulkState.xlsxSheetOptions) ? bulkState.xlsxSheetOptions : [];
+  if (options.length <= 1) {
+    return `
+      <div class="helper-text" style="margin-bottom:10px">
+        ${esc(bulkState.xlsxFileName || "")} · ${esc(bulkState.xlsxSheetName || "")}
+      </div>
+    `;
+  }
+  return `
+    <div class="form-group">
+      <label for="productMasterBulkXlsxSheet">${t("bulkImportSheetLabel", "ชีตสำหรับนำเข้า")}</label>
+      <select id="productMasterBulkXlsxSheet" class="input" onchange="setProductMasterBulkXlsxSheet(this.value)">
+        ${options.map(sheetName => `
+          <option value="${escAttr(sheetName)}" ${sheetName === bulkState.xlsxSheetName ? "selected" : ""}>
+            ${esc(sheetName)}
+          </option>
+        `).join("")}
+      </select>
+    </div>
+  `;
+}
+
+function renderProductMasterPreview(results) {
+  if (!results.length) {
+    return `<div class="empty-state">${t("previewTsvPrompt", "วาง/อัปโหลดข้อมูลเพื่อแสดงตัวอย่าง")}</div>`;
+  }
+  const summary = productMasterSummary(results);
+  const cards = results.map(result => `
+    <div class="bulk-preview-card ${result.action === "ERROR" ? "has-error" : ""}">
+      <div class="name">${esc(result.productId || t("missingProductId", "(ยังไม่มีรหัสสินค้า)"))}</div>
+      <div class="bulk-preview-meta">
+        <span class="status-badge ${result.action === "ERROR" ? "status-rejected" : result.action === "NO_CHANGE" ? "status-neutral" : "status-approved"} compact">${esc(result.action)}</span>
+        ${result.row ? ` · Row ${esc(result.row)}` : ""}
+      </div>
+      ${
+        result.changes && result.changes.length
+          ? `<div class="bulk-template-table bulk-data-preview-table"><table><tbody>${result.changes.map(change => `
+              <tr>
+                <th>${esc(getProductMasterFieldLabel(change.field))}</th>
+                <td>${esc(formatProductMasterPreviewValue(change.field, change.before))}</td>
+                <td>→</td>
+                <td>${esc(formatProductMasterPreviewValue(change.field, change.after))}</td>
+              </tr>
+            `).join("")}</tbody></table></div>`
+          : ""
+      }
+      ${
+        result.errors && result.errors.length
+          ? `<ul class="bulk-error-list">${result.errors.map(error => `<li>${esc(error.field)}: ${esc(getProductMasterErrorMessage(error))}</li>`).join("")}</ul>`
+          : ""
+      }
+    </div>
+  `).join("");
+  return `
+    <div class="cart-summary">
+      <div class="summary-row"><span>CREATE</span><strong>${summary.create}</strong></div>
+      <div class="summary-row"><span>UPDATE</span><strong>${summary.update}</strong></div>
+      <div class="summary-row"><span>NO_CHANGE</span><strong>${summary.noChange}</strong></div>
+      <div class="summary-row"><span>ERROR</span><strong>${summary.error}</strong></div>
+    </div>
+    <div class="bulk-preview-list">${cards}</div>
+  `;
+}
+
+function formatProductMasterPreviewValue(field, value) {
+  if (field === "active") return value === true ? t("openForSale", "เปิดขาย") : t("closedForSale", "ปิดขาย");
+  if (field === "status") return getViewerStatusLabel(value);
+  return String(value ?? "");
+}
+
+function getProductMasterErrorMessage(error) {
+  const message = String(error?.message || "").trim();
+  const known = {
+    "Product master bulk validation failed": t("bulkImportValidationFailed", "ตรวจสอบข้อมูลนำเข้าไม่ผ่าน"),
+    "Rows must be valid JSON": t("invalidData", "ข้อมูลไม่ถูกต้อง"),
+    "Rows must be an array": t("invalidData", "ข้อมูลไม่ถูกต้อง"),
+    "Batch size limit is 100 rows": t("bulkImportMaxRows", "นำเข้าได้สูงสุด 100 รายการต่อครั้ง"),
+    "SKU is required": t("bulkImportSkuRequired", "กรุณากรอกรหัสสินค้า"),
+    "Duplicate SKU inside request": t("bulkImportDuplicateSku", "รหัสสินค้าซ้ำในข้อมูลที่วาง"),
+    "Existing SKU stock is read-only": t("productMasterStockReadOnly", "จำนวนคงเหลือเป็นข้อมูลอ้างอิง ห้ามแก้ผ่าน Product Master"),
+    "Existing SKU image is read-only": t("productMasterImageReadOnly", "รูปสินค้าเป็นข้อมูลอ้างอิง ห้ามแก้ผ่าน Product Master"),
+    "Stock must be an integer >= 0": t("bulkImportStockInvalid", "จำนวนสต๊อกต้องเป็นตัวเลขจำนวนเต็ม 0 ขึ้นไป"),
+    "Image must be an http/https URL": t("imageUrlInvalid", "รูปภาพต้องเป็น URL แบบ http/https"),
+    "Invalid product status": t("bulkImportStatusInvalid", "สถานะสินค้าไม่ถูกต้อง")
+  };
+  return known[message] || message || getBulkImportErrorMessage(error);
+}
+
+function renderProductMasterBulkSheet() {
+  const bulkState = state.admin.productMasterBulk;
+  const shouldParsePreview = bulkState.hasPreview || state.admin.isSubmitting;
+  const parsed = shouldParsePreview
+    ? parseProductMasterBulkSource(bulkState)
+    : { rows: [], errors: [] };
+  const preview = shouldParsePreview
+    ? buildProductMasterPreview(parsed.rows, parsed.errors)
+    : { results: [], errors: [] };
+  bulkState.rows = parsed.rows;
+  bulkState.results = preview.results;
+  bulkState.errors = preview.errors;
+  const backendErrorRows = (Array.isArray(bulkState.backendRows) ? bulkState.backendRows : [])
+    .filter(row => row.action === "ERROR")
+    .flatMap(row => row.errors || []);
+  const allErrors = preview.errors.concat(backendErrorRows);
+  bulkState.previewValid = Boolean(
+    bulkState.hasPreview &&
+    preview.results.length > 0 &&
+    allErrors.length === 0
+  );
+  const canSubmit = bulkState.previewValid &&
+    preview.results.length > 0 &&
+    !state.admin.isSubmitting &&
+    !bulkState.summary;
+
+  adminProductMasterBulkSheet.innerHTML = `
+    <div class="sheet-topbar">
+      <button class="app-back-btn" type="button" onclick="closeProductMasterBulkSheet()" aria-label="${t("back", "กลับ")}">
+        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
+        <span>${t("back", "กลับ")}</span>
+      </button>
+      <h3 id="adminProductMasterBulkSheetTitle">${t("productMasterBulk", "Product Master Excel")}</h3>
+      <div aria-hidden="true"></div>
+    </div>
+    <div class="helper-text" style="margin-bottom:10px">
+      ${t("productMasterBulkHelp", "ส่งออก Product Master แก้ไขใน Excel แล้วอัปโหลดกลับ ระบบจะแสดง Preview ก่อนบันทึกจริง")}
+    </div>
+    <div class="product-master-workflow">
+      <div class="product-master-step">
+        <div class="product-master-step-title">${t("productMasterExportStep", "ส่งออก Product Master")}</div>
+        <button class="btn btn-outline" type="button" onclick="downloadProductMasterExport()">
+          ${t("downloadProductMaster", "ดาวน์โหลด Product Master")}
+        </button>
+      </div>
+      <div class="product-master-step">
+        <label class="product-master-step-title" for="productMasterBulkFile">${t("productMasterUploadStep", "อัปโหลดไฟล์ที่แก้ไขแล้ว")}</label>
+        <input id="productMasterBulkFile" class="input bulk-import-file-input" type="file" accept=".xlsx,.tsv,.txt" onchange="handleProductMasterBulkFileUpload(event)">
+        <div class="helper-text">${t("tsvOnlyHelp", "รองรับ Excel (.xlsx), TSV และ TXT เท่านั้น")}</div>
+      </div>
+    </div>
+    ${renderProductMasterBulkXlsxSheetSelector(bulkState)}
+    ${renderProductMasterBulkStatus(preview.results, allErrors)}
+    ${renderProductMasterPreview(bulkState.backendRows && bulkState.backendRows.length ? bulkState.backendRows : preview.results)}
+    <details class="bulk-raw-input">
+      <summary>${t("productMasterReviewAndSave", "ตรวจสอบและบันทึก")}</summary>
+      <div class="form-group">
+        <label for="productMasterBulkText">${t("rawTsvText", "ข้อความ TSV ต้นฉบับ")}</label>
+        <textarea id="productMasterBulkText" class="input bulk-import-textarea" oninput="setProductMasterBulkRawText(this.value)">${esc(bulkState.rawText || "")}</textarea>
+      </div>
+    </details>
+    <button class="btn btn-outline" onclick="previewProductMasterBulk()">
+      ${t("validateData", "ตรวจสอบข้อมูล")}
+    </button>
+    <div class="sheet-action-footer">
+      <button class="btn btn-primary" ${canSubmit ? "" : "disabled"} onclick="submitProductMasterBulk(this)">
+        ${state.admin.isSubmitting ? t("saving", "กำลังบันทึก...") : t("applyProductMaster", "บันทึก Product Master")}
+      </button>
+      <button class="btn btn-outline" onclick="resetProductMasterBulk()">
+        ${t("clearData", "ล้างข้อมูล")}
+      </button>
+    </div>
+  `;
+}
+
+function previewProductMasterBulk() {
+  const input = document.getElementById("productMasterBulkText");
+  if (input && state.admin.productMasterBulk.sourceType !== "xlsx") {
+    state.admin.productMasterBulk.rawText = input.value;
+  }
+  state.admin.productMasterBulk.backendRows = [];
+  state.admin.productMasterBulk.backendError = "";
+  state.admin.productMasterBulk.summary = null;
+  state.admin.productMasterBulk.hasPreview = true;
+  state.admin.productMasterBulk.previewValid = false;
+  renderProductMasterBulkSheet();
+}
+
+function resetProductMasterBulk() {
+  clearProductMasterBulkWorkingState();
+  renderProductMasterBulkSheet();
+}
+
+async function submitProductMasterBulk(btn) {
+  if (!ensureAdminSessionForProductMasterBulk()) return;
+  if (state.admin.isSubmitting) return;
+  let successCompleted = false;
+  const bulkState = state.admin.productMasterBulk;
+  if (!bulkState.hasPreview || !bulkState.previewValid || !bulkState.results.length || bulkState.errors.length) {
+    showToast(t("fixErrorsBeforeImport", "กรุณาแก้ไขข้อผิดพลาดก่อนนำเข้าสินค้า"), "warning");
+    return;
+  }
+  if (!confirm(t("confirmApplyProductMaster", "ยืนยันบันทึก Product Master ใช่หรือไม่?"))) {
+    return;
+  }
+
+  state.admin.isSubmitting = true;
+  renderProductMasterBulkSheet();
+  try {
+    showLoading(t("productMasterApplying", "กำลังบันทึก Product Master..."));
+    const rows = bulkState.results.map(result => result.payload);
+    const form = new URLSearchParams();
+    form.append("action", "bulkUpsertProductMaster");
+    form.append("token", state.admin.token);
+    form.append("rows", JSON.stringify(rows));
+    const res = await fetchWithTimeout(API_URL, {
+      method: "POST",
+      body: form
+    }, 45000);
+    const json = await res.json();
+    const backendRows = Array.isArray(json?.data?.rows) ? json.data.rows : [];
+    bulkState.backendRows = backendRows;
+    bulkState.summary = json?.success === true ? (json.data?.summary || productMasterSummary(backendRows)) : null;
+    bulkState.backendError = json?.error || "";
+    if (json?.success === true) {
+      await refreshProducts();
+      clearProductMasterBulkWorkingState();
+      const fileInput = document.getElementById("productMasterBulkFile");
+      if (fileInput) fileInput.value = "";
+      state.ui.backdropLocked = false;
+      state.admin.isSubmitting = false;
+      returnToProductMasterParentMenu();
+      showToast(t("productMasterApplied", "บันทึก Product Master สำเร็จ"), "success");
+      successCompleted = true;
+      return;
+    }
+    renderProductMasterBulkSheet();
+    if (isAuthError(json?.error)) {
+      showToast(t("sessionExpiredLoginAgain", "เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง"), "warning");
+      exitAdmin({ silent: true });
+      return;
+    }
+    showToast(getProductMasterErrorMessage({ message: json?.error }) || t("bulkImportFailedRetry", "นำเข้าสินค้าไม่สำเร็จ กรุณาลองใหม่อีกครั้ง"), "error");
+  } catch (err) {
+    console.error(err);
+    showToast(t("bulkImportFailedRetry", "นำเข้าสินค้าไม่สำเร็จ กรุณาลองใหม่อีกครั้ง"), "error");
+  } finally {
+    safeHideLoading();
+    state.ui.backdropLocked = false;
+    state.admin.isSubmitting = false;
+    if (!successCompleted) {
+      renderProductMasterBulkSheet();
+    }
     requestAnimationFrame(syncOverlayBackdropState);
   }
 }
