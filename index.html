@@ -10576,8 +10576,17 @@ async function fetchWithTimeout(input, init = {}, ms = 30000) {
 
     // 🔒 เช็ค HTTP status ชัดเจน
     if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`HTTP ${res.status}: ${text}`);
+      // Apps Script ContentService redirects JSON through a Google-hosted URL.
+      // That URL may answer with an HTML error page; never surface its HTML or
+      // assume that a failed response means a POST was not processed.
+      const isGoogleNotFound = res.status === 404 &&
+        /^https:\/\/(?:[^/]+\.)?(?:google\.com|googleusercontent\.com)(?:\/|$)/i.test(res.url || "");
+      const error = new Error(isGoogleNotFound
+        ? "บริการ Google ตอบกลับ 404 กรุณาตรวจสอบ URL และการเผยแพร่ Apps Script"
+        : `HTTP ${res.status}: ไม่สามารถรับคำตอบจากเซิร์ฟเวอร์`);
+      error.code = isGoogleNotFound ? "APPS_SCRIPT_RESPONSE_404" : "HTTP_ERROR";
+      error.httpStatus = res.status;
+      throw error;
     }
 
     return res;
@@ -28208,6 +28217,7 @@ async function submitProductEdit(){
   }
  
   let imageUrl = p.image || "";
+  let updateAccepted = false;
 
   try {
     showLoading(t("savingProductEdit", "กำลังบันทึกการแก้ไขสินค้า..."));
@@ -28240,6 +28250,7 @@ async function submitProductEdit(){
     form.append("compareImages", compareImages);
 
     const res = await postFormAction(form);
+    updateAccepted = true;
 
     showToast(t("editSaved", "บันทึกการแก้ไขเรียบร้อย"), "success");
 
@@ -28249,14 +28260,25 @@ async function submitProductEdit(){
     state.editImageFile = null;
     closeProductEdit();
     await refreshProducts();
-    await refreshAdminAuditSnapshot();
+    // Audit data is supplementary here. A slow orders/stockLogs request must
+    // not turn an already accepted product update into a save failure.
+    void refreshAdminAuditSnapshot().catch(err => {
+      console.warn("admin audit refresh delayed after product save", err?.message || err);
+    });
 
   } catch (err) {
-    console.error(err);
-    showToast(
-      getWave2DisplayError(err, "saveProductFailed", "เกิดข้อผิดพลาดในการบันทึกสินค้า"),
-      "error"
-    );
+    console.error("submitProductEdit failed", err);
+    if (updateAccepted) {
+      showToast("บันทึกสินค้าแล้ว แต่โหลดข้อมูลล่าสุดไม่สำเร็จ กรุณาโหลดหน้าใหม่เพื่อตรวจสอบ", "warning");
+      return;
+    }
+    const responseUnknown = err?.code === "APPS_SCRIPT_RESPONSE_404" ||
+      err?.code === "REQUEST_TIMEOUT" || err?.httpStatus >= 500 ||
+      err instanceof TypeError;
+    showToast(responseUnknown
+      ? "ยังยืนยันผลการบันทึกไม่ได้ กรุณาตรวจข้อมูลสินค้าก่อนกดบันทึกอีกครั้ง"
+      : getWave2DisplayError(err, "saveProductFailed", "เกิดข้อผิดพลาดในการบันทึกสินค้า"),
+      "error");
 
   } finally {
     // ✅ CLEANUP กลางเดียว (หัวใจ STEP 9)
