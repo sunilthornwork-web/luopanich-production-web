@@ -6239,6 +6239,48 @@ textarea.input{
   line-height:1.45;
 }
 
+/* Dashboard B+C: violet/blue, scoped to the admin summary. */
+.dash-analytics{--dash-purple:#a78bfa;--dash-blue:#459bff;margin:22px 0 24px;color:var(--text);font-variant-numeric:tabular-nums}
+.dash-kicker{display:flex;align-items:center;justify-content:space-between;margin:0 0 12px;font-size:20px;font-weight:900;color:var(--dash-purple)}
+.dash-kicker>span{font-size:10px;letter-spacing:1.3px;color:var(--text-soft);border:1px solid var(--border);padding:5px 8px;border-radius:20px}
+.dash-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.dash-metric{min-width:0;display:flex;flex-direction:column;gap:7px;padding:16px 14px;border:1px solid var(--border);border-radius:18px;background:linear-gradient(140deg,rgba(139,92,246,.09),transparent),var(--surface-2)}
+.dash-metric>span{font-size:13px;color:var(--text-soft);font-weight:700}
+.dash-metric>strong{font-size:clamp(19px,5.4vw,27px);line-height:1.25;overflow-wrap:anywhere;letter-spacing:-.6px}
+.dash-metric>small{font-size:11px;color:var(--text-soft)}
+.dash-sales{border-color:rgba(69,155,255,.35)}.dash-sales>strong{color:var(--dash-blue)}
+.dash-profit>strong{color:var(--dash-purple)}.dash-loss>strong,.dash-negative{color:#fb7185}
+.dash-note{font-size:11px;line-height:1.7;color:var(--text-soft);margin:10px 2px 18px}
+.dash-panel{margin:12px 0;padding:18px 14px;border:1px solid var(--border);border-radius:20px;background:linear-gradient(155deg,rgba(139,92,246,.05),transparent 55%),var(--surface-2);overflow:hidden}
+.dash-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.dash-panel-heading h3{margin:0!important;padding:0!important;font-size:16px!important;font-weight:850}
+.dash-caption{font-size:11px;color:var(--text-soft);margin:0 0 6px;line-height:1.6}
+.dash-segments{display:flex;padding:3px;gap:2px;border:1px solid var(--border);border-radius:11px;background:rgba(0,0,0,.1)}
+.dash-segments button{border:0;border-radius:8px;background:transparent;color:var(--text-soft);padding:7px 10px;font:inherit;font-size:12px;cursor:pointer;min-height:34px}
+.dash-segments button[aria-pressed=true]{color:white;background:linear-gradient(125deg,#8b5cf6,#6563ea);box-shadow:0 3px 10px rgba(124,58,237,.22)}
+.dash-segments button:focus-visible,.dash-plot-scroll:focus-visible,.dash-data summary:focus-visible{outline:2px solid var(--dash-purple);outline-offset:3px}
+.dash-legend{display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:11px;margin:12px 0 5px}.dash-legend small{margin-left:auto;color:var(--text-soft)}
+.dash-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}.dash-dot.blue{background:var(--dash-blue)}.dash-dot.purple{background:var(--dash-purple)}
+.dash-plot-scroll,.dash-table-scroll{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:var(--dash-purple) transparent}
+.dash-plot{display:block;width:100%;height:auto;max-height:260px}.dash-plot text{fill:var(--text-soft);font-size:11px;font-family:inherit}
+.dash-grid-line{stroke:var(--border);stroke-width:1}.dash-zero-line{stroke:var(--text-soft);stroke-opacity:.4;stroke-width:1}
+.dash-split{display:flex;align-items:center;justify-content:center;gap:20px;padding:10px 0}
+.dash-ring{flex:0 0 156px;width:156px;height:156px;border-radius:50%;background:conic-gradient(var(--dash-purple) 0 var(--cost-share),var(--dash-blue) var(--cost-share) 100%);display:grid;place-items:center}
+.dash-ring-neutral{background:var(--border)}
+.dash-ring>div{width:120px;height:120px;border-radius:50%;background:var(--surface-2);display:flex;flex-direction:column;justify-content:center;align-items:center;padding:8px;box-sizing:border-box;text-align:center}
+.dash-ring small{color:var(--text-soft);font-size:10px}.dash-ring strong{font-size:16px;overflow-wrap:anywhere;max-width:100%}
+.dash-breakdown{display:flex;flex-direction:column;gap:17px;min-width:0}.dash-breakdown>div{display:flex;flex-direction:column;gap:3px}.dash-breakdown span{font-size:12px}.dash-breakdown strong{font-size:20px;overflow-wrap:anywhere}.dash-breakdown small{font-size:11px;color:var(--text-soft)}
+.dash-ranking{list-style:none;padding:0;margin:0}.dash-ranking li{display:flex;gap:10px;margin-top:17px;align-items:flex-start}
+.dash-rank{display:grid;place-items:center;flex:0 0 25px;height:25px;border-radius:50%;background:rgba(139,92,246,.14);color:var(--dash-purple);font-size:12px;font-weight:800}
+.dash-rank-product{flex:1;min-width:0}.dash-rank-product>div:first-child{display:flex;justify-content:space-between;gap:8px;font-size:13px}.dash-rank-product b{overflow-wrap:anywhere}.dash-rank-product strong{flex-shrink:0}
+.dash-product-name{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;color:var(--text-soft);margin:3px 0 7px}
+.dash-track{height:9px;background:rgba(139,92,246,.12);border-radius:12px;overflow:hidden}.dash-track>span{display:block;height:100%;border-radius:12px;background:linear-gradient(90deg,#b494ff,#7160ee)}
+.dash-rank-product small{display:block;font-size:10px;color:var(--text-soft);margin-top:4px}
+.dash-data{margin-top:10px;border-top:1px solid var(--border);padding-top:10px}.dash-data summary{font-size:12px;color:var(--dash-purple);cursor:pointer;padding:5px 0}.dash-data table{width:100%;border-collapse:collapse;white-space:nowrap;font-size:11px;margin-top:8px}.dash-data th,.dash-data td{padding:9px 7px;text-align:right;border-bottom:1px solid var(--border)}.dash-data th:first-child{text-align:left}.dash-data thead{color:var(--text-soft)}
+.dash-empty{text-align:center;color:var(--text-soft);font-size:13px;line-height:1.8;padding:24px 8px}
+.dash-pending{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--text-soft);padding:12px 4px}.dash-pending strong{color:var(--dash-purple)}
+@media(max-width:360px){.dash-split{gap:12px}.dash-ring{flex-basis:130px;width:130px;height:130px}.dash-ring>div{width:100px;height:100px}.dash-ring strong{font-size:14px}.dash-breakdown strong{font-size:17px}.dash-panel{padding:15px 10px}}
+
 </style>
 </head>
 <body>
@@ -16936,48 +16978,189 @@ function getDashboardProductCostMap() {
   return new Map(
     (Array.isArray(state.products) ? state.products : []).map(p => [
       String(p.productId || "").trim(),
-      Number(p.costPrice || 0)
+      p.costPrice
     ])
   );
 }
 
+function dashboardNumber(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function getDashboardLineAmounts(item, productCostMap) {
+  const qty = dashboardNumber(item.qty);
+  const price = dashboardNumber(item.price);
+  const present = v => v !== null && v !== undefined && String(v).trim() !== "" && Number.isFinite(Number(v));
+  const historical = present(item.costPrice) ? item.costPrice : present(item.unitCost) ? item.unitCost : null;
+  const fallback = productCostMap.get(String(item.productId || "").trim());
+  const cost = dashboardNumber(historical ?? fallback);
+  return { qty, sales: price * qty, cost: cost * qty, profit: (price - cost) * qty,
+    estimated: historical === null, missingCost: historical === null && !present(fallback) };
+}
+
 function calculateDashboardSummary(orders) {
   const safeOrders = Array.isArray(orders) ? orders : [];
-  const productCostMap = getDashboardProductCostMap();
+  const costs = getDashboardProductCostMap();
+  const result = { orderCount: safeOrders.length, totalQty: 0, totalSales: 0, totalCost: 0, totalProfit: 0, estimatedLines: 0, missingCostLines: 0 };
+  safeOrders.forEach(order => (Array.isArray(order.items) ? order.items : []).forEach(item => {
+    const line = getDashboardLineAmounts(item, costs);
+    result.totalQty += line.qty; result.totalSales += line.sales; result.totalCost += line.cost; result.totalProfit += line.profit;
+    if (line.estimated) result.estimatedLines++;
+    if (line.missingCost) result.missingCostLines++;
+  }));
+  return result;
+}
 
-  let totalSales = 0;
-  let totalCost = 0;
-  let totalProfit = 0;
-  let totalQty = 0;
+function dashboardMoney(value) {
+  return "฿" + dashboardNumber(value).toLocaleString("th-TH", { maximumFractionDigits: 2 });
+}
 
-  safeOrders.forEach(order => {
-    const items = Array.isArray(order.items) ? order.items : [];
-
-    items.forEach(item => {
-      const qty = Number(item.qty || 0);
-      const sellPrice = Number(item.price || 0);
-      const fallbackCost = productCostMap.get(String(item.productId || "").trim()) || 0;
-      const costPrice = Number(
-        item.costPrice ?? item.unitCost ?? fallbackCost
-      );
-
-      const lineSales = sellPrice * qty;
-      const lineCost = costPrice * qty;
-
-      totalSales += lineSales;
-      totalCost += lineCost;
-      totalProfit += (lineSales - lineCost);
-      totalQty += qty;
+function buildDashboardAnalytics(orders, from, to, requestedPeriod = "day") {
+  const costs = getDashboardProductCostMap();
+  const validOrders = (Array.isArray(orders) ? orders : []).filter(o => String(o.status || "").toUpperCase() === "APPROVED");
+  // Use the same local calendar date as the existing dashboard date filter.
+  const dateOf = o => {
+    const date = new Date(getOrderDateValue(o));
+    return Number.isNaN(date.getTime()) ? "" : toYmdLocal(date);
+  };
+  const dates = validOrders.map(dateOf).filter(Boolean).sort();
+  const start = from || dates[0] || toYmdLocal(new Date());
+  const end = to || dates[dates.length - 1] || start;
+  const utcDay = value => new Date(value + "T00:00:00Z");
+  const span = Math.round((utcDay(end) - utcDay(start)) / 86400000) + 1;
+  let period = ["day", "week", "month"].includes(requestedPeriod) ? requestedPeriod : "day";
+  // Bound chart density on very large date ranges; retain all values in grouped totals.
+  if ((period === "day" && span > 120) || (period === "week" && span > 840)) period = "month";
+  const keyOf = ymd => {
+    if (period === "month") return ymd.slice(0, 7) + "-01";
+    if (period === "day") return ymd;
+    const d = utcDay(ymd); d.setUTCDate(d.getUTCDate() - (d.getUTCDay() + 6) % 7);
+    return d.toISOString().slice(0, 10);
+  };
+  const buckets = new Map();
+  if (span > 0 && Number.isFinite(span)) {
+    const cursor = utcDay(keyOf(start));
+    const last = keyOf(end);
+    // HTML date controls can represent extremely long ranges; chart buckets remain bounded.
+    for (let i = 0; i < 2400 && cursor.toISOString().slice(0, 10) <= last; i++) {
+      const key = cursor.toISOString().slice(0, 10);
+      buckets.set(key, { key, sales: 0, cost: 0, profit: 0 });
+      if (period === "month") cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+      else cursor.setUTCDate(cursor.getUTCDate() + (period === "week" ? 7 : 1));
+    }
+  }
+  const products = new Map();
+  validOrders.forEach(order => {
+    const ymd = dateOf(order);
+    if (!ymd || ymd < start || ymd > end) return;
+    const key = keyOf(ymd);
+    if (!buckets.has(key)) buckets.set(key, { key, sales: 0, cost: 0, profit: 0 });
+    const bucket = buckets.get(key);
+    (Array.isArray(order.items) ? order.items : []).forEach(item => {
+      const line = getDashboardLineAmounts(item, costs);
+      bucket.sales += line.sales; bucket.cost += line.cost; bucket.profit += line.profit;
+      const id = String(item.productId || "").trim();
+      if (!id) return;
+      if (!products.has(id)) products.set(id, { id, name: String(item.name || id), qty: 0, sales: 0 });
+      const p = products.get(id); p.qty += line.qty; p.sales += line.sales;
     });
   });
+  return { period, grouped: period !== requestedPeriod,
+    buckets: [...buckets.values()].sort((a, b) => a.key.localeCompare(b.key)),
+    topProducts: [...products.values()].filter(p => p.qty > 0).sort((a, b) => b.qty - a.qty || b.sales - a.sales || a.id.localeCompare(b.id)).slice(0, 5) };
+}
 
-  return {
-    orderCount: safeOrders.length,
-    totalQty,
-    totalSales,
-    totalCost,
-    totalProfit
-  };
+function dashboardBucketLabel(key, period) {
+  const [year, month, day] = key.split("-").map(Number);
+  return period === "month" ? `${month}/${year + 543}` : `${day}/${month}`;
+}
+
+function renderDashboardPlot(model, comparison = false) {
+  const rows = model.buckets;
+  if (!rows.length) return '<p class="dash-empty">ไม่มีข้อมูลในช่วงที่เลือก</p>';
+  const second = comparison ? "cost" : "profit";
+  const secondLabel = comparison ? "ต้นทุน" : "กำไรขั้นต้น";
+  const width = Math.max(320, rows.length * (comparison ? 22 : 12) + 72), height = 235;
+  const left = 60, right = width - 16, top = 16, bottom = 192;
+  const values = rows.flatMap(r => [r.sales, r[second]]);
+  const min = Math.min(0, ...values), max = Math.max(0, ...values);
+  const range = max - min || 1;
+  const y = v => bottom - ((v - min) / range) * (bottom - top);
+  const x = i => left + (i + .5) * (right - left) / rows.length;
+  const short = v => Math.abs(v) >= 1000000 ? (v / 1000000).toFixed(1) + "M" : Math.abs(v) >= 1000 ? (v / 1000).toFixed(1) + "k" : v.toLocaleString("th-TH", { maximumFractionDigits: 1 });
+  let grid = "";
+  for (let i = 0; i <= 4; i++) {
+    const value = min + range * i / 4, yy = y(value);
+    grid += `<line x1="${left}" x2="${right}" y1="${yy}" y2="${yy}" class="dash-grid-line"/><text x="${left - 8}" y="${yy + 4}" text-anchor="end">${esc(short(value))}</text>`;
+  }
+  const tickStep = Math.max(1, Math.ceil(rows.length / 8));
+  const ticks = rows.map((r, i) => i % tickStep === 0 || i === rows.length - 1 ? `<text x="${x(i)}" y="216" text-anchor="middle">${esc(dashboardBucketLabel(r.key, model.period))}</text>` : "").join("");
+  const titleOf = r => `${dashboardBucketLabel(r.key, model.period)} • ยอดขาย ${dashboardMoney(r.sales)} • ${secondLabel} ${dashboardMoney(r[second])}`;
+  let marks;
+  if (comparison) {
+    const bw = Math.min(12, (right - left) / rows.length * .3);
+    marks = rows.map((r, i) => ["sales", second].map((key, n) => `<rect x="${x(i) + (n ? 1 : -bw - 1)}" y="${Math.min(y(r[key]), y(0))}" width="${bw}" height="${Math.max(.5, Math.abs(y(r[key]) - y(0)))}" rx="2" fill="${n ? '#a78bfa' : '#459bff'}"><title>${esc(titleOf(r))}</title></rect>`).join("")).join("");
+  } else {
+    marks = ["sales", second].map((key, n) => {
+      const color = n ? "#b494ff" : "#459bff";
+      const points = rows.map((r, i) => `${x(i)},${y(r[key])}`).join(" ");
+      return `<polygon points="${x(0)},${y(0)} ${points} ${x(rows.length - 1)},${y(0)}" fill="${color}" opacity=".08"/><polyline points="${points}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round"/>` + rows.map((r, i) => `<circle cx="${x(i)}" cy="${y(r[key])}" r="3" fill="${color}"><title>${esc(titleOf(r))}</title></circle>`).join("");
+    }).join("");
+  }
+  return `<div class="dash-legend"><span><i class="dash-dot blue"></i>ยอดขาย</span><span><i class="dash-dot purple"></i>${secondLabel}</span><small>หน่วย: บาท</small></div>
+    <div class="dash-plot-scroll" tabindex="0" aria-label="กราฟ เลื่อนแนวนอนเพื่อดูข้อมูลทั้งหมด"><svg class="dash-plot" style="min-width:${width}px" viewBox="0 0 ${width} ${height}" role="img" aria-label="ยอดขายเทียบ${secondLabel}"><title>ยอดขายเทียบ${secondLabel} ตามช่วงวันที่ที่เลือก</title>${grid}<line x1="${left}" x2="${right}" y1="${y(0)}" y2="${y(0)}" class="dash-zero-line"/>${marks}${ticks}</svg></div><p class="dash-caption">เลื่อนกราฟแนวนอนเมื่อข้อมูลเกินหน้าจอ</p>`;
+}
+
+function renderDashboardAnalytics(orders, summary, from, to, pendingCount) {
+  const period = state.admin.dashboardChartPeriod || "day";
+  const model = buildDashboardAnalytics(orders, from, to, period);
+  const positiveSales = summary.totalSales > 0;
+  const donutValid = positiveSales && summary.totalCost >= 0 && summary.totalProfit >= 0;
+  const margin = positiveSales ? (summary.totalProfit / summary.totalSales * 100).toFixed(1) + "%" : "—";
+  const costPercent = positiveSales ? (summary.totalCost / summary.totalSales * 100).toFixed(1) + "%" : "—";
+  const note = summary.estimatedLines ? `มี ${summary.estimatedLines.toLocaleString("th-TH")} รายการสินค้าที่ไม่มีต้นทุนย้อนหลัง ใช้ต้นทุนปัจจุบันแทน${summary.missingCostLines ? ` (ไม่พบต้นทุน ${summary.missingCostLines} รายการ คิดเป็น 0)` : ""} กำไรจึงเป็นค่าประมาณ` : "คำนวณจากราคาขายและต้นทุนที่บันทึกในออเดอร์ ยังไม่หักค่าใช้จ่ายอื่น";
+  const metric = (label, value, sub, cls = "") => `<div class="dash-metric ${cls}"><span>${label}</span><strong>${value}</strong><small>${sub}</small></div>`;
+  const maxQty = model.topProducts[0]?.qty || 1;
+  const costFraction = donutValid ? summary.totalCost / summary.totalSales * 100 : 0;
+  const empty = '<p class="dash-empty">ไม่มีออเดอร์ APPROVED ในช่วงวันที่ / PO ที่เลือก</p>';
+  return `<div class="dash-analytics">
+    <div class="dash-kicker">ภาพรวมธุรกิจ <span>APPROVED</span></div>
+    <div class="dash-metrics">
+      ${metric("ยอดขายรวม", dashboardMoney(summary.totalSales), `${summary.orderCount.toLocaleString("th-TH")} ออเดอร์`, "dash-sales")}
+      ${metric("ต้นทุนรวม", dashboardMoney(summary.totalCost), `${costPercent} ของยอดขาย`)}
+      ${metric("กำไรขั้นต้น", dashboardMoney(summary.totalProfit), `อัตรากำไร ${margin}`, summary.totalProfit < 0 ? "dash-loss" : "dash-profit")}
+      ${metric("จำนวนที่ขาย", summary.totalQty.toLocaleString("th-TH"), "ชิ้น")}
+    </div>
+    <p class="dash-note">${esc(note)}</p>
+    <section class="dash-panel"><div class="dash-panel-heading"><h3>ยอดขายและกำไร</h3><div class="dash-segments" role="group" aria-label="ช่วงเวลาในกราฟ">${[["day", "วัน"], ["week", "สัปดาห์"], ["month", "เดือน"]].map(([value, label]) => `<button type="button" aria-pressed="${model.period === value}" onclick="setDashboardChartPeriod('${value}')">${label}</button>`).join("")}</div></div>
+      <p class="dash-caption">อิงวันที่สร้างออเดอร์${model.period === "week" ? " • สัปดาห์เริ่มวันจันทร์" : ""}${model.grouped ? " • ช่วงวันที่ยาว จึงรวมแสดงรายเดือน" : ""}</p>
+      ${orders.length ? renderDashboardPlot(model) : empty}
+      ${orders.length ? `<details class="dash-data"><summary>ดูตัวเลขในกราฟ</summary><div class="dash-table-scroll"><table><thead><tr><th>ช่วงเวลา</th><th>ยอดขาย</th><th>ต้นทุน</th><th>กำไรขั้นต้น</th></tr></thead><tbody>${model.buckets.map(r => `<tr><th>${esc(dashboardBucketLabel(r.key, model.period))}</th><td>${dashboardMoney(r.sales)}</td><td>${dashboardMoney(r.cost)}</td><td>${dashboardMoney(r.profit)}</td></tr>`).join("")}</tbody></table></div></details>` : ""}
+    </section>
+    <section class="dash-panel"><div class="dash-panel-heading"><h3>สัดส่วนต้นทุนและกำไร</h3><span class="dash-caption">เทียบยอดขาย</span></div>
+      <div class="dash-split"><div class="dash-ring ${donutValid ? "" : "dash-ring-neutral"}" style="--cost-share:${costFraction}%" role="img" aria-label="${escAttr(donutValid ? `ต้นทุน ${costPercent} กำไรขั้นต้น ${margin}` : "ไม่แสดงสัดส่วนเมื่อไม่มียอดขายหรือมีค่าติดลบ")}"><div><small>ยอดขายรวม</small><strong>${dashboardMoney(summary.totalSales)}</strong></div></div>
+      <div class="dash-breakdown"><div><span><i class="dash-dot purple"></i>ต้นทุน</span><strong>${dashboardMoney(summary.totalCost)}</strong><small>${costPercent}</small></div><div><span><i class="dash-dot blue"></i>กำไรขั้นต้น</span><strong class="${summary.totalProfit < 0 ? 'dash-negative' : ''}">${dashboardMoney(summary.totalProfit)}</strong><small>${margin}</small></div></div></div>
+      ${!donutValid ? '<p class="dash-note">ไม่แสดงกราฟสัดส่วนเมื่อไม่มียอดขายหรือมีค่าติดลบ ดูยอดจริงจากตัวเลขด้านบน</p>' : ""}
+    </section>
+    <section class="dash-panel"><div class="dash-panel-heading"><h3>ขายดี 5 อันดับ</h3><span class="dash-caption">จำนวนขาย (ชิ้น)</span></div>
+      ${model.topProducts.length ? `<ol class="dash-ranking">${model.topProducts.map((p, i) => `<li><span class="dash-rank">${i + 1}</span><div class="dash-rank-product"><div><b>${esc(p.id)}</b><strong>${p.qty.toLocaleString("th-TH")}</strong></div><span class="dash-product-name" title="${escAttr(p.name)}">${esc(p.name)}</span><div class="dash-track"><span style="width:${p.qty / maxQty * 100}%"></span></div><small>ยอดขาย ${dashboardMoney(p.sales)}</small></div></li>`).join("")}</ol>` : empty}
+    </section>
+    <section class="dash-panel"><div class="dash-panel-heading"><h3>ยอดขายเทียบต้นทุน</h3><span class="dash-caption">${{day:"รายวัน",week:"รายสัปดาห์",month:"รายเดือน"}[model.period]}</span></div>${orders.length ? renderDashboardPlot(model, true) : empty}</section>
+    <div class="dash-pending"><span>ออเดอร์รอดำเนินการทั้งหมด</span><strong>${pendingCount.toLocaleString("th-TH")}</strong></div>
+  </div>`;
+}
+
+function setDashboardChartPeriod(period) {
+  if (!["day", "week", "month"].includes(period)) return;
+  const host = document.getElementById("dashboardAnalytics");
+  const data = state.admin.dashboardAnalyticsData;
+  if (!host || !data || !state.admin.loggedIn || !state.admin.token) return;
+  state.admin.dashboardChartPeriod = period;
+  const scrollTop = adminDashboardSheet.scrollTop;
+  host.innerHTML = renderDashboardAnalytics(data.orders, data.summary, data.from, data.to, data.pendingCount);
+  adminDashboardSheet.scrollTop = scrollTop;
+  host.querySelector(`.dash-segments button[aria-pressed="true"]`)?.focus({ preventScroll: true });
 }
 
 function applyAdminDashboardRange() {
@@ -17213,6 +17396,7 @@ async function openAdminDashboard(mode = "SUMMARY", force = false) {
 
     const duplicatePoMap = getDuplicatePoOrderMap();
     const summary = calculateDashboardSummary(approvedOrders);
+    state.admin.dashboardAnalyticsData = { orders: approvedOrders, summary, from, to, pendingCount };
 
     if (mode === "PENDING") {
       adminDashboardSheet.innerHTML = `
@@ -17301,23 +17485,7 @@ async function openAdminDashboard(mode = "SUMMARY", force = false) {
         </button>
       </div>
 
-      <div class="card metric-card">
-        <div class="name">${t("totalSales", "ยอดขายรวม")}</div>
-        <div class="price">฿${Number(summary.totalSales).toLocaleString("th-TH")}</div>
-        <div class="stock">${t("orderCount", "จำนวนออเดอร์")}: ${summary.orderCount}</div>
-      </div>
-
-      <div class="card metric-card">
-        <div class="name">${t("totalCost", "ต้นทุนรวม")}</div>
-        <div class="price">฿${Number(summary.totalCost).toLocaleString("th-TH")}</div>
-        <div class="stock">${t("soldQty", "จำนวนสินค้าที่ขาย")}: ${summary.totalQty}</div>
-      </div>
-
-      <div class="card metric-card">
-        <div class="name">${t("totalProfit", "กำไรรวม")}</div>
-        <div class="price">฿${Number(summary.totalProfit).toLocaleString("th-TH")}</div>
-        <div class="stock">${t("pendingOrdersCount", "Orders รอดำเนินการ")}: ${pendingCount}</div>
-      </div>
+      <div id="dashboardAnalytics">${renderDashboardAnalytics(approvedOrders, summary, from, to, pendingCount)}</div>
 
       <h3 class="section-title">${t("approvedOrderListTitle", "รายการออเดอร์ APPROVED ที่นำมาคิด")}</h3>
 
