@@ -10741,32 +10741,66 @@ function failLuopanichFrontendConfig(message) {
   throw new Error("Luopanich frontend configuration invalid");
 }
 
+ let luopanichPostSequence = 0;
  async function postFormAction(form, { timeout = 30000, returnFailure = false } = {}) {
-   const res = await fetchWithTimeout(API_URL, {
-     method: "POST",
-     body: form
-   }, timeout);
-
-   let json;
-   try {
-     json = await res.json();
-   } catch (err) {
-     throw new Error("รูปแบบข้อมูลตอบกลับไม่ถูกต้อง");
+   const action = String(form?.get?.("action") || "").trim();
+   if (!action) {
+     const error = new Error("ไม่ได้ระบุคำสั่งก่อนส่งข้อมูล (action)");
+     error.code = "CLIENT_MISSING_ACTION";
+     error.serverRejected = true;
+     throw error;
    }
+   // Retry only this read operation, never a mutation or an authentication failure.
+   const maxAttempts = action === "orders" ? 2 : 1;
+   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+     const requestId = Date.now().toString(36) + "-" + (++luopanichPostSequence) + "-" + Math.random().toString(36).slice(2, 10);
+     const requestUrl = new URL(API_URL);
+     requestUrl.searchParams.set("lpPost", "1");
+     requestUrl.searchParams.set("lpRequestId", requestId);
+     const res = await fetchWithTimeout(requestUrl.toString(), {
+       method: "POST",
+       body: form,
+       cache: "no-store",
+       redirect: "follow"
+     }, timeout);
 
-   if (json?.error || json?.success === false) {
-     if (returnFailure) return json || {};
-     if (isAuthError(json.error)) {
-       showToast(t("sessionExpiredLoginAgain", "Session หมดอายุ กรุณา login ใหม่"), "warning");
-       exitAdmin({ silent: true });
+     let json;
+     try {
+       json = await res.json();
+     } catch (err) {
+       throw new Error("รูปแบบข้อมูลตอบกลับไม่ถูกต้อง");
      }
-     const rejection = new Error(json.message || json.error || "Request failed");
-     rejection.serverRejected = true;
-     throw rejection;
-   }
 
-   return json;
- } 
+     if (json?.error || json?.success === false) {
+       const serverMessage = String(json.message || json.error || "Request failed");
+       const transportFailure = ["MISSING_ACTION", "POST_REQUIRED"].includes(json.code) || serverMessage === "Missing action";
+       if (transportFailure) {
+         // No credentials, request body, or redirected Google URL in diagnostics.
+         const diagnostic = { action, requestId, attempt, handler: json.handler || "unknown", code: json.code || "LEGACY_MISSING_ACTION" };
+         console.warn("[Luopanich request]", diagnostic);
+         if (attempt < maxAttempts) {
+           await new Promise(resolve => setTimeout(resolve, 500));
+           continue;
+         }
+         const error = new Error("เซิร์ฟเวอร์รับคำสั่งไม่ครบ กรุณาลองโหลดข้อมูลอีกครั้ง (" + diagnostic.code + "; ref: " + requestId + ")");
+         error.code = "REQUEST_ROUTING_ERROR";
+         error.requestId = requestId;
+         // A response-routing failure cannot prove that a prior write did not happen.
+         error.serverRejected = false;
+         throw error;
+       }
+       if (returnFailure) return json || {};
+       if (isAuthError(json.error)) {
+         showToast(t("sessionExpiredLoginAgain", "Session หมดอายุ กรุณา login ใหม่"), "warning");
+         exitAdmin({ silent: true });
+       }
+       const rejection = new Error(serverMessage);
+       rejection.serverRejected = true;
+       throw rejection;
+     }
+     return json;
+   }
+ }
 
 function getBrandingFieldLabel(key) {
   return {
@@ -12480,7 +12514,7 @@ function isAmbiguousStockMutationFailure(err) {
   const code = String(err?.code || "").trim();
   const name = String(err?.name || "").trim();
   const message = String(err?.message || err || "").trim();
-  if (code === "REQUEST_TIMEOUT" || code === "APPS_SCRIPT_RESPONSE_404" || name === "AbortError") return true;
+  if (code === "REQUEST_TIMEOUT" || code === "REQUEST_ROUTING_ERROR" || code === "APPS_SCRIPT_RESPONSE_404" || name === "AbortError") return true;
   if (/^HTTP\s+\d+:/i.test(message)) return false;
   if (/forbidden|not authenticated|missing admin token|missing token|invalid token|session expired/i.test(message)) return false;
   if (/invalid stock|product not found|invalid product|invalid qty|invalid quantity/i.test(message)) return false;
