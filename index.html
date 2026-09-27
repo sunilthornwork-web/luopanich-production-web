@@ -28262,21 +28262,40 @@ async function submitProductEdit(){
     // cleanup
     state.editImageFile = null;
     closeProductEdit();
-    // Read-only refreshes happen after the confirmed save, without holding the
-    // save overlay open. Do not retry updateProduct if one of these times out.
-    void (async () => {
-      try {
-        await refreshProducts({ retry: false, throwOnError: true });
-        await refreshAdminAuditSnapshot();
-      } catch (err) {
-        console.warn("product data refresh delayed after save", err?.message || err);
-      }
-    })();
+    // The server has confirmed the update. Reflect those same values in the
+    // current list; a full adminProducts/orders reload is unnecessary here.
+    // A pre-existing refresh must not overwrite this confirmed edit later.
+    productRefreshRequestSeq += 1;
+    state.products = sortProducts(state.products.map(product =>
+      normalizeProductId(product.productId) === oldProductId
+        ? {
+            ...product,
+            ...variantMetadata,
+            productId: newProductId,
+            name,
+            price,
+            costPrice,
+            stock,
+            displayExtraQty,
+            status,
+            image: imageUrl,
+            note,
+            detailsText,
+            compareImages
+          }
+        : product
+    ));
+    state.productCreationOrderIds = state.productCreationOrderIds.map(id =>
+      normalizeProductId(id) === oldProductId ? newProductId : id
+    );
+    state.productLoad.status = "success";
+    state.productLoad.error = "";
+    renderProducts();
 
   } catch (err) {
     console.error("submitProductEdit failed", err);
     if (updateAccepted) {
-      showToast("บันทึกสินค้าแล้ว แต่โหลดข้อมูลล่าสุดไม่สำเร็จ กรุณาโหลดหน้าใหม่เพื่อตรวจสอบ", "warning");
+      showToast("บันทึกสินค้าแล้ว แต่แสดงรายการล่าสุดไม่สำเร็จ กรุณาโหลดหน้าใหม่เพื่อตรวจสอบ", "warning");
       return;
     }
     const responseUnknown = err?.code === "APPS_SCRIPT_RESPONSE_404" ||
