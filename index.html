@@ -6239,47 +6239,34 @@ textarea.input{
   line-height:1.45;
 }
 
-/* Dashboard B+C: violet/blue, scoped to the admin summary. */
-.dash-analytics{--dash-purple:#a78bfa;--dash-blue:#459bff;margin:22px 0 24px;color:var(--text);font-variant-numeric:tabular-nums}
-.dash-kicker{display:flex;align-items:center;justify-content:space-between;margin:0 0 12px;font-size:20px;font-weight:900;color:var(--dash-purple)}
-.dash-kicker>span{font-size:10px;letter-spacing:1.3px;color:var(--text-soft);border:1px solid var(--border);padding:5px 8px;border-radius:20px}
-.dash-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.dash-metric{min-width:0;display:flex;flex-direction:column;gap:7px;padding:16px 14px;border:1px solid var(--border);border-radius:18px;background:linear-gradient(140deg,rgba(139,92,246,.09),transparent),var(--surface-2)}
-.dash-metric>span{font-size:13px;color:var(--text-soft);font-weight:700}
-.dash-metric>strong{font-size:clamp(19px,5.4vw,27px);line-height:1.25;overflow-wrap:anywhere;letter-spacing:-.6px}
-.dash-metric>small{font-size:11px;color:var(--text-soft)}
-.dash-sales{border-color:rgba(69,155,255,.35)}.dash-sales>strong{color:var(--dash-blue)}
-.dash-profit>strong{color:var(--dash-purple)}.dash-loss>strong,.dash-negative{color:#fb7185}
-.dash-note{font-size:11px;line-height:1.7;color:var(--text-soft);margin:10px 2px 18px}
-.dash-panel{margin:12px 0;padding:18px 14px;border:1px solid var(--border);border-radius:20px;background:linear-gradient(155deg,rgba(139,92,246,.05),transparent 55%),var(--surface-2);overflow:hidden}
-.dash-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-.dash-panel-heading h3{margin:0!important;padding:0!important;font-size:16px!important;font-weight:850}
-.dash-caption{font-size:11px;color:var(--text-soft);margin:0 0 6px;line-height:1.6}
-.dash-segments{display:flex;padding:3px;gap:2px;border:1px solid var(--border);border-radius:11px;background:rgba(0,0,0,.1)}
-.dash-segments button{border:0;border-radius:8px;background:transparent;color:var(--text-soft);padding:7px 10px;font:inherit;font-size:12px;cursor:pointer;min-height:34px}
-.dash-segments button[aria-pressed=true]{color:white;background:linear-gradient(125deg,#8b5cf6,#6563ea);box-shadow:0 3px 10px rgba(124,58,237,.22)}
-.dash-segments button:focus-visible,.dash-plot-scroll:focus-visible,.dash-data summary:focus-visible{outline:2px solid var(--dash-purple);outline-offset:3px}
-.dash-legend{display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:11px;margin:12px 0 5px}.dash-legend small{margin-left:auto;color:var(--text-soft)}
-.dash-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}.dash-dot.blue{background:var(--dash-blue)}.dash-dot.purple{background:var(--dash-purple)}
-.dash-plot-scroll,.dash-table-scroll{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:var(--dash-purple) transparent}
-.dash-plot{display:block;width:100%;height:auto;max-height:260px}.dash-plot text{fill:var(--text-soft);font-size:11px;font-family:inherit}
-.dash-grid-line{stroke:var(--border);stroke-width:1}.dash-zero-line{stroke:var(--text-soft);stroke-opacity:.4;stroke-width:1}
-.dash-split{display:flex;align-items:center;justify-content:center;gap:20px;padding:10px 0}
-.dash-ring{flex:0 0 156px;width:156px;height:156px;border-radius:50%;background:conic-gradient(var(--dash-purple) 0 var(--cost-share),var(--dash-blue) var(--cost-share) 100%);display:grid;place-items:center}
-.dash-ring-neutral{background:var(--border)}
-.dash-ring>div{width:120px;height:120px;border-radius:50%;background:var(--surface-2);display:flex;flex-direction:column;justify-content:center;align-items:center;padding:8px;box-sizing:border-box;text-align:center}
-.dash-ring small{color:var(--text-soft);font-size:10px}.dash-ring strong{font-size:16px;overflow-wrap:anywhere;max-width:100%}
-.dash-breakdown{display:flex;flex-direction:column;gap:17px;min-width:0}.dash-breakdown>div{display:flex;flex-direction:column;gap:3px}.dash-breakdown span{font-size:12px}.dash-breakdown strong{font-size:20px;overflow-wrap:anywhere}.dash-breakdown small{font-size:11px;color:var(--text-soft)}
-.dash-ranking{list-style:none;padding:0;margin:0}.dash-ranking li{display:flex;gap:10px;margin-top:17px;align-items:flex-start}
-.dash-rank{display:grid;place-items:center;flex:0 0 25px;height:25px;border-radius:50%;background:rgba(139,92,246,.14);color:var(--dash-purple);font-size:12px;font-weight:800}
-.dash-rank-product{flex:1;min-width:0}.dash-rank-product>div:first-child{display:flex;justify-content:space-between;gap:8px;font-size:13px}.dash-rank-product b{overflow-wrap:anywhere}.dash-rank-product strong{flex-shrink:0}
-.dash-product-name{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;color:var(--text-soft);margin:3px 0 7px}
-.dash-track{height:9px;background:rgba(139,92,246,.12);border-radius:12px;overflow:hidden}.dash-track>span{display:block;height:100%;border-radius:12px;background:linear-gradient(90deg,#b494ff,#7160ee)}
-.dash-rank-product small{display:block;font-size:10px;color:var(--text-soft);margin-top:4px}
-.dash-data{margin-top:10px;border-top:1px solid var(--border);padding-top:10px}.dash-data summary{font-size:12px;color:var(--dash-purple);cursor:pointer;padding:5px 0}.dash-data table{width:100%;border-collapse:collapse;white-space:nowrap;font-size:11px;margin-top:8px}.dash-data th,.dash-data td{padding:9px 7px;text-align:right;border-bottom:1px solid var(--border)}.dash-data th:first-child{text-align:left}.dash-data thead{color:var(--text-soft)}
-.dash-empty{text-align:center;color:var(--text-soft);font-size:13px;line-height:1.8;padding:24px 8px}
-.dash-pending{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--text-soft);padding:12px 4px}.dash-pending strong{color:var(--dash-purple)}
-@media(max-width:360px){.dash-split{gap:12px}.dash-ring{flex-basis:130px;width:130px;height:130px}.dash-ring>div{width:100px;height:100px}.dash-ring strong{font-size:14px}.dash-breakdown strong{font-size:17px}.dash-panel{padding:15px 10px}}
+/* Dashboard A: compact blue sales overview, scoped to the summary sheet. */
+#adminDashboardSheet.dashboard-a-sheet{max-width:560px;margin:0 auto;padding:18px 16px calc(22px + env(safe-area-inset-bottom,0px));background:linear-gradient(150deg,#0d1922,#0c151c 58%,#0e1a22);border:1px solid #2b3e4c;color:#f5f8ff;border-radius:24px 24px 0 0;box-shadow:0 0 0 2px rgba(74,104,126,.09),0 18px 60px #0008;color-scheme:dark}
+.da-content{font-family:inherit;font-variant-numeric:tabular-nums;line-height:1.4}
+.da-content *{box-sizing:border-box}.da-content button,.da-content input{font-family:inherit}
+.da-content button{cursor:pointer}.da-content svg{width:22px;height:22px;flex-shrink:0}
+.da-header{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:15px}
+.da-heading{display:flex;gap:4px;align-items:flex-start;min-width:0}.da-heading h3{font-size:17px;line-height:1.4;margin:0 0 4px!important;font-weight:850;white-space:nowrap}.da-heading small{font-size:11px;color:#b6c5d7}
+.da-back{padding:0;margin:1px 0 0 -5px;width:18px;height:23px;border:0;background:transparent;color:#b9c9db}.da-back svg{width:17px;height:20px}
+.da-date-button{display:flex;align-items:center;justify-content:center;gap:6px;min-height:34px;max-width:49%;padding:7px 9px;font-size:10px;line-height:1.5;color:#e2ecf6;border:1px solid #2b3a48;border-radius:9px;background:linear-gradient(120deg,#1b2933,#17222c)}.da-date-button svg{width:15px;height:15px}.da-date-button>span:first-of-type{overflow-wrap:anywhere}
+.da-toolbar{display:flex;align-items:center;gap:7px;margin-bottom:14px}.da-toolbar h2{margin:0 auto 0 0;font-size:27px;letter-spacing:-.6px;color:#3196ff;font-weight:900;line-height:1.3;white-space:nowrap}
+.da-search{display:flex;align-items:center;gap:5px;width:135px;min-width:0;height:32px;padding:0 5px 0 8px;border:1px solid #2a3946;border-radius:9px;background:#17232d;color:#a6bacf}.da-search svg{width:15px;height:15px}.da-search input{min-width:0;width:100%;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;font-size:11px!important;color:#edf5ff}.da-search input::placeholder{color:#9aadc0}.da-search button{background:transparent;border:0;padding:0 3px;color:#6eafff;font-size:19px}
+.da-filter-button{width:32px;height:32px;display:grid;place-items:center;border:1px solid #2a3946;border-radius:9px;background:#1b2a36;color:#c3d6e8}.da-filter-button svg{width:17px;height:17px}
+.da-sr-only{position:absolute!important;clip:rect(0,0,0,0);clip-path:inset(50%);width:1px;height:1px;padding:0;overflow:hidden;white-space:nowrap}
+.da-filters[open]{border:1px solid #2b4053;border-radius:12px;background:#15232e;padding:12px;margin:-3px 0 14px}.da-filter-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}.da-filter-fields label{font-size:11px;color:#becfe1;min-width:0}.da-filter-fields input{display:block;width:100%;min-width:0;background:#0e1b25;color:#eef5ff;border:1px solid #30475b;border-radius:8px;padding:8px 6px;margin-top:5px;font-size:12px}.da-filter-actions{display:flex;gap:6px;margin-top:10px}.da-filter-actions button{background:#1c3449;border:1px solid #35516b;color:#e5efff;border-radius:8px;padding:7px 10px;font-size:12px}.da-filter-actions button:first-child{background:#0877df;border-color:#2f9aff}
+.da-active-filter{display:flex;align-items:center;justify-content:space-between;font-size:12px;padding:8px 10px;margin-bottom:12px;background:#123354;border-radius:8px}.da-active-filter button{border:0;background:none;color:#b6d8ff;font-size:20px}
+.da-hero{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:19px 18px;min-height:115px;margin-bottom:12px;border:1px solid #3a97f9;border-radius:16px;background:linear-gradient(118deg,#0876e4 0%,#0758b8 55%,#09377a 100%);box-shadow:inset 0 1px 0 #70c3ff33,0 6px 22px #001a402b}.da-hero>div:first-child{min-width:0}.da-hero>div:first-child>span{display:block;font-size:16px;font-weight:750;margin-bottom:4px}.da-hero strong{font-size:clamp(31px,8.6vw,46px);font-weight:900;letter-spacing:-1.3px;line-height:1.15;overflow-wrap:anywhere}
+.da-growth{display:flex;flex-direction:column;align-items:center;flex:0 0 86px;gap:4px}.da-growth-icon{display:grid;place-items:center;width:34px;height:34px;background:#168ecd5c;border-radius:50%;color:#39e4bd;box-shadow:0 0 18px #24bee320}.da-growth-icon svg{width:25px;height:25px;stroke-width:3}.da-growth b{font-size:15px;color:#dfedff;line-height:1.2}.da-growth small{color:#c1d8f6;font-size:9px;text-align:center;line-height:1.3}.da-growth.is-negative .da-growth-icon{transform:rotate(180deg);color:#ffb7b7}
+.da-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin-bottom:12px}.da-card{background:linear-gradient(125deg,#1b2832,#131e27);border:1px solid #2b3b49;border-radius:15px;min-width:0;box-shadow:inset 0 1px 0 #ffffff03}.da-value{padding:13px 13px 12px;display:flex;flex-direction:column;gap:3px}.da-value>span{display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:650}.da-value svg{width:21px;height:21px;color:#71a1ff}.da-value:nth-child(2) svg{color:#30d8b6;stroke-width:2.8}.da-value>strong{font-size:clamp(20px,5.5vw,26px);font-weight:900;letter-spacing:-.5px;overflow-wrap:anywhere;line-height:1.25}.da-value>small{font-size:10px;color:#b2c1d2}.da-negative{color:#ff9eaa}
+.da-counts .da-card{padding:10px 14px;display:flex;align-items:center;gap:14px;min-height:58px}.da-counts svg{width:29px;height:29px;color:#aec9e3}.da-counts .da-card>div{flex:1;text-align:center;padding-right:15px}.da-counts strong{display:block;font-size:23px;font-weight:850;line-height:1.2}.da-counts span{font-size:11px;color:#c0d0e0}
+.da-chart-card{padding:13px 12px 8px;margin-bottom:12px}.da-section-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px}.da-section-head h3{font-size:16px!important;font-weight:800;margin:0!important}.da-section-head>span{font-size:10px;color:#bfcedd}.da-section-head button{border:0;background:none;padding:4px 0 4px 8px;color:#3ea6ff;font-size:12px;white-space:nowrap}.da-section-head h3 small{font-size:11px}
+.da-chart-scroll{overflow-x:auto;scrollbar-width:thin;scrollbar-color:#38648a transparent}.da-content .da-chart{display:block;width:100%;height:auto;max-height:240px}.da-chart line{stroke:#334957;stroke-opacity:.7;stroke-width:.7}.da-chart text{font:10px sans-serif;fill:#b8cbe0}.da-chart-note{font-size:10px;color:#a9bdd1}
+.da-recent{padding:12px 12px 3px;margin-bottom:11px}.da-order{width:100%;padding:10px 0!important;background:transparent!important;color:#e8f0fb;border:0;border-radius:0!important;border-top:1px solid #2c3f4e;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) auto;gap:8px;text-align:left;position:relative;box-shadow:none!important;line-height:1.4}.da-order>span{min-width:0}.da-order-left,.da-order-middle,.da-order-right{display:flex;flex-direction:column;gap:3px}.da-order b{font-size:12px;font-weight:750;overflow-wrap:anywhere}.da-order small{font-size:10px;color:#aebed0}.da-order-middle>span{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.da-order-right{align-items:flex-end}.da-approved{color:#6be0c5;background:#12554d;border:1px solid #207466;border-radius:5px;font-size:8px;font-weight:800;letter-spacing:.3px;padding:2px 5px;line-height:1.1}.da-duplicate{color:#efc981!important}.da-order:hover{background:#17334c55!important}.da-order:active{opacity:.8}
+.da-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;color:#8fa9c1;font-size:9px;padding:1px 2px}.da-footer button{display:flex;align-items:center;gap:4px;color:#7bbaff;background:none;border:0;font-size:10px;padding:5px 0}.da-footer svg{width:13px;height:13px}
+.da-notes{margin-top:10px;color:#a5b9ce;font-size:10px}.da-notes summary{cursor:pointer;width:max-content}.da-notes p{font-size:11px;line-height:1.7}.da-table-scroll{overflow-x:auto}.da-notes table{width:100%;white-space:nowrap;border-collapse:collapse}.da-notes th,.da-notes td{text-align:right;padding:6px;border-bottom:1px solid #253d50}.da-notes th:first-child,.da-notes td:first-child{text-align:left}
+.da-empty{font-size:12px;line-height:1.8;text-align:center;color:#a8bfd4;padding:24px 8px}.da-stale{border:1px solid #856837;color:#ead6aa;background:#443317;padding:10px;border-radius:10px;font-size:12px;margin-bottom:12px}
+.da-content button:focus-visible,.da-content input:focus-visible,.da-content summary:focus-visible{outline:2px solid #70b6ff;outline-offset:3px}
+.da-loading,.da-load-error{padding:4px;color:var(--text)}.dashboard-a-sheet .da-loading,.dashboard-a-sheet .da-load-error{color:#eef5ff}.da-loading h3,.da-load-error h3{margin-top:16px}.da-loading p,.da-load-error p{font-size:13px;color:#aebfd2;line-height:1.7}.da-skeleton{height:112px;border-radius:15px;background:linear-gradient(115deg,#19314c,#0f2438);margin:18px 0}.da-load-error>.btn{width:100%;margin:12px 0}
+@media(max-width:370px){#adminDashboardSheet.dashboard-a-sheet{padding-left:12px;padding-right:12px}.da-heading h3{font-size:14px}.da-date-button{font-size:9px;padding:6px}.da-toolbar h2{font-size:23px}.da-search{width:108px}.da-hero{padding:16px 12px}.da-growth{flex-basis:72px}.da-hero strong{font-size:30px}.da-value{padding:11px}.da-value>span{font-size:12px}.da-order{gap:6px;grid-template-columns:minmax(0,1fr) minmax(0,.85fr) auto}.da-order b{font-size:11px}.da-section-head h3{font-size:14px!important}.da-counts .da-card{gap:8px;padding:10px}.da-counts .da-card>div{padding-right:5px}}
 
 </style>
 </head>
@@ -10792,6 +10779,7 @@ function failLuopanichFrontendConfig(message) {
      error.serverRejected = true;
      throw error;
    }
+   invalidateAdminOrdersRead(action);
    // Retry only this read operation, never a mutation or an authentication failure.
    const maxAttempts = action === "orders" ? 2 : 1;
    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -12900,40 +12888,68 @@ async function fetchStockLogs() {
   return json.data;
 }
 
-async function fetchOrders(){
+// In-memory only, isolated by admin session. Never persist order data or credentials.
+let adminOrdersRead = { token: "", rows: null, loadedAt: 0, inFlight: null };
+let adminDashboardLoadSeq = 0;
+function resetAdminOrdersRead() {
+  adminOrdersRead = { token: "", rows: null, loadedAt: 0, inFlight: null };
+}
+function invalidateAdminOrdersRead(action) {
+  if (["createOrder", "approveOrder", "rejectOrder", "convertPartnerRequestToOrder"].includes(action)) resetAdminOrdersRead();
+}
+function isDashboardReadTransient(err) {
+  return ["REQUEST_TIMEOUT", "APPS_SCRIPT_RESPONSE_404", "REQUEST_ROUTING_ERROR"].includes(err?.code) || /failed to fetch|networkerror|network error|load failed/i.test(String(err?.message || "")) || [408,429,502,503,504].includes(err?.httpStatus);
+}
+async function fetchOrders({ timeout = 30000 } = {}) {
+  const token = state.admin.token;
+  if (!token) throw new Error("Not authenticated");
+  if (adminOrdersRead.token !== token) adminOrdersRead = { token, rows: null, loadedAt: 0, inFlight: null };
+  const read = adminOrdersRead;
+  if (read.inFlight) return read.inFlight;
   const requestStartMs = Date.now();
-  try {
-    if (!state.admin.token) {
-      throw new Error("Not authenticated");
+  const job = (async () => {
+    try {
+      const form = new URLSearchParams({ action: "orders", token });
+      const json = await postFormAction(form, { timeout });
+      if (!Array.isArray(json.data)) throw new Error("รูปแบบข้อมูลออเดอร์ไม่ถูกต้อง");
+      // An old session / a read begun before an order mutation must not refill the cache.
+      if (state.admin.token !== token || adminOrdersRead !== read) {
+        const error = new Error("Order read superseded"); error.code = "ORDERS_READ_SUPERSEDED"; throw error;
+      }
+      read.rows = json.data; read.loadedAt = Date.now();
+      logAdminPreloadLatencyDiagnostic({ phase: "orders", attempt: 1, startMs: requestStartMs, endMs: Date.now(), elapsedMs: Date.now() - requestStartMs, result: "success" });
+      return json.data;
+    } catch (err) {
+      logAdminPreloadLatencyDiagnostic({ phase: "orders", attempt: 1, startMs: requestStartMs, endMs: Date.now(), elapsedMs: Date.now() - requestStartMs, result: classifyAdminPreloadError(err) });
+      throw err;
     }
-
-    const form = new URLSearchParams();
-    form.append("action", "orders");
-    form.append("token", state.admin.token);
-
-    const json = await postFormAction(form);
-    logAdminPreloadLatencyDiagnostic({
-      phase: "orders",
-      attempt: 1,
-      startMs: requestStartMs,
-      endMs: Date.now(),
-      elapsedMs: Date.now() - requestStartMs,
-      result: "success"
-    });
-    return json.data;
-  } catch (err) {
-    logAdminPreloadLatencyDiagnostic({
-      phase: "orders",
-      attempt: 1,
-      startMs: requestStartMs,
-      endMs: Date.now(),
-      elapsedMs: Date.now() - requestStartMs,
-      result: classifyAdminPreloadError(err)
-    });
-    throw err;
+  })();
+  read.inFlight = job;
+  try { return await job; } finally { if (read.inFlight === job) read.inFlight = null; }
+}
+async function loadDashboardOrders({ forceRefresh = false, allowStale = true, onRetry = () => {} } = {}) {
+  const token = state.admin.token;
+  if (!token) throw new Error("Not authenticated");
+  const cached = adminOrdersRead.token === token && Array.isArray(adminOrdersRead.rows) ? adminOrdersRead : null;
+  if (!forceRefresh && cached && Date.now() - cached.loadedAt < 60000) {
+    return { rows: cached.rows, loadedAt: cached.loadedAt, stale: false };
+  }
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const rows = await fetchOrders({ timeout: 45000 });
+      return { rows, loadedAt: adminOrdersRead.loadedAt, stale: false };
+    } catch (err) {
+      if (state.admin.token !== token) throw err;
+      const transient = isDashboardReadTransient(err) || err.code === "ORDERS_READ_SUPERSEDED";
+      if (!transient) throw err;
+      // Keep the last successful snapshot visible if refreshing fails. Never replace it with zero.
+      if (allowStale && cached && adminOrdersRead === cached) return { rows: cached.rows, loadedAt: cached.loadedAt, stale: true };
+      if (attempt === 0) { onRetry(); await new Promise(resolve => setTimeout(resolve, 700)); continue; }
+      throw err;
+    }
   }
 }
-  
+
 /* ================= STOCK CHECK ================= */
 async function checkStockBeforeSubmit() {
   const latestProducts = await fetchProducts();
@@ -17075,98 +17091,120 @@ function dashboardBucketLabel(key, period) {
   const [year, month, day] = key.split("-").map(Number);
   return period === "month" ? `${month}/${year + 543}` : `${day}/${month}`;
 }
-
-function renderDashboardPlot(model, comparison = false) {
+function dashboardAIcon(name) {
+  const paths = {
+    back: '<path d="m14 6-6 6 6 6"/>',
+    calendar: '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 11h18"/>',
+    search: '<circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/>',
+    filter: '<path d="M4 6h16M4 12h16M4 18h16M8 3v6m8 0v6M9 15v6"/>',
+    coins: '<ellipse cx="12" cy="5" rx="7" ry="3"/><path d="M5 5v5c0 4 14 4 14 0V5M5 10v5c0 4 14 4 14 0v-5M5 15v4c0 4 14 4 14 0v-4"/>',
+    profit: '<path d="M5 20v-6m5 6V9m5 11V4m5 16V7"/>',
+    order: '<path d="M7 3h8l4 4v14H5V3h2m9 0v5h4M8 12h8m-8 4h8"/>',
+    box: '<path d="m12 2 9 5v10l-9 5-9-5V7l9-5Zm0 10 9-5M3 7l9 5m0 0v10M7 5l10 5"/>',
+    arrow: '<path d="m6 14 6-6 6 6"/>',
+    refresh: '<path d="M20 7V3m0 4h-4M4 17v4m0-4h4M5 8a8 8 0 0 1 13-3l2 2M4 17l2 2a8 8 0 0 0 13-3"/>'
+  };
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.order}</svg>`;
+}
+function dashboardARangeLabel(from, to) {
+  const a = new Date(from + "T12:00:00"), b = new Date(to + "T12:00:00");
+  if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime())) return "เลือกช่วงวันที่";
+  const month = b.toLocaleDateString("th-TH", { month: "short" });
+  if (from.slice(0, 7) === to.slice(0, 7)) return `${a.getDate()}–${b.getDate()} ${month} ${b.getFullYear() + 543}`;
+  return `${a.getDate()}/${a.getMonth()+1}/${a.getFullYear()+543} – ${b.getDate()}/${b.getMonth()+1}/${b.getFullYear()+543}`;
+}
+function dashboardAPreviousSales(allOrders, from, to) {
+  const start = new Date(from + "T12:00:00"), end = new Date(to + "T12:00:00");
+  const days = Math.round((end - start) / 86400000) + 1;
+  if (!(days > 0)) return null;
+  const previousEnd = new Date(start); previousEnd.setDate(previousEnd.getDate()-1);
+  const previousStart = new Date(start); previousStart.setDate(previousStart.getDate()-days);
+  const lo = toYmdLocal(previousStart), hi = toYmdLocal(previousEnd);
+  const previous = allOrders.filter(o => {
+    if (String(o.status || "").toUpperCase() !== "APPROVED" || !orderMatchesAdminPoQuery(o)) return false;
+    const date = new Date(getOrderDateValue(o));
+    if (Number.isNaN(date.getTime())) return false;
+    const ymd = toYmdLocal(date); return ymd >= lo && ymd <= hi;
+  });
+  return { sales: calculateDashboardSummary(previous).totalSales, from: lo, to: hi };
+}
+function renderDashboardABars(model) {
   const rows = model.buckets;
-  if (!rows.length) return '<p class="dash-empty">ไม่มีข้อมูลในช่วงที่เลือก</p>';
-  const second = comparison ? "cost" : "profit";
-  const secondLabel = comparison ? "ต้นทุน" : "กำไรขั้นต้น";
-  const width = Math.max(320, rows.length * (comparison ? 22 : 12) + 72), height = 235;
-  const left = 60, right = width - 16, top = 16, bottom = 192;
-  const values = rows.flatMap(r => [r.sales, r[second]]);
-  const min = Math.min(0, ...values), max = Math.max(0, ...values);
-  const range = max - min || 1;
-  const y = v => bottom - ((v - min) / range) * (bottom - top);
-  const x = i => left + (i + .5) * (right - left) / rows.length;
-  const short = v => Math.abs(v) >= 1000000 ? (v / 1000000).toFixed(1) + "M" : Math.abs(v) >= 1000 ? (v / 1000).toFixed(1) + "k" : v.toLocaleString("th-TH", { maximumFractionDigits: 1 });
+  const width = Math.max(340, rows.length * 9 + 50), height = 186;
+  const left = 42, right = width - 10, top = 12, bottom = 157;
+  const max = Math.max(0, ...rows.map(r => r.sales));
+  const rough = max / 3 || 1, power = Math.pow(10, Math.floor(Math.log10(rough)));
+  const step = [1,2,5,10].find(n => n * power >= rough) * power;
+  const ceiling = step * 3;
+  const min = Math.min(0, ...rows.map(r => r.sales));
+  const y = value => bottom - (value - min) / (ceiling - min) * (bottom - top);
+  const slot = (right-left) / Math.max(rows.length,1);
+  const bw = Math.min(14, slot * .62);
+  const tick = v => v >= 1000000 ? (v/1000000).toLocaleString("th-TH", {maximumFractionDigits:1})+"M" : v >= 1000 ? (v/1000).toLocaleString("th-TH", {maximumFractionDigits:1})+"k" : v.toLocaleString("th-TH");
   let grid = "";
-  for (let i = 0; i <= 4; i++) {
-    const value = min + range * i / 4, yy = y(value);
-    grid += `<line x1="${left}" x2="${right}" y1="${yy}" y2="${yy}" class="dash-grid-line"/><text x="${left - 8}" y="${yy + 4}" text-anchor="end">${esc(short(value))}</text>`;
+  for(let i=0;i<=3;i++) {
+    const value = min + (ceiling-min)*i/3;
+    grid += `<line x1="${left}" x2="${right}" y1="${y(value)}" y2="${y(value)}"/><text x="${left-8}" y="${y(value)+4}" text-anchor="end">${esc(tick(value))}</text>`;
   }
-  const tickStep = Math.max(1, Math.ceil(rows.length / 8));
-  const ticks = rows.map((r, i) => i % tickStep === 0 || i === rows.length - 1 ? `<text x="${x(i)}" y="216" text-anchor="middle">${esc(dashboardBucketLabel(r.key, model.period))}</text>` : "").join("");
-  const titleOf = r => `${dashboardBucketLabel(r.key, model.period)} • ยอดขาย ${dashboardMoney(r.sales)} • ${secondLabel} ${dashboardMoney(r[second])}`;
-  let marks;
-  if (comparison) {
-    const bw = Math.min(12, (right - left) / rows.length * .3);
-    marks = rows.map((r, i) => ["sales", second].map((key, n) => `<rect x="${x(i) + (n ? 1 : -bw - 1)}" y="${Math.min(y(r[key]), y(0))}" width="${bw}" height="${Math.max(.5, Math.abs(y(r[key]) - y(0)))}" rx="2" fill="${n ? '#a78bfa' : '#459bff'}"><title>${esc(titleOf(r))}</title></rect>`).join("")).join("");
-  } else {
-    marks = ["sales", second].map((key, n) => {
-      const color = n ? "#b494ff" : "#459bff";
-      const points = rows.map((r, i) => `${x(i)},${y(r[key])}`).join(" ");
-      return `<polygon points="${x(0)},${y(0)} ${points} ${x(rows.length - 1)},${y(0)}" fill="${color}" opacity=".08"/><polyline points="${points}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round"/>` + rows.map((r, i) => `<circle cx="${x(i)}" cy="${y(r[key])}" r="3" fill="${color}"><title>${esc(titleOf(r))}</title></circle>`).join("");
-    }).join("");
-  }
-  return `<div class="dash-legend"><span><i class="dash-dot blue"></i>ยอดขาย</span><span><i class="dash-dot purple"></i>${secondLabel}</span><small>หน่วย: บาท</small></div>
-    <div class="dash-plot-scroll" tabindex="0" aria-label="กราฟ เลื่อนแนวนอนเพื่อดูข้อมูลทั้งหมด"><svg class="dash-plot" style="min-width:${width}px" viewBox="0 0 ${width} ${height}" role="img" aria-label="ยอดขายเทียบ${secondLabel}"><title>ยอดขายเทียบ${secondLabel} ตามช่วงวันที่ที่เลือก</title>${grid}<line x1="${left}" x2="${right}" y1="${y(0)}" y2="${y(0)}" class="dash-zero-line"/>${marks}${ticks}</svg></div><p class="dash-caption">เลื่อนกราฟแนวนอนเมื่อข้อมูลเกินหน้าจอ</p>`;
+  const marks = rows.map((r,i) => `<rect x="${left+i*slot+(slot-bw)/2}" y="${Math.min(y(r.sales),y(0))}" width="${bw}" height="${Math.abs(y(r.sales)-y(0))}" rx="2" fill="url(#dashboardABlue)"><title>${esc(dashboardBucketLabel(r.key,model.period))}: ${dashboardMoney(r.sales)}</title></rect>`).join("");
+  const every = Math.max(1,Math.ceil(rows.length/8));
+  const ticks = rows.map((r,i) => i%every === 0 || (i===rows.length-1 && i%every>=every/2) ? `<text x="${left+(i+.5)*slot}" y="178" text-anchor="middle">${esc(model.period === "day" ? String(Number(r.key.slice(-2))) : dashboardBucketLabel(r.key,model.period))}</text>` : "").join("");
+  return `<div class="da-chart-scroll"><svg class="da-chart" style="min-width:${width > 430 ? width : 0}px" viewBox="0 0 ${width} ${height}" role="img" aria-label="กราฟยอดขาย${model.period === 'month' ? 'รายเดือน' : 'รายวัน'}"><defs><linearGradient id="dashboardABlue" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#5da8ff"/><stop offset="1" stop-color="#0872e3"/></linearGradient></defs>${grid}${marks}${ticks}</svg></div>`;
 }
-
-function renderDashboardAnalytics(orders, summary, from, to, pendingCount) {
-  const period = state.admin.dashboardChartPeriod || "day";
-  const model = buildDashboardAnalytics(orders, from, to, period);
-  const positiveSales = summary.totalSales > 0;
-  const donutValid = positiveSales && summary.totalCost >= 0 && summary.totalProfit >= 0;
-  const margin = positiveSales ? (summary.totalProfit / summary.totalSales * 100).toFixed(1) + "%" : "—";
-  const costPercent = positiveSales ? (summary.totalCost / summary.totalSales * 100).toFixed(1) + "%" : "—";
-  const note = summary.estimatedLines ? `มี ${summary.estimatedLines.toLocaleString("th-TH")} รายการสินค้าที่ไม่มีต้นทุนย้อนหลัง ใช้ต้นทุนปัจจุบันแทน${summary.missingCostLines ? ` (ไม่พบต้นทุน ${summary.missingCostLines} รายการ คิดเป็น 0)` : ""} กำไรจึงเป็นค่าประมาณ` : "คำนวณจากราคาขายและต้นทุนที่บันทึกในออเดอร์ ยังไม่หักค่าใช้จ่ายอื่น";
-  const metric = (label, value, sub, cls = "") => `<div class="dash-metric ${cls}"><span>${label}</span><strong>${value}</strong><small>${sub}</small></div>`;
-  const maxQty = model.topProducts[0]?.qty || 1;
-  const costFraction = donutValid ? summary.totalCost / summary.totalSales * 100 : 0;
-  const empty = '<p class="dash-empty">ไม่มีออเดอร์ APPROVED ในช่วงวันที่ / PO ที่เลือก</p>';
-  return `<div class="dash-analytics">
-    <div class="dash-kicker">ภาพรวมธุรกิจ <span>APPROVED</span></div>
-    <div class="dash-metrics">
-      ${metric("ยอดขายรวม", dashboardMoney(summary.totalSales), `${summary.orderCount.toLocaleString("th-TH")} ออเดอร์`, "dash-sales")}
-      ${metric("ต้นทุนรวม", dashboardMoney(summary.totalCost), `${costPercent} ของยอดขาย`)}
-      ${metric("กำไรขั้นต้น", dashboardMoney(summary.totalProfit), `อัตรากำไร ${margin}`, summary.totalProfit < 0 ? "dash-loss" : "dash-profit")}
-      ${metric("จำนวนที่ขาย", summary.totalQty.toLocaleString("th-TH"), "ชิ้น")}
-    </div>
-    <p class="dash-note">${esc(note)}</p>
-    <section class="dash-panel"><div class="dash-panel-heading"><h3>ยอดขายและกำไร</h3><div class="dash-segments" role="group" aria-label="ช่วงเวลาในกราฟ">${[["day", "วัน"], ["week", "สัปดาห์"], ["month", "เดือน"]].map(([value, label]) => `<button type="button" aria-pressed="${model.period === value}" onclick="setDashboardChartPeriod('${value}')">${label}</button>`).join("")}</div></div>
-      <p class="dash-caption">อิงวันที่สร้างออเดอร์${model.period === "week" ? " • สัปดาห์เริ่มวันจันทร์" : ""}${model.grouped ? " • ช่วงวันที่ยาว จึงรวมแสดงรายเดือน" : ""}</p>
-      ${orders.length ? renderDashboardPlot(model) : empty}
-      ${orders.length ? `<details class="dash-data"><summary>ดูตัวเลขในกราฟ</summary><div class="dash-table-scroll"><table><thead><tr><th>ช่วงเวลา</th><th>ยอดขาย</th><th>ต้นทุน</th><th>กำไรขั้นต้น</th></tr></thead><tbody>${model.buckets.map(r => `<tr><th>${esc(dashboardBucketLabel(r.key, model.period))}</th><td>${dashboardMoney(r.sales)}</td><td>${dashboardMoney(r.cost)}</td><td>${dashboardMoney(r.profit)}</td></tr>`).join("")}</tbody></table></div></details>` : ""}
-    </section>
-    <section class="dash-panel"><div class="dash-panel-heading"><h3>สัดส่วนต้นทุนและกำไร</h3><span class="dash-caption">เทียบยอดขาย</span></div>
-      <div class="dash-split"><div class="dash-ring ${donutValid ? "" : "dash-ring-neutral"}" style="--cost-share:${costFraction}%" role="img" aria-label="${escAttr(donutValid ? `ต้นทุน ${costPercent} กำไรขั้นต้น ${margin}` : "ไม่แสดงสัดส่วนเมื่อไม่มียอดขายหรือมีค่าติดลบ")}"><div><small>ยอดขายรวม</small><strong>${dashboardMoney(summary.totalSales)}</strong></div></div>
-      <div class="dash-breakdown"><div><span><i class="dash-dot purple"></i>ต้นทุน</span><strong>${dashboardMoney(summary.totalCost)}</strong><small>${costPercent}</small></div><div><span><i class="dash-dot blue"></i>กำไรขั้นต้น</span><strong class="${summary.totalProfit < 0 ? 'dash-negative' : ''}">${dashboardMoney(summary.totalProfit)}</strong><small>${margin}</small></div></div></div>
-      ${!donutValid ? '<p class="dash-note">ไม่แสดงกราฟสัดส่วนเมื่อไม่มียอดขายหรือมีค่าติดลบ ดูยอดจริงจากตัวเลขด้านบน</p>' : ""}
-    </section>
-    <section class="dash-panel"><div class="dash-panel-heading"><h3>ขายดี 5 อันดับ</h3><span class="dash-caption">จำนวนขาย (ชิ้น)</span></div>
-      ${model.topProducts.length ? `<ol class="dash-ranking">${model.topProducts.map((p, i) => `<li><span class="dash-rank">${i + 1}</span><div class="dash-rank-product"><div><b>${esc(p.id)}</b><strong>${p.qty.toLocaleString("th-TH")}</strong></div><span class="dash-product-name" title="${escAttr(p.name)}">${esc(p.name)}</span><div class="dash-track"><span style="width:${p.qty / maxQty * 100}%"></span></div><small>ยอดขาย ${dashboardMoney(p.sales)}</small></div></li>`).join("")}</ol>` : empty}
-    </section>
-    <section class="dash-panel"><div class="dash-panel-heading"><h3>ยอดขายเทียบต้นทุน</h3><span class="dash-caption">${{day:"รายวัน",week:"รายสัปดาห์",month:"รายเดือน"}[model.period]}</span></div>${orders.length ? renderDashboardPlot(model, true) : empty}</section>
-    <div class="dash-pending"><span>ออเดอร์รอดำเนินการทั้งหมด</span><strong>${pendingCount.toLocaleString("th-TH")}</strong></div>
+function renderDashboardAOrder(order, duplicatePoMap) {
+  const duplicate = getDuplicatePoInfo(order, duplicatePoMap);
+  const qty = (Array.isArray(order.items) ? order.items : []).reduce((n,item)=>n+dashboardNumber(item.qty),0);
+  const total = calculateDashboardSummary([order]).totalSales;
+  const name = String(order.customerName || order.partnerNameSnapshot || "");
+  return `<button type="button" class="da-order approved-order-card ${isAdminOrderOpening(order.orderId) ? 'is-opening' : ''}" data-approved-order-id="${escAttr(order.orderId || '')}" onclick="openAdminOrder(${toInlineJsStringLiteral(order.orderId)})" aria-busy="${isAdminOrderOpening(order.orderId) ? 'true' : 'false'}">
+    <span class="da-order-left"><b>${esc(order.poNumber ? 'PO: '+order.poNumber : formatOrderIdForDisplay(order.orderId))}</b><small>${esc(formatThaiDate(getOrderDateValue(order)))}</small>${duplicate ? `<small class="da-duplicate" title="${escAttr(duplicate.otherOrderId)}">⚠ PO ซ้ำ</small>` : ""}</span>
+    <span class="da-order-middle"><span>${esc(name || formatOrderIdForDisplay(order.orderId))}</span><small>${qty.toLocaleString('th-TH')} ชิ้น</small></span>
+    <span class="da-order-right"><b>${dashboardMoney(total)}</b><span class="da-approved">APPROVED</span></span>
+    <span class="admin-order-opening-feedback" aria-hidden="true"><span class="admin-order-opening-spinner"></span><span>กำลังเปิดออเดอร์...</span></span>
+  </button>`;
+}
+function toggleDashboardAOrders(button) {
+  const list = document.getElementById("dashboardMoreOrders");
+  if (!list) return;
+  list.hidden = !list.hidden;
+  button.setAttribute("aria-expanded", String(!list.hidden));
+  button.textContent = list.hidden ? "ดูทั้งหมด ›" : "ย่อรายการ ‹";
+}
+function renderDashboardAView(orders, summary, from, to, pendingCount, readInfo) {
+  const model = buildDashboardAnalytics(orders,from,to,"day");
+  const previous = dashboardAPreviousSales(state.admin.orders || [],from,to);
+  const change = previous?.sales > 0 ? (summary.totalSales-previous.sales)/previous.sales*100 : null;
+  const margin = summary.totalSales > 0 ? (summary.totalProfit/summary.totalSales*100).toFixed(1)+"%" : "—";
+  const costPercent = summary.totalSales > 0 ? (summary.totalCost/summary.totalSales*100).toFixed(1)+"%" : "—";
+  const duplicatePoMap = getDuplicatePoOrderMap();
+  const sorted = orders.slice().sort((a,b)=>new Date(getOrderDateValue(b))-new Date(getOrderDateValue(a)));
+  const costNote = summary.estimatedLines ? `มี ${summary.estimatedLines} รายการสินค้าที่ไม่มีต้นทุนย้อนหลัง ใช้ต้นทุนปัจจุบันแทน${summary.missingCostLines ? `; ไม่พบต้นทุน ${summary.missingCostLines} รายการ คิดเป็น 0` : ''} กำไรจึงเป็นค่าประมาณ` : "ต้นทุนอิงข้อมูลที่บันทึกในออเดอร์ กำไรขั้นต้นยังไม่หักค่าใช้จ่ายอื่น";
+  const updated = readInfo?.loadedAt ? new Date(readInfo.loadedAt).toLocaleTimeString("th-TH",{hour:'2-digit',minute:'2-digit'}) : '';
+  return `<div class="da-content">
+    <header class="da-header"><div class="da-heading"><button class="da-back" type="button" aria-label="กลับเมนูแอดมิน" onclick="backToAdminMainMenu()">${dashboardAIcon('back')}</button><div><h3 id="adminDashboardSheetTitle">แดชบอร์ดแอดมิน</h3><small>เฉพาะ APPROVED</small></div></div>
+      <button type="button" class="da-date-button" aria-label="เลือกช่วงวันที่" onclick="document.getElementById('dashboardAFilters').open = !document.getElementById('dashboardAFilters').open">${dashboardAIcon('calendar')}<span>${esc(dashboardARangeLabel(from,to))}</span><span>⌄</span></button>
+    </header>
+    <div class="da-toolbar"><h2>สรุปอ่านง่าย</h2><div class="da-search"><label for="adminOrderPoSearch" class="da-sr-only">ค้นหาเลข PO</label>${dashboardAIcon('search')}<input id="adminOrderPoSearch" type="search" placeholder="ค้นหา PO..." value="${escAttr(state.admin.filters.poQueryDraft || '')}" oninput="state.admin.filters.poQueryDraft = this.value" onkeydown="if(event.key==='Enter') applyAdminOrderPoQuery()"><button type="button" aria-label="ค้นหา PO" onclick="applyAdminOrderPoQuery()">›</button></div><button type="button" class="da-filter-button" aria-label="ตัวกรองวันที่และ PO" onclick="document.getElementById('dashboardAFilters').open = !document.getElementById('dashboardAFilters').open">${dashboardAIcon('filter')}</button></div>
+    <details id="dashboardAFilters" class="da-filters"><summary class="da-sr-only">ตัวกรอง</summary><div class="da-filter-fields"><label>ตั้งแต่วันที่<input id="dashboardDateFrom" type="date" value="${escAttr(from)}"></label><label>ถึงวันที่<input id="dashboardDateTo" type="date" value="${escAttr(to)}"></label></div><div class="da-filter-actions"><button type="button" onclick="applyAdminDashboardRange()">ดูสรุป</button><button type="button" onclick="resetAdminDashboardRange()">เดือนนี้</button><button type="button" onclick="clearAdminOrderPoQuery()">ล้าง PO</button></div></details>
+    ${state.admin.filters.poQuery ? `<div class="da-active-filter">PO: ${esc(state.admin.filters.poQuery)}<button type="button" onclick="clearAdminOrderPoQuery()" aria-label="ล้าง PO">×</button></div>` : ''}
+    ${readInfo?.stale ? '<div class="da-stale" role="status">อัปเดตข้อมูลไม่สำเร็จ กำลังแสดงข้อมูลที่โหลดสำเร็จล่าสุด กดปุ่มรีเฟรชด้านล่างเพื่อลองอีกครั้ง</div>' : ''}
+    <section class="da-hero" aria-label="ยอดขายรวม"><div><span>ยอดขาย</span><strong>${dashboardMoney(summary.totalSales)}</strong></div><div class="da-growth ${change !== null && change < 0 ? 'is-negative' : ''}"><span class="da-growth-icon">${dashboardAIcon('arrow')}</span><b>${change === null ? '—' : (change > 0 ? '+' : '')+change.toFixed(1)+'%'}</b><small>${change === null ? 'ไม่มีฐานเปรียบเทียบ' : 'จากช่วงก่อนหน้า'}</small></div></section>
+    <div class="da-pair"><section class="da-card da-value"><span>ต้นทุน ${dashboardAIcon('coins')}</span><strong>${dashboardMoney(summary.totalCost)}</strong><small>${costPercent} ของยอดขาย</small></section><section class="da-card da-value"><span>กำไรขั้นต้น ${dashboardAIcon('profit')}</span><strong class="${summary.totalProfit < 0 ? 'da-negative' : ''}">${dashboardMoney(summary.totalProfit)}</strong><small>${margin} ของยอดขาย</small></section></div>
+    <div class="da-pair da-counts"><section class="da-card">${dashboardAIcon('order')}<div><strong>${summary.orderCount.toLocaleString('th-TH')}</strong><span>ออเดอร์</span></div></section><section class="da-card">${dashboardAIcon('box')}<div><strong>${summary.totalQty.toLocaleString('th-TH')}</strong><span>ชิ้น</span></div></section></div>
+    <section class="da-card da-chart-card"><div class="da-section-head"><h3>ยอดขาย${model.period === 'month' ? 'รายเดือน' : 'รายวัน'}</h3><span>หน่วย: บาท</span></div>${orders.length ? renderDashboardABars(model) : '<div class="da-empty">ไม่มีออเดอร์ APPROVED<br>ในช่วงวันที่ / PO ที่เลือก</div>'}${model.grouped ? '<small class="da-chart-note">รวมรายเดือนสำหรับช่วงเกิน 120 วัน</small>' : ''}</section>
+    <section class="da-card da-recent"><div class="da-section-head"><h3>ออเดอร์ล่าสุด <small>(APPROVED)</small></h3>${sorted.length>3 ? '<button type="button" aria-expanded="false" aria-controls="dashboardMoreOrders" onclick="toggleDashboardAOrders(this)">ดูทั้งหมด ›</button>' : `<span>${sorted.length} รายการ</span>`}</div>${sorted.length ? sorted.slice(0,3).map(o=>renderDashboardAOrder(o, duplicatePoMap)).join('') : '<p class="da-empty">ยังไม่มีรายการในช่วงที่เลือก</p>'}<div id="dashboardMoreOrders" hidden>${sorted.slice(3).map(o=>renderDashboardAOrder(o, duplicatePoMap)).join('')}</div></section>
+    <footer class="da-footer"><span>ข้อมูลที่โหลด ${updated || '—'} • รอดำเนินการทั้งหมด ${pendingCount}</span><button type="button" onclick="openAdminDashboard('SUMMARY',true,true)" aria-label="โหลดข้อมูลล่าสุด">${dashboardAIcon('refresh')}<span>รีเฟรช</span></button></footer>
+    <details class="da-notes"><summary>รายละเอียดการคำนวณ</summary><p>${esc(costNote)}</p><p>นับเฉพาะ APPROVED ตามวันที่สร้างออเดอร์และตัวกรอง PO ที่เลือก เปรียบเทียบยอดขายกับช่วงก่อนหน้าที่มีจำนวนวันเท่ากัน</p><div class="da-table-scroll"><table><thead><tr><th>วันที่</th><th>ยอดขาย</th><th>ต้นทุน</th><th>กำไรขั้นต้น</th></tr></thead><tbody>${model.buckets.map(r=>`<tr><td>${esc(dashboardBucketLabel(r.key,model.period))}</td><td>${dashboardMoney(r.sales)}</td><td>${dashboardMoney(r.cost)}</td><td>${dashboardMoney(r.profit)}</td></tr>`).join('')}</tbody></table></div></details>
   </div>`;
-}
-
-function setDashboardChartPeriod(period) {
-  if (!["day", "week", "month"].includes(period)) return;
-  const host = document.getElementById("dashboardAnalytics");
-  const data = state.admin.dashboardAnalyticsData;
-  if (!host || !data || !state.admin.loggedIn || !state.admin.token) return;
-  state.admin.dashboardChartPeriod = period;
-  const scrollTop = adminDashboardSheet.scrollTop;
-  host.innerHTML = renderDashboardAnalytics(data.orders, data.summary, data.from, data.to, data.pendingCount);
-  adminDashboardSheet.scrollTop = scrollTop;
-  host.querySelector(`.dash-segments button[aria-pressed="true"]`)?.focus({ preventScroll: true });
 }
 
 function applyAdminDashboardRange() {
   const from = document.getElementById("dashboardDateFrom")?.value || "";
   const to = document.getElementById("dashboardDateTo")?.value || "";
 
+  if (!from || !to || from > to) {
+    showToast("กรุณาเลือกช่วงวันที่ให้ถูกต้อง", "warning"); return;
+  }
   state.admin.filters.dashboardFrom = from;
   state.admin.filters.dashboardTo = to;
 
@@ -17317,7 +17355,7 @@ function clearAdminOrderPoQuery() {
   openAdminDashboard(state.admin.dashboardMode || "SUMMARY", true);
 }
 
-async function openAdminDashboard(mode = "SUMMARY", force = false) {
+async function openAdminDashboard(mode = "SUMMARY", force = false, reloadOrders = false) {
   if (!force && !allowOpenOrders) return;
 
   if (
@@ -17330,6 +17368,10 @@ async function openAdminDashboard(mode = "SUMMARY", force = false) {
     return;
   }
 
+  const loadSeq = ++adminDashboardLoadSeq;
+  const dashboardToken = state.admin.token;
+  const stillActive = () => loadSeq === adminDashboardLoadSeq && state.admin.token === dashboardToken && adminDashboardSheet.classList.contains("show");
+  adminDashboardSheet.classList.toggle("dashboard-a-sheet", mode !== "PENDING");
   allowOpenOrders = false;
   state.admin.dashboardMode = mode === "PENDING" ? "PENDING" : "SUMMARY";
   closeOverlay(adminStockSheet);
@@ -17346,18 +17388,18 @@ async function openAdminDashboard(mode = "SUMMARY", force = false) {
   }
 
   adminDashboardSheet.innerHTML = `
-    <h3 id="adminDashboardSheetTitle">${t("dashboard", "แดชบอร์ดแอดมิน")}</h3>
-    <div class="loading has-lottie">${renderLottieLoading(t("loadingData", "กำลังโหลดข้อมูล"))}</div>
-  `;
-
+    <div class="da-loading"><button class="app-back-btn" type="button" onclick="backToAdminMainMenu()">‹ กลับ</button><h3 id="adminDashboardSheetTitle">แดชบอร์ดแอดมิน</h3><div class="da-skeleton"></div><p id="dashboardLoadMessage" role="status">กำลังโหลดข้อมูลออเดอร์...</p></div>`;
   openOverlay(adminDashboardSheet);
 
   try {
-    if (!Array.isArray(state.products) || state.products.length === 0) {
-      await refreshProducts();
-    }
-
-    state.admin.orders = await fetchOrders();
+    // Products are already preloaded on admin entry. Do not hold order reads behind a second product load.
+    const readInfo = await loadDashboardOrders({ forceRefresh: reloadOrders || mode === "PENDING", allowStale: mode !== "PENDING", onRetry: () => {
+      if (!stillActive()) return;
+      const message = document.getElementById("dashboardLoadMessage");
+      if (message) message.textContent = "การเชื่อมต่อล่าช้า กำลังลองโหลดให้อีกครั้ง...";
+    }});
+    if (!stillActive()) return;
+    state.admin.orders = readInfo.rows;
 
     const from = state.admin.filters.dashboardFrom || "";
     const to = state.admin.filters.dashboardTo || "";
@@ -17442,132 +17484,15 @@ async function openAdminDashboard(mode = "SUMMARY", force = false) {
       return;
     }   
 
-    adminDashboardSheet.innerHTML = `
-      <div class="admin-sheet-topbar">
-        <button class="app-back-btn" type="button"
-          onclick="backToAdminMainMenu()">
-          <span class="app-back-btn-icon" aria-hidden="true">‹</span>
-          <span>${t("back", "กลับ")}</span>
-        </button>
-        <h3 id="adminDashboardSheetTitle">
-          <span class="dashboard-title-main">${t("dashboard", "แดชบอร์ดแอดมิน")}</span>
-          <span class="dashboard-title-sub">(${t("approvedOnly", "เฉพาะ APPROVED")})</span>
-        </h3>
-      </div>
-
-      <div class="dashboard-filter-wrap">
-        <div class="form-group">
-          <label for="dashboardDateFrom">${t("fromDate", "ตั้งแต่วันที่")}</label>
-          <div class="dashboard-date-picker">
-            <span class="dashboard-date-display" aria-hidden="true">${esc(formatDashboardDateDisplay(from))}</span>
-            <input id="dashboardDateFrom" type="date" value="${escAttr(from)}" onchange="syncDashboardDateDisplay(this)">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="dashboardDateTo">${t("toDate", "ถึงวันที่")}</label>
-          <div class="dashboard-date-picker">
-            <span class="dashboard-date-display" aria-hidden="true">${esc(formatDashboardDateDisplay(to))}</span>
-            <input id="dashboardDateTo" type="date" value="${escAttr(to)}" onchange="syncDashboardDateDisplay(this)">
-          </div>
-        </div>
-
-        ${renderAdminOrderPoSearch()}
-      </div>
-
-
-      <div class="action-row">
-        <button class="btn btn-primary" onclick="applyAdminDashboardRange()">
-          ${t("showSummary", "ดูสรุป")}
-        </button>
-        <button class="btn btn-outline" onclick="resetAdminDashboardRange()">
-          ${t("reset", "รีเซ็ต")}
-        </button>
-      </div>
-
-      <div id="dashboardAnalytics">${renderDashboardAnalytics(approvedOrders, summary, from, to, pendingCount)}</div>
-
-      <h3 class="section-title">${t("approvedOrderListTitle", "รายการออเดอร์ APPROVED ที่นำมาคิด")}</h3>
-
-${
-  approvedOrders.length
-    ? approvedOrders
-        .slice()
-        .sort(
-          (a, b) =>
-            new Date(
-              getOrderDateValue(b)
-            ) -
-            new Date(
-              getOrderDateValue(a)
-            )
-        )
-        .map(o => `
-            <div class="card admin-card approved-order-card ${isAdminOrderOpening(o.orderId) ? "is-opening" : ""}"
-              role="button"
-              tabindex="0"
-              data-approved-order-id="${escAttr(o.orderId || "")}"
-              aria-busy="${isAdminOrderOpening(o.orderId) ? "true" : "false"}"
-              onclick="openAdminOrder(${toInlineJsStringLiteral(o.orderId)})"
-              onkeydown="handleKeyboardActivation(event, this)">
-              <div class="name" title="${escAttr(o.orderId || "")}">${esc(formatOrderIdForDisplay(o.orderId))}</div>
-              <div class="stock">PO: ${esc(o.poNumber || "-")}</div>
-              ${renderDuplicatePoBadge(o, duplicatePoMap)}
-              <div class="admin-card-meta">
-                <span class="status-badge compact status-approved">${esc(getAdminOrderStatusLabel(o.status))}</span>
-                <span>${t("total", "ยอดรวม")} ฿${Number(o.total || 0).toLocaleString("th-TH")}</span>
-              </div>
-              ${renderPartnerOrderSourceBadge(o, { compact: true })}
-              <div class="price">฿${Number(o.total || 0).toLocaleString("th-TH")}</div>
-              <div class="stock">
-                ${t("date", "วันที่")}: ${esc(formatThaiDate(getOrderDateValue(o)))}
-              </div>
-              <div class="admin-order-opening-feedback" aria-hidden="true">
-                <span class="admin-order-opening-spinner"></span>
-                <span>${t("openingOrder", "กำลังเปิดออเดอร์...")}</span>
-              </div>
-            </div>
-          `).join("")
-          : `
-            <div class="empty-state">
-              ${t("noApprovedOrdersInRange", "ไม่มีออเดอร์สถานะ APPROVED ในช่วงวันที่ที่เลือก")}
-            </div>
-          `
-      }
-    `;
+    adminDashboardSheet.innerHTML = renderDashboardAView(approvedOrders, summary, from, to, pendingCount, readInfo);
   } catch (err) {
-    console.error(err);
-
-    if (
-      err.message?.includes("Session") ||
-      err.message?.includes("token")
-    ) {
+    if (!stillActive()) return;
+    console.warn("dashboard order read failed", err);
+    if (isAuthError(err.message) || /not authenticated|session|token/i.test(String(err.message || ""))) {
       showToast(t("sessionExpiredLoginAgain", "Session หมดอายุ กรุณา login ใหม่"), "warning");
-      exitAdmin();
-      return;
+      exitAdmin(); return;
     }
-
-    adminDashboardSheet.innerHTML = `
-      <h3 id="adminDashboardSheetTitle">${t("dashboard", "แดชบอร์ดแอดมิน")}</h3>
-
-      <div style="text-align:center;color:#d93025;margin-top:32px">
-        ${t("dashboardLoadError", "ไม่สามารถโหลดข้อมูลแดชบอร์ดได้")}
-      </div>
-
-      <button class="btn btn-primary"
-        style="width:100%;margin-top:16px"
-        onclick="allowOpenOrders = true; openAdminDashboard('SUMMARY', true)">
-        ${t("retry", "ลองใหม่")}
-      </button>
-
-      <button class="app-back-btn"
-        style="margin-top:8px"
-        type="button"
-        onclick="finishAdminAction({ refresh:false })">
-        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
-        <span>${t("back", "กลับ")}</span>
-      </button>
-    `;
+    adminDashboardSheet.innerHTML = `<div class="da-load-error"><button type="button" class="app-back-btn" onclick="backToAdminMainMenu()">‹ กลับ</button><h3 id="adminDashboardSheetTitle">แดชบอร์ดแอดมิน</h3><h4>ยังโหลดข้อมูลออเดอร์ไม่ได้</h4><p>${isDashboardReadTransient(err) ? "เซิร์ฟเวอร์ตอบกลับช้า ระบบลองโหลดให้อีกครั้งแล้ว กรุณากดลองใหม่" : "กรุณาลองโหลดข้อมูลอีกครั้ง"}</p><button class="btn btn-primary" type="button" onclick="openAdminDashboard('${mode === 'PENDING' ? 'PENDING' : 'SUMMARY'}',true,true)">ลองใหม่</button></div>`;
   }
 }
 
@@ -36755,6 +36680,9 @@ function loadAdminSession() {
 
 // ================= STEP A7: SINGLE LOGOUT SOURCE OF TRUTH =================
 function clearAdminSession(){
+  resetAdminOrdersRead();
+  adminDashboardLoadSeq++;
+  state.admin.dashboardAnalyticsData = null;
   try {
     // ล้าง storage ที่ใช้ restore
     localStorage.removeItem("admin_session");
