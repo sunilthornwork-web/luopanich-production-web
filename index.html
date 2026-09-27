@@ -6268,6 +6268,24 @@ textarea.input{
 .da-loading,.da-load-error{padding:4px;color:var(--text)}.dashboard-a-sheet .da-loading,.dashboard-a-sheet .da-load-error{color:#eef5ff}.da-loading h3,.da-load-error h3{margin-top:16px}.da-loading p,.da-load-error p{font-size:13px;color:#aebfd2;line-height:1.7}.da-skeleton{height:112px;border-radius:15px;background:linear-gradient(115deg,#19314c,#0f2438);margin:18px 0}.da-load-error>.btn{width:100%;margin:12px 0}
 @media(max-width:370px){#adminDashboardSheet.dashboard-a-sheet{padding-left:12px;padding-right:12px}.da-heading h3{font-size:14px}.da-date-button{font-size:9px;padding:6px}.da-toolbar h2{font-size:23px}.da-search{width:108px}.da-hero{padding:16px 12px}.da-growth{flex-basis:72px}.da-hero strong{font-size:30px}.da-value{padding:11px}.da-value>span{font-size:12px}.da-order{gap:6px;grid-template-columns:minmax(0,1fr) minmax(0,.85fr) auto}.da-order b{font-size:11px}.da-section-head h3{font-size:14px!important}.da-counts .da-card{gap:8px;padding:10px}.da-counts .da-card>div{padding-right:5px}}
 
+/* Stock history / design 1: isolated from all other admin sheets. */
+#adminStockSheet:has(.sh-view){max-width:560px;margin:0 auto;padding:18px 16px calc(24px + env(safe-area-inset-bottom,0px));background:linear-gradient(145deg,#0c1d2a,#0a1822 55%,#0b1923);color:#eff7ff;border:1px solid #365d78;border-radius:24px 24px 0 0;box-shadow:0 16px 48px #0006;color-scheme:dark}
+.sh-view{font:inherit;line-height:1.45;font-variant-numeric:tabular-nums}.sh-view *{box-sizing:border-box}.sh-view svg{width:21px;height:21px;flex-shrink:0}.sh-view button,.sh-view input,.sh-view select{font-family:inherit}.sh-view button{cursor:pointer}.sh-view [hidden]{display:none!important}
+.sh-header{display:grid;grid-template-columns:23px minmax(0,1fr) auto;align-items:center;gap:9px;margin-bottom:20px}.sh-back{border:0;background:none;color:#d6e9fa;padding:0;width:23px;height:38px;display:grid;place-items:center}.sh-back svg{width:24px;height:24px;stroke-width:2.3}.sh-title{min-width:0}.sh-title h3{font-size:21px!important;letter-spacing:-.3px;line-height:1.3;margin:0 0 3px!important;font-weight:850}.sh-title p{margin:0;font-size:12px;color:#a5c7e4}.sh-date{display:flex;align-items:center;justify-content:center;gap:7px;min-height:36px;max-width:165px;padding:8px 10px;background:linear-gradient(130deg,#13354c,#0e2537);border:1px solid #376381;border-radius:11px;color:#c3e2fa;font-size:11px;line-height:1.35}.sh-date svg{width:16px;height:16px}.sh-date span{overflow-wrap:anywhere}
+.sh-search-row{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:10px;margin-bottom:12px}.sh-search{height:44px;display:flex;align-items:center;gap:10px;padding:0 13px;border:1px solid #42677f;border-radius:13px;background:linear-gradient(120deg,#173448,#102b3d);color:#b4d4ef;min-width:0}.sh-search svg{width:19px;height:19px}.sh-search input{width:100%;min-width:0;margin:0;padding:0;border:0!important;outline:none;background:transparent!important;box-shadow:none!important;color:#edf7ff;font-size:16px}.sh-search input::placeholder{color:#90b2cd;font-size:13px}.sh-search input::-webkit-search-cancel-button{cursor:pointer}.sh-filter-button{display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid #42677f;border-radius:13px;color:#d8ebfa;background:linear-gradient(145deg,#203d52,#102b40);box-shadow:0 3px 10px #0002}.sh-filter-button.has-filter{border-color:#379ffe;color:#57b9ff;background:#123e60}
+.sh-filters[open]{padding:12px;border:1px solid #345d79;border-radius:13px;margin-bottom:12px;background:#132b3c}.sh-date-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}.sh-date-fields label{display:flex;flex-direction:column;gap:5px;font-size:11px;color:#bbd3e8;min-width:0}.sh-date-fields input[type=date]{display:block;box-sizing:border-box;width:100%;min-width:0;max-width:100%;height:44px;min-height:44px;overflow:hidden;-webkit-appearance:none;appearance:none;margin:0;border:1px solid #3a5870;border-radius:9px;padding:8px 6px;background:#0c1f2d;color:#ebf5ff;font-size:16px;text-align:center;line-height:normal}.sh-date-fields input::-webkit-date-and-time-value{min-width:0;width:100%;text-align:center;margin:0}.sh-date-fields input::-webkit-datetime-edit{min-width:0;padding:0}.sh-type-label{display:block;margin-top:10px;font-size:11px;color:#bbd3e8}.sh-type-label select{width:100%;min-height:42px;margin-top:5px;border:1px solid #3a5870;border-radius:9px;padding:6px 9px;background:#0c1f2d;color:#ebf5ff}.sh-filter-actions{display:flex;gap:8px;margin-top:12px}.sh-filter-actions button{border:1px solid #3d6c8e;border-radius:9px;padding:8px 12px;background:#1a3b52;color:#e2f2ff;font-size:12px}.sh-filter-actions button:first-child{background:#0b77cd;border-color:#379eff}
+.sh-active-filter:empty{display:none}.sh-active-filter{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:#b5dafa;padding:2px 2px 10px;overflow-wrap:anywhere}.sh-active-filter button{border:0;background:transparent;color:#77bdff;font-size:11px;padding:4px;white-space:nowrap}
+.sh-summary{display:grid;grid-template-columns:1.15fr 1fr 1fr;align-items:center;padding:10px 0;min-height:67px;border:1px solid #335d79;border-radius:14px;background:linear-gradient(120deg,#17354b,#102a3e);box-shadow:inset 0 1px 0 #75b8ff08;margin-bottom:13px}.sh-summary>div{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;padding:0 8px;min-height:42px}.sh-summary>div+div{border-left:1px solid #395870}.sh-summary span{font-size:12px;color:#bad8ef;line-height:1.4}.sh-summary strong{font-size:23px;font-weight:850;line-height:1.25;overflow-wrap:anywhere}.sh-summary .sh-summary-count{flex-direction:row;gap:9px;text-align:center}.sh-summary-count svg{color:#33b6ff;width:21px;height:21px}.sh-summary-count strong{font-size:18px}.sh-summary-count small{font-size:13px;font-weight:700}.sh-view .positive{color:#40e7b1}.sh-view .negative{color:#ff6478}.sh-view .neutral{color:#c6d6e6}
+.sh-cards{display:grid;gap:9px}.sh-card{display:grid;grid-template-columns:58px minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px 11px;border:1px solid #315a76;border-radius:15px;background:linear-gradient(112deg,#1c3b50 0%,#112d41 65%,#0c2334 100%);box-shadow:inset 0 1px 0 #8fcaff07,0 4px 12px #0001;min-width:0}.sh-thumb{width:58px;height:66px;border-radius:10px;overflow:hidden;background:#eff2f5;position:relative;align-self:start;flex-shrink:0}.sh-thumb img{display:block;width:100%;height:100%;object-fit:contain}.sh-thumb-fallback{display:flex;width:100%;height:100%;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#657d91;background:linear-gradient(145deg,#d7e2eb,#f5f8fa)}.sh-thumb-fallback svg{width:25px;height:25px}.sh-thumb-fallback small{font-size:9px}
+.sh-main{min-width:0;align-self:center}.sh-product-head{display:flex;align-items:center;flex-wrap:wrap;gap:5px 7px;line-height:1.4;margin-bottom:5px}.sh-product-head>strong{font-size:15px;font-weight:850;color:#fff;overflow-wrap:anywhere}.sh-badge{display:inline-flex;align-items:center;min-height:21px;max-width:100%;font-size:10px;font-weight:750;line-height:1.2;padding:3px 7px;border-radius:30px;border:1px solid #667d91;color:#d9e8f7;background:#2b4355;overflow-wrap:anywhere}.sh-badge.adjust{background:linear-gradient(120deg,#86541d,#583710);border-color:#bc8e43;color:#ffdf9c}.sh-badge.create{background:linear-gradient(120deg,#15588f,#0d3b67);border-color:#3a94c9;color:#daefff}.sh-badge.in{background:linear-gradient(120deg,#156550,#114c40);border-color:#39a686;color:#b2f7dd}.sh-badge.out{background:linear-gradient(120deg,#72293c,#4a2130);border-color:#b55870;color:#ffd3db}.sh-group-caption{font-size:10px;color:#b3cce0;margin-bottom:5px;overflow-wrap:anywhere}
+.sh-meta{display:flex;align-items:center;flex-wrap:wrap;gap:2px 5px;font-size:10px;line-height:1.5;color:#9fc5e4;margin-bottom:5px}.sh-clock{display:inline-flex;align-items:center;line-height:1;color:#b2dbff}.sh-clock svg{width:13px;height:13px}.sh-meta>span:last-child{max-width:100%;overflow-wrap:anywhere}.sh-meta time{white-space:nowrap}.sh-balance{display:flex;align-items:baseline;flex-wrap:wrap;gap:3px 7px;font-size:12px;color:#adcce5;line-height:1.5}.sh-balance>span{white-space:nowrap}.sh-balance b{font-weight:550;color:#f0f6ff}.sh-balance i{font-style:normal;color:#9bbdd9}
+.sh-side{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:9px;max-width:94px;min-width:58px;align-self:stretch}.sh-delta{font-size:25px;font-weight:850;line-height:1.2;letter-spacing:-.6px;overflow-wrap:anywhere;text-align:right;max-width:100%}.sh-detail-button{display:flex;align-items:center;gap:4px;padding:4px 0 4px 4px;font-size:11px;color:#9bd4ff;line-height:1.4;background:none;border:0;white-space:nowrap}.sh-detail-button>span:last-child{font-size:18px;line-height:1}.sh-detail-button[aria-expanded=true]>span:last-child{transform:rotate(90deg)}
+.sh-details{grid-column:1/-1;border-top:1px solid #34556d;margin-top:1px;padding-top:5px;min-width:0}.sh-detail-item{padding:10px 2px;border-bottom:1px solid #2a465c}.sh-detail-title{display:flex;justify-content:space-between;gap:10px;font-size:13px;overflow-wrap:anywhere}.sh-detail-title>span{white-space:nowrap}.sh-product-name{margin:3px 0 6px;font-size:12px;color:#cae0f3;overflow-wrap:anywhere}.sh-detail-meta,.sh-price{font-size:11px;color:#9dbfdc;margin:6px 0 0}.sh-note{font-size:12px;color:#c6d9e9;margin:7px 0 0;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}.sh-order-summary{display:flex;flex-direction:column;gap:4px;font-size:12px;margin:10px 0;color:#dcefff}.sh-order-summary small{font-size:11px;color:#a4c4df}.sh-related-order{width:100%;border:1px solid #3d6c91;border-radius:9px;padding:10px;margin-top:9px;background:#153d5a;color:#a9d9ff;font-size:12px;overflow-wrap:anywhere}
+.sh-foot{display:flex;flex-direction:column;align-items:center;gap:10px;font-size:10px;color:#8caac3;margin-top:16px;text-align:center}.sh-foot p{margin:0;font-size:11px;color:#e4c083}.sh-refresh{display:flex;align-items:center;gap:5px;border:0;background:none;color:#91c9f2;font-size:11px;padding:8px}.sh-refresh svg{width:13px;height:13px}.sh-more{padding:10px 18px;color:#c2e7ff;background:#183c56;border:1px solid #376380;border-radius:10px;font-size:12px}
+.sh-empty{display:flex;flex-direction:column;align-items:center;gap:9px;padding:34px 16px;text-align:center;color:#9bbdd8;border:1px dashed #345772;border-radius:14px;font-size:12px}.sh-empty strong{font-size:16px;color:#def0ff}.sh-empty svg{width:30px;height:30px}.sh-empty button{background:#0b73be;color:white;border:1px solid #319eec;border-radius:9px;padding:9px 22px;margin-top:7px}.sh-loading-card{height:98px;background:linear-gradient(110deg,#163044,#0e2435);border:1px solid #27485e;border-radius:15px;margin:10px 0}.sh-loading p{color:#a5c7e4;text-align:center;font-size:13px}
+.sh-view button:focus-visible,.sh-view summary:focus-visible,.sh-view input:focus-visible,.sh-view select:focus-visible{outline:2px solid #74beff;outline-offset:3px}.sh-search:focus-within{border-color:#58b9ff;box-shadow:0 0 0 2px #2e8bca25}
+@media(max-width:370px){#adminStockSheet:has(.sh-view){padding-left:12px;padding-right:12px}.sh-header{grid-template-columns:20px minmax(0,1fr) auto;gap:6px}.sh-title h3{font-size:18px!important}.sh-title p{font-size:10px}.sh-date{font-size:10px;max-width:124px;padding:7px;gap:5px}.sh-summary strong{font-size:21px}.sh-summary .sh-summary-count{gap:5px}.sh-summary-count strong{font-size:16px}.sh-summary-count svg{width:18px;height:18px}.sh-summary-count small{font-size:11px}.sh-card{grid-template-columns:48px minmax(0,1fr) 59px;gap:8px;padding:10px 9px}.sh-thumb{width:48px;height:59px}.sh-product-head>strong{font-size:14px}.sh-badge{font-size:9px;padding:3px 6px}.sh-delta{font-size:23px}.sh-meta{font-size:9px}.sh-balance{font-size:11px;gap:3px 5px}.sh-side{min-width:0;max-width:59px}.sh-detail-button{font-size:10px}}
+
 </style>
 </head>
 <body>
@@ -18495,467 +18513,247 @@ function handleOpenAddProduct(){
   openAddProduct();
 }  
 
-async function openStockTimeline(force = false, options = {}) {
-  // ❌ ต้องมี intent จริง
-  if (!force && !allowOpenStockTimeline) return;
-
-  // 🔐 session guard
-  if (
-    !state.admin.loggedIn ||
-    !state.admin.token ||
-    isAdminSessionExpired()
-  ) {
-    showToast(t("sessionExpiredLoginAgain", "Session หมดอายุ กรุณา login ใหม่"), "warning");
-    exitAdmin();
-    return;
-  }
-
-  if (!ensureAdminUiContext()) return;
-
-  // 🔒 ใช้แล้วปิดทันที (กันเด้งซ้ำ)
-  allowOpenStockTimeline = false;
-  adminStockSheet.classList.remove("stock-menu-return-side");
-
-  const targetSheet = adminStockSheet;
-  const returnToAdminMenu = options.returnToAdminMenu === true;
-  const focusProductId = normalizeProductId(options.focusProductId || "");
-  const backAction = returnToAdminMenu
-    ? "closeStockTimelineToAdminMenu()"
-    : "closeStockTimelineSheet()";
-  const stockTimelineTitleId = "adminStockSheetTitle";
-  const tr = t;
-  const stockTimelineTitle = t("stockMovementHistory", "ประวัติความเคลื่อนไหวสต๊อก");
-  const backLabel = t("back", "กลับ");
-  const viewMoreLabel = t("viewMoreDetails", "ดูรายละเอียดเพิ่มเติม");
-  const hideDetailsLabel = t("hideDetails", "ซ่อนรายละเอียด");
-
-  closeOverlay(adminDashboardSheet);
-
-  targetSheet.innerHTML = `
-    <div class="admin-sheet-topbar">
-      <button class="app-back-btn" type="button" onclick="${backAction}">
-        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
-        <span>${t("back", "กลับ")}</span>
-      </button>
-      <h3 id="${stockTimelineTitleId}">
-        <span class="dashboard-title-main">${stockTimelineTitle}</span>
-      </h3>
+// Stock history is a read-only view. Filtering never changes the underlying log records.
+let stockHistoryView = null;
+let stockHistoryLoadSeq = 0;
+function stockHistoryNumber(value) {
+  if (value === null || value === undefined || String(value).trim() === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+function stockHistoryDelta(log) {
+  const qty = stockHistoryNumber(log.qty);
+  const type = String(log.type || "").trim().toUpperCase();
+  if (qty !== null) return type === "OUT" ? -Math.abs(qty) : qty;
+  const before = stockHistoryNumber(log.before), after = stockHistoryNumber(log.after);
+  return before !== null && after !== null ? after - before : null;
+}
+function stockHistoryQty(value, signed = false) {
+  if (value === null || !Number.isFinite(value)) return "—";
+  return (signed && value > 0 ? "+" : value < 0 ? "−" : "") + Math.abs(value).toLocaleString("th-TH", { maximumFractionDigits: 3 });
+}
+function stockHistoryIcon(name) {
+  const path = name === 'cart' ? '<path d="M3 3h2l2.3 11h11.5l2-8H6M8 18h10"/><circle cx="9" cy="21" r="1"/><circle cx="17" cy="21" r="1"/>' : '<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/>';
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${path}</svg>`;
+}
+function stockHistoryTime(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+function stockHistoryEventLabel(type, reasonCode = "") {
+  if (type === "OUT" && ["PENDING_FULFILLMENT", "ORDER_APPROVE_FULFILLMENT"].includes(reasonCode)) return formatStockReasonForDisplay(reasonCode);
+  return ({ IN: t("stockTimelineStockIn", "รับสินค้าเข้า"), CREATE: t("stockTimelineCreated", "เพิ่มสินค้าใหม่"), ADJUST: t("stockTimelineAdjusted", "ปรับสต๊อก"), OUT: t("stockTimelineSold", "ขายออก") })[type] || type || "ไม่ระบุประเภท";
+}
+function buildStockHistoryModel(logs, orders, products, filters = {}) {
+  const orderMap = new Map((Array.isArray(orders) ? orders : []).map(order => [String(order.orderId || "").trim(), order]));
+  const productMap = new Map((Array.isArray(products) ? products : []).map(product => [normalizeProductId(product.productId), product]));
+  const groups = new Map(), events = [];
+  const summary = { count: 0, increase: 0, decrease: 0, unknownQty: 0 };
+  const query = normalizeProductId(filters.query || "");
+  const focus = normalizeProductId(filters.focusProductId || "");
+  (Array.isArray(logs) ? logs : []).forEach((log, index) => {
+    const productId = String(log.productId || "").trim();
+    const normalizedId = normalizeProductId(productId);
+    const type = String(log.type || "").trim().toUpperCase();
+    const time = stockHistoryTime(log.timestamp);
+    const dateKey = time ? toYmdLocal(time) : "";
+    if (focus && normalizedId !== focus) return;
+    if (query && !normalizedId.includes(query)) return;
+    if (filters.type && type !== filters.type) return;
+    if (filters.from && (!dateKey || dateKey < filters.from)) return;
+    if (filters.to && (!dateKey || dateKey > filters.to)) return;
+    const product = productMap.get(normalizedId);
+    const orderId = String(log.orderId || log.ref || "").trim();
+    const order = orderMap.get(orderId);
+    const orderItem = Array.isArray(order?.items) ? order.items.find(item => normalizeProductId(item.productId) === normalizedId) : null;
+    const reasonCode = String(log.reason || log.note || "").trim();
+    const qty = stockHistoryDelta(log);
+    const firstNumber = (...values) => values.map(stockHistoryNumber).find(value => value !== null) ?? null;
+    const price = firstNumber(log.salePrice, log.price, orderItem?.price);
+    const lineTotal = firstNumber(log.lineTotal, price !== null && qty !== null ? price * Math.abs(qty) : null);
+    const line = { productId, name: String(log.productName || log.name || orderItem?.name || product?.name || ""), image: String(log.image || orderItem?.image || product?.image || ""), qty,
+      before: stockHistoryNumber(log.before), after: stockHistoryNumber(log.after), time, by: String(log.by || "-"), type, price, lineTotal,
+      reasonCode, note: formatStockReasonForDisplay(log.note || log.reason || ""), orderId };
+    summary.count++;
+    if (qty === null) summary.unknownQty++;
+    else if (qty > 0) summary.increase += qty;
+    else summary.decrease += qty;
+    // Preserve the original order grouping; pending-delivery fulfillment remains its own event.
+    if (type === "OUT" && orderId && reasonCode !== "PENDING_FULFILLMENT") {
+      if (!groups.has(orderId)) {
+        const group = { key: 'order-' + index, kind: "ORDER", type, orderId, time, by: line.by, reasonCode, lines: [], orderTotal: firstNumber(order?.total) };
+        groups.set(orderId, group); events.push(group);
+      }
+      const group = groups.get(orderId);
+      group.lines.push(line);
+      if (time && (!group.time || time > group.time)) { group.time = time; group.by = line.by; }
+    } else events.push({ key: 'log-' + index, kind: "STOCK", type, orderId, time, by: line.by, reasonCode, lines: [line], orderTotal: null });
+  });
+  events.forEach(event => {
+    event.qty = event.lines.some(line => line.qty === null) ? null : event.lines.reduce((sum, line) => sum + line.qty, 0);
+    event.lineTotal = event.lines.some(line => line.lineTotal === null) ? null : event.lines.reduce((sum, line) => sum + line.lineTotal, 0);
+  });
+  events.sort((a,b) => (b.time?.getTime() ?? -Infinity) - (a.time?.getTime() ?? -Infinity));
+  return { events, summary };
+}
+function stockHistoryThumb(line) {
+  // Prefer recorded images, with the existing product image fallback supplied by the model.
+  const image = String(line.image || "").trim();
+  const safe = /^(https?:\/\/|data:image\/(?:png|jpe?g|webp|gif);base64,)/i.test(image);
+  return `<div class="sh-thumb">${safe ? `<img src="${escAttr(image)}" alt="${escAttr(line.name || line.productId)}" loading="lazy" decoding="async" onerror="this.hidden=true;this.nextElementSibling.hidden=false">` : ''}<span class="sh-thumb-fallback" ${safe ? 'hidden' : ''}>${dashboardAIcon('box')}<small>ไม่มีรูป</small></span></div>`;
+}
+function stockHistoryBalance(line) {
+  return `<span>${t("before", "ก่อน")} <b>${stockHistoryQty(line.before)}</b></span><i aria-hidden="true">→</i><span>${t("after", "หลัง")} <b>${stockHistoryQty(line.after)}</b></span>`;
+}
+function renderStockHistoryCard(event) {
+  const first = event.lines[0];
+  const grouped = event.kind === "ORDER" && event.lines.length > 1;
+  const detailId = 'sh-detail-' + event.key;
+  const badge = ({IN:'in',CREATE:'create',ADJUST:'adjust',OUT:'out'})[event.type] || 'neutral';
+  const date = event.time ? event.time.toLocaleDateString('th-TH',{day:'numeric',month:'short'}) : 'ไม่ระบุวัน';
+  const clock = event.time ? event.time.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}) : '—';
+  const signClass = event.qty === null || event.qty === 0 ? 'neutral' : event.qty > 0 ? 'positive' : 'negative';
+  const authorList = [...new Set(event.lines.map(line=>line.by))];
+  const actor = authorList.length === 1 ? authorList[0] : 'หลายผู้ดำเนินการ';
+  return `<article class="sh-card">
+    ${stockHistoryThumb(first)}
+    <div class="sh-main"><div class="sh-product-head"><strong title="${escAttr(first.name || first.productId)}">${esc(first.productId || 'ไม่ระบุ SKU')}</strong><span class="sh-badge ${badge}">${esc(stockHistoryEventLabel(event.type,event.reasonCode))}</span></div>
+      ${grouped ? `<div class="sh-group-caption">และอีก ${event.lines.length-1} รายการ • ${esc(formatOrderIdForDisplay(event.orderId))}</div>` : ''}
+      <div class="sh-meta"><span class="sh-clock" aria-hidden="true">${stockHistoryIcon('clock')}</span><time ${event.time ? `datetime="${escAttr(event.time.toISOString())}"` : ''}>${esc(date)} · ${esc(clock)}</time><span title="${escAttr(actor)}">${t('by','โดย')} ${esc(actor)}</span></div>
+      <div class="sh-balance">${grouped ? '<span>ยอดก่อน–หลังแยกตามสินค้า</span>' : stockHistoryBalance(first)}</div>
     </div>
-    <div class="loading has-lottie">${renderLottieLoading(t("loading", "กำลังโหลด..."))}</div>
-  `;
-
-  openOverlay(targetSheet);
-
+    <div class="sh-side"><strong class="sh-delta ${signClass}">${stockHistoryQty(event.qty,true)}</strong><button type="button" class="sh-detail-button" aria-expanded="false" aria-controls="${detailId}" onclick="toggleStockHistoryDetails(this)"><span>รายละเอียด</span><span aria-hidden="true">›</span></button></div>
+    <div id="${detailId}" class="sh-details" hidden>
+      ${event.lines.map(line=>`<div class="sh-detail-item"><div class="sh-detail-title"><strong>${esc(line.productId || '—')}</strong><span class="${line.qty !== null && line.qty < 0 ? 'negative' : line.qty > 0 ? 'positive' : 'neutral'}">${stockHistoryQty(line.qty,true)} ชิ้น</span></div>${line.name ? `<p class="sh-product-name">${esc(line.name)}</p>` : ''}<div class="sh-balance">${stockHistoryBalance(line)}</div><p class="sh-detail-meta">${esc(line.time ? formatThaiDate(line.time) : 'ไม่ระบุวันและเวลา')} · ${t('by','โดย')} ${esc(line.by)}</p>${line.note ? `<p class="sh-note">${t('note','หมายเหตุ')}: ${esc(line.note)}</p>` : ''}${event.type === 'OUT' ? `<p class="sh-price">ราคาขาย ${line.price === null ? '—' : dashboardMoney(line.price)}/ชิ้น · รวม ${line.lineTotal === null ? '—' : dashboardMoney(line.lineTotal)}</p>` : ''}</div>`).join('')}
+      ${event.kind === 'ORDER' ? `<div class="sh-order-summary"><span>${event.lines.length} รายการที่แสดง · ${stockHistoryQty(event.qty === null ? null : Math.abs(event.qty))} ชิ้น</span><strong>ยอดรายการที่แสดง ${event.lineTotal === null ? '—' : dashboardMoney(event.lineTotal)}</strong>${event.orderTotal !== null ? `<small>ยอดทั้งออเดอร์ ${dashboardMoney(event.orderTotal)}</small>` : ''}</div>` : ''}
+      ${event.orderId && event.type === 'OUT' ? `<button type="button" class="sh-related-order" onclick="openRelatedOrderFromContext(${toInlineJsStringLiteral(event.orderId)})">${t('viewRelatedOrder','ดูออเดอร์ที่เกี่ยวข้อง')} · ${esc(formatOrderIdForDisplay(event.orderId))} ›</button>` : ''}
+    </div>
+  </article>`;
+}
+function toggleStockHistoryDetails(button) {
+  const panel = document.getElementById(button.getAttribute('aria-controls'));
+  if (!panel) return;
+  panel.hidden = !panel.hidden;
+  button.setAttribute('aria-expanded',String(!panel.hidden));
+  button.querySelector('span').textContent = panel.hidden ? 'รายละเอียด' : 'ย่อ';
+}
+function stockHistoryDateLabel(filters) {
+  if (filters.from && filters.from === filters.to) return formatDashboardDateDisplay(filters.from);
+  if (filters.from && filters.to) return dashboardARangeLabel(filters.from,filters.to);
+  if (filters.from) return 'ตั้งแต่ '+formatDashboardDateDisplay(filters.from);
+  if (filters.to) return 'ถึง '+formatDashboardDateDisplay(filters.to);
+  return 'ทุกช่วงเวลา';
+}
+function canRenderStockHistory() {
+  return stockHistoryView && stockHistoryView.token === state.admin.token && state.admin.loggedIn && adminStockSheet.classList.contains('show') && !!document.getElementById('stockHistoryCards');
+}
+function renderStockHistoryResults(resetLimit = true) {
+  if (!canRenderStockHistory()) return;
+  if (resetLimit) stockHistoryView.limit = 60;
+  const view = stockHistoryView;
+  const model = buildStockHistoryModel(view.logs, view.orders, state.products, {...view.filters,focusProductId:view.focusProductId});
+  view.model = model;
+  const {summary,events} = model;
+  document.getElementById('stockHistorySummary').innerHTML = `<div class="sh-summary-count">${stockHistoryIcon('cart')}<strong>${summary.count.toLocaleString('th-TH')} <small>รายการ</small></strong></div><div><span>เพิ่ม</span><strong class="positive">${stockHistoryQty(summary.increase,true)}</strong></div><div><span>ลด</span><strong class="negative">${stockHistoryQty(summary.decrease,true)}</strong></div>`;
+  document.getElementById('stockHistoryDateLabel').textContent = stockHistoryDateLabel(view.filters);
+  const active = !!(view.filters.from || view.filters.to || view.filters.type || view.filters.query || view.focusProductId);
+  document.getElementById('stockHistoryFilterButton').classList.toggle('has-filter',active);
+  const showFilterCaption = !!(view.filters.type || view.filters.query || view.focusProductId);
+  document.getElementById('stockHistoryActive').innerHTML = showFilterCaption ? `<span>${view.focusProductId ? 'เฉพาะ SKU '+esc(view.focusProductId)+' • ' : ''}${view.filters.query ? 'ค้นหา '+esc(view.filters.query)+' • ' : ''}${view.filters.type ? esc(stockHistoryEventLabel(view.filters.type)) : 'ทุกประเภท'}</span><button type="button" onclick="clearStockHistoryFilters()">ล้างตัวกรอง ×</button>` : '';
+  document.getElementById('stockHistoryCards').innerHTML = events.length ? events.slice(0,view.limit).map(renderStockHistoryCard).join('') : `<div class="sh-empty">${dashboardAIcon('search')}<strong>ไม่พบประวัติสต๊อก</strong><span>${view.logs.length ? 'ลองเปลี่ยนวันที่ รหัสสินค้า หรือประเภทงาน' : 'ยังไม่มีรายการเคลื่อนไหวสต๊อก'}</span></div>`;
+  const foot = document.getElementById('stockHistoryFoot');
+  foot.innerHTML = `${summary.unknownQty ? `<p>ไม่ทราบจำนวน ${summary.unknownQty} รายการ จึงไม่นำมารวมยอดเพิ่ม/ลด</p>` : ''}<span>รวม ${summary.count} รายการเคลื่อนไหวตามตัวกรอง${events.length !== summary.count ? ` • ${events.length} เหตุการณ์` : ''}</span>${events.length > view.limit ? `<button type="button" class="sh-more" onclick="loadMoreStockHistory()">แสดงเพิ่ม (${events.length-view.limit} เหตุการณ์)</button>` : ''}<button type="button" class="sh-refresh" onclick="refreshStockHistory()">${dashboardAIcon('refresh')} โหลดข้อมูลล่าสุด</button>`;
+}
+function updateStockHistorySearch(value) {
+  if (!canRenderStockHistory()) return;
+  stockHistoryView.filters.query = String(value || '').trim();
+  renderStockHistoryResults();
+}
+function applyStockHistoryFilters() {
+  if (!canRenderStockHistory()) return;
+  const from = document.getElementById('stockHistoryFrom').value;
+  const to = document.getElementById('stockHistoryTo').value;
+  if (from && to && from > to) { showToast('กรุณาเลือกช่วงวันที่ให้ถูกต้อง','warning'); return; }
+  Object.assign(stockHistoryView.filters,{from,to,type:document.getElementById('stockHistoryType').value});
+  document.getElementById('stockHistoryFilters').open = false;
+  renderStockHistoryResults();
+}
+function clearStockHistoryFilters() {
+  if (!canRenderStockHistory()) return;
+  stockHistoryView.filters = {query:'',from:'',to:'',type:''}; stockHistoryView.focusProductId = '';
+  ['stockHistorySearch','stockHistoryFrom','stockHistoryTo','stockHistoryType'].forEach(id=>{document.getElementById(id).value=''});
+  renderStockHistoryResults();
+}
+function renderStockHistoryPreservingDetails() {
+  if (!canRenderStockHistory()) return;
+  const opened = [...document.querySelectorAll('.sh-detail-button[aria-expanded="true"]')].map(button=>button.getAttribute('aria-controls'));
+  const scrollTop = adminStockSheet.scrollTop;
+  renderStockHistoryResults(false);
+  opened.forEach(id=>{
+    const panel=document.getElementById(id),button=document.querySelector(`.sh-detail-button[aria-controls="${id}"]`);
+    if(panel && button) toggleStockHistoryDetails(button);
+  });
+  adminStockSheet.scrollTop = scrollTop;
+}
+function loadMoreStockHistory() {
+  if (!canRenderStockHistory()) return;
+  stockHistoryView.limit += 60;
+  renderStockHistoryPreservingDetails();
+}
+function refreshStockHistory() {
+  if (!canRenderStockHistory()) return;
+  openStockTimeline(true,{returnToAdminMenu:stockHistoryView.returnToAdminMenu,focusProductId:stockHistoryView.focusProductId,filters:{...stockHistoryView.filters}});
+}
+function renderStockHistoryHeader(backAction) {
+  return `<div class="sh-header"><button class="sh-back" type="button" aria-label="${t('back','กลับ')}" onclick="${backAction}">${dashboardAIcon('back')}</button><div class="sh-title"><h3 id="adminStockSheetTitle">ประวัติสต๊อก</h3><p>ความเคลื่อนไหวสินค้า</p></div><button class="sh-date" type="button" onclick="const el=document.getElementById('stockHistoryFilters');if(el)el.open=!el.open" aria-label="เลือกช่วงวันที่">${dashboardAIcon('calendar')}<span id="stockHistoryDateLabel">ทุกช่วงเวลา</span></button></div>`;
+}
+function renderStockHistoryShell(view) {
+  return `<div class="sh-view">${renderStockHistoryHeader(view.backAction)}
+    <div class="sh-search-row"><label class="sh-search">${dashboardAIcon('search')}<span class="da-sr-only">ค้นหารหัสสินค้า</span><input id="stockHistorySearch" type="search" value="${escAttr(view.filters.query)}" placeholder="ค้นหารหัสสินค้า..." autocomplete="off" oninput="updateStockHistorySearch(this.value)"></label><button id="stockHistoryFilterButton" class="sh-filter-button" type="button" aria-label="ตัวกรองวันที่และประเภท" onclick="const el=document.getElementById('stockHistoryFilters');el.open=!el.open">${dashboardAIcon('filter')}</button></div>
+    <details id="stockHistoryFilters" class="sh-filters"><summary class="da-sr-only">ตัวกรอง</summary><div class="sh-date-fields"><label>ตั้งแต่วันที่<input id="stockHistoryFrom" type="date" value="${escAttr(view.filters.from)}"></label><label>ถึงวันที่<input id="stockHistoryTo" type="date" value="${escAttr(view.filters.to)}"></label></div><label class="sh-type-label" for="stockHistoryType">ประเภทงาน<select id="stockHistoryType">${[['','ทุกประเภท'],['IN','รับสินค้าเข้า'],['CREATE','เพิ่มสินค้าใหม่'],['ADJUST','ปรับสต๊อก'],['OUT','ขายออก / ลดสต๊อก']].map(([value,label])=>`<option value="${value}" ${view.filters.type===value?'selected':''}>${label}</option>`).join('')}</select></label><div class="sh-filter-actions"><button type="button" onclick="applyStockHistoryFilters()">ใช้ตัวกรอง</button><button type="button" onclick="clearStockHistoryFilters()">ล้างทั้งหมด</button></div></details>
+    <div id="stockHistoryActive" class="sh-active-filter"></div><div id="stockHistorySummary" class="sh-summary" aria-live="polite" aria-label="ยอดรวมตามตัวกรอง"></div><div id="stockHistoryCards" class="sh-cards"></div><div id="stockHistoryFoot" class="sh-foot"></div></div>`;
+}
+async function openStockTimeline(force = false, options = {}) {
+  if (!force && !allowOpenStockTimeline) return;
+  if (!state.admin.loggedIn || !state.admin.token || isAdminSessionExpired()) {
+    showToast(t('sessionExpiredLoginAgain','Session หมดอายุ กรุณา login ใหม่'),'warning'); exitAdmin(); return;
+  }
+  if (!ensureAdminUiContext()) return;
+  allowOpenStockTimeline = false;
+  adminStockSheet.classList.remove('stock-menu-return-side');
+  const token = state.admin.token, seq = ++stockHistoryLoadSeq;
+  const stillActive = () => stockHistoryLoadSeq === seq && state.admin.token === token && adminStockSheet.classList.contains('show') && !!adminStockSheet.querySelector('.sh-view');
+  const returnToAdminMenu = options.returnToAdminMenu === true;
+  const backAction = returnToAdminMenu ? 'closeStockTimelineToAdminMenu()' : 'closeStockTimelineSheet()';
+  closeOverlay(adminDashboardSheet);
+  stockHistoryView = null;
+  adminStockSheet.innerHTML = `<div class="sh-view">${renderStockHistoryHeader(backAction)}<div class="sh-loading" role="status"><div class="sh-loading-card"></div><div class="sh-loading-card"></div><p>กำลังโหลดประวัติสต๊อก...</p></div></div>`;
+  openOverlay(adminStockSheet);
   try {
     const logs = await fetchStockLogs();
-    const safeLogs = Array.isArray(logs) ? logs : [];
-
-    const money = (value) => `฿${Number(value || 0).toLocaleString("th-TH")}`;
-    const esc = (value) => escapeHtml(value ?? "");   
-
-    // ✅ ensure orders พร้อมใช้สำหรับ fallback ราคา/ยอดรวม
-    if (!Array.isArray(state.admin.orders) || state.admin.orders.length === 0) {
-      try {
-        const freshOrders = await fetchOrders();
-        state.admin.orders = Array.isArray(freshOrders) ? freshOrders : [];
-      } catch (orderErr) {
-        console.warn("openStockTimeline: preload orders failed", orderErr);
-      }
+    if (!stillActive()) return;
+    if (!Array.isArray(logs)) throw new Error('รูปแบบข้อมูลประวัติสต๊อกไม่ถูกต้อง');
+    const view = { token,logs,orders:Array.isArray(state.admin.orders)?state.admin.orders:[],returnToAdminMenu,backAction,
+      focusProductId:normalizeProductId(options.focusProductId || ''),filters:{query:'',from:'',to:'',type:'',...(options.filters || {})},limit:60 };
+    stockHistoryView = view;
+    adminStockSheet.innerHTML = renderStockHistoryShell(view);
+    renderStockHistoryResults();
+    // Optional order prices must not hold the history list behind another network request.
+    if (logs.some(log=>String(log.type).toUpperCase()==='OUT' && (log.orderId || log.ref)) && !view.orders.length) {
+      void fetchOrders().then(orders=>{
+        if (!stillActive() || stockHistoryView !== view) return;
+        view.orders = orders; state.admin.orders = orders;
+        // Enrich prices without closing details, changing search input or moving the scroll position.
+        renderStockHistoryPreservingDetails();
+      }).catch(err=>console.warn('stock history: order details unavailable',err?.code || err?.message));
     }
-   
-    // ✅ fallback ราคา/ยอดรวมจาก order จริง ถ้า stock log ไม่มีราคา
-    const orderLookup = new Map(
-      (Array.isArray(state.admin.orders) ? state.admin.orders : []).map(o => [
-        String(o.orderId || "").trim(),
-        o
-      ])
-    );   
-
-    /* ================= GROUP ORDER OUT ================= */
-    const orderMap = {};
-    const singles = [];
-
- safeLogs.forEach(l => {
-  const time = l.timestamp ? new Date(l.timestamp) : new Date();
-  const reasonCode = String(l.reason || l.note || "").trim();
-
-  // ✅ ใช้ orderId จริงจาก sheet (fallback เผื่อของเก่า)
-  const orderRef = l.orderId || l.ref || null;
-
-  if (l.type === "OUT" && orderRef && reasonCode !== "PENDING_FULFILLMENT") {
-    const matchedOrder = orderLookup.get(String(orderRef).trim());
-    const matchedOrderItem = Array.isArray(matchedOrder?.items)
-      ? matchedOrder.items.find(item =>
-          String(item.productId || "").trim() === String(l.productId || "").trim()
-        )
-      : null;
-
-    const fallbackSalePrice = Number(
-      l.salePrice ??
-      l.price ??
-      matchedOrderItem?.price ??
-      0
-    );
-
-    const fallbackLineTotal = Number(
-      l.lineTotal ??
-      (fallbackSalePrice * Math.abs(Number(l.qty || 0)))
-    );
-   
-    if (!orderMap[orderRef]) {
-      orderMap[orderRef] = {
-        orderId: orderRef,
-        time,
-        by: l.by || "-",
-        note: formatStockReasonForDisplay(reasonCode),
-        reasonCode,
-        totalSalesAmount: Number(matchedOrder?.total || 0),
-        items: []
-      };
-    }
-
-    if (!orderMap[orderRef].note && (l.note || l.reason)) {
-      orderMap[orderRef].note = formatStockReasonForDisplay(reasonCode);
-    }   
-
-    // ใช้เวลาล่าสุดของ item ใน order เดียวกัน
-    if (time.getTime() > orderMap[orderRef].time.getTime()) {
-      orderMap[orderRef].time = time;
-    }
-
-    // ✅ ถ้า order.total ไม่มี ค่อยสะสมจากรายการย่อย
-    if (!Number(orderMap[orderRef].totalSalesAmount)) {
-      orderMap[orderRef].totalSalesAmount += fallbackLineTotal;
-    }   
-
-    orderMap[orderRef].items.push({
-      productId: l.productId,
-      productName: l.productName || l.name || matchedOrderItem?.name || "",
-      image: l.image || matchedOrderItem?.image || "",
-      qty: Math.abs(Number(l.qty || 0)),
-      before: l.before,
-      after: l.after,
-      salePrice: fallbackSalePrice,
-      lineTotal: fallbackLineTotal
-    });
-  } else {
-    singles.push({
-      ...l,
-      orderId: orderRef || l.orderId || "",
-      reasonCode,
-      _time: time
-    });
-  }
-});
-
-    /* ================= BUILD TIMELINE ================= */
-    const timeline = [];
-
-    Object.values(orderMap).forEach(o => {
-      timeline.push({
-        kind: "ORDER",
-        type: "OUT",
-        orderId: o.orderId,
-        time: o.time,
-        by: o.by,
-        note: o.note || "",
-        reasonCode: o.reasonCode || "",
-        items: o.items,
-        totalLines: o.items.length,
-        totalQty: o.items.reduce((sum, item) => sum + Number(item.qty || 0), 0),
-        totalSalesAmount: o.totalSalesAmount
-      });
-    });
-
-    singles.forEach(l => {
-      timeline.push({
-        kind: "STOCK",
-        type: l.type,
-        productId: l.productId,
-        productName: l.productName || l.name || "",
-        image: l.image || "",
-        orderId: l.orderId || "",
-        qty: l.qty,
-        before: l.before,
-        after: l.after,
-        time: l._time,
-        by: l.by || "-",
-        reasonCode: l.reasonCode || "",
-        note: formatStockReasonForDisplay(l.note || l.reason)
-      });
-    });
-
-    // 🕒 latest first (safe)
-    timeline.sort((a, b) => b.time.getTime() - a.time.getTime());
-
-    const visibleTimeline = focusProductId
-      ? timeline.filter(item => {
-          if (item.kind === "ORDER") {
-            return (Array.isArray(item.items) ? item.items : []).some(product =>
-              normalizeProductId(product?.productId || "") === focusProductId
-            );
-          }
-          return normalizeProductId(item?.productId || "") === focusProductId;
-        })
-      : timeline;
-
-    /* ================= RENDER ================= */
-    targetSheet.innerHTML = `
-      <div class="admin-sheet-topbar">
-        <button class="app-back-btn" type="button" onclick="${backAction}">
-          <span class="app-back-btn-icon" aria-hidden="true">‹</span>
-          <span>${t("back", "กลับ")}</span>
-        </button>
-        <h3 id="${stockTimelineTitleId}">
-          <span class="dashboard-title-main">${stockTimelineTitle}</span>
-          ${focusProductId ? `<span class="dashboard-title-sub">SKU ${esc(focusProductId)}</span>` : ""}
-        </h3>
-      </div>
-
-      ${
-        visibleTimeline.length
-          ? visibleTimeline.map((t, timelineIndex) => {
-
-              if (t.kind === "ORDER") {
-                const detailId = `stock-detail-${timelineIndex}`;
-                const orderEventLabel = t.reasonCode === "ORDER_APPROVE_FULFILLMENT"
-                  ? formatStockReasonForDisplay(t.reasonCode)
-                  : tr("stockTimelineSold", "ขายออก");
-               
-                return `
-                  <div class="card">
-                    <div class="timeline-tag tag-out">
-                      ${esc(orderEventLabel)} · ${esc(formatOrderIdForDisplay(t.orderId))}
-                    </div>
-
-                    <div class="timeline-summary">
-                      ${formatUiText("stockTimelineSummary", {
-                        items: Number(t.totalLines) || 0,
-                        qty: Number(t.totalQty) || 0,
-                        amount: money(t.totalSalesAmount)
-                      }, "{items} รายการ · {qty} ชิ้น · {amount}")}
-                    </div>                    
-
-                    ${t.items.map(i => `
-                      <div class="timeline-product-row">
-                        ${renderCartItemThumb({
-                          productId: i.productId,
-                          name: i.productName || i.productId || tr("productLabel", "สินค้า"),
-                          image: i.image || ""
-                        })}
-                        <div class="timeline-main">
-                          <div class="timeline-row">
-                            <strong>${esc(i.productId)}</strong>
-                            ${i.productName ? ` — ${esc(i.productName)}` : ""}
-                          </div>
-                          <div class="timeline-row">
-                            ${tr("qtyChanged", "จำนวนที่เปลี่ยน")}: -${Number(i.qty || 0)}
-                            ${
-                              Number.isFinite(Number(i.before)) &&
-                              Number.isFinite(Number(i.after))
-                                ? `<span class="timeline-muted">
-                                    · ${tr("stock", "สต๊อก")} ${Number(i.before)} → ${Number(i.after)}
-                                  </span>`
-                                : ""
-                            }
-                          </div>
-                        </div>
-                      </div>
-                    `).join("")}
-
-                    <div class="timeline-detail-wrap">
-                      <button
-                        type="button"
-                        class="timeline-detail-toggle"
-                        data-open-label="${escAttr(viewMoreLabel)}"
-                        data-close-label="${escAttr(hideDetailsLabel)}"
-                        onclick="
-                          const panel = document.getElementById(${toInlineJsStringLiteral(detailId)});
-                          if (!panel) return;
-                          panel.classList.toggle('show');
-                          this.textContent = panel.classList.contains('show')
-                            ? this.dataset.closeLabel
-                            : this.dataset.openLabel;
-                        "
-                      >
-                        ${viewMoreLabel}
-                      </button>
-
-                      <div id="${escAttr(detailId)}" class="timeline-detail-panel">
-                        <div class="timeline-detail-meta">
-                          ${tr("totalProductLines", "ยอดรวมสินค้า")}: ${Number(t.totalLines) || 0} ${tr("itemUnit", "รายการ")}<br>
-                          ${tr("totalQty", "ยอดรวมจำนวนชิ้น")}: ${Number(t.totalQty) || 0}<br>
-                          ${tr("totalSales", "ยอดขายรวม")}: ${money(t.totalSalesAmount)}
-                          ${t.note ? `<br>${tr("note", "หมายเหตุ")}: ${esc(t.note)}` : ""}
-                        </div>
-
-                        <div class="timeline-detail-list" style="margin-top:10px">
-                          ${t.items.map(i => `
-                            <div class="timeline-row">
-                              ${esc(i.productId)}
-                              ${i.productName ? ` — ${esc(i.productName)}` : ""} |
-                              ${Number(i.qty || 0)} ${tr("pieceUnit", "ชิ้น")}
-                              ${
-                                Number.isFinite(Number(i.before)) &&
-                                Number.isFinite(Number(i.after))
-                                  ? ` | ${Number(i.before)} → ${Number(i.after)}`
-                                  : ""
-                              }
-                              | ${money(i.salePrice)}/${tr("pieceUnit", "ชิ้น")}
-                              | ${tr("total", "รวม")} ${money(i.lineTotal)}
-                            </div>
-                          `).join("")}
-                        </div>
-                      </div>
-                    </div>                    
-
-                    <button
-                      class="btn btn-outline"
-                      type="button"
-                      style="margin-top:10px;width:100%"
-                      onclick="openRelatedOrderFromContext(${toInlineJsStringLiteral(t.orderId)})">
-                      ${tr("viewRelatedOrder", "ดูออเดอร์ที่เกี่ยวข้อง")}
-                    </button>
-
-                    <div style="font-size:12px;color:var(--muted);margin-top:6px">
-                      ${t.time.toLocaleDateString("th-TH")}
-                      ${t.time.toLocaleTimeString("th-TH")}
-                      · ${tr("by", "โดย")} ${esc(t.by)}
-                    </div>
-                  </div>
-                `;
-              }
-
-              const typeMap = {
-                IN:     { text: tr("stockTimelineStockIn", "รับสต๊อกเข้า"), class: "tag-in" },
-                CREATE: { text: tr("stockTimelineCreated", "เพิ่มสินค้าใหม่"), class: "tag-create" },
-                ADJUST: { text: tr("stockTimelineAdjusted", "ปรับสต๊อก"), class: "tag-adjust" }
-              };
-
-              typeMap.OUT = {
-                text: t.reasonCode === "PENDING_FULFILLMENT"
-                  ? formatStockReasonForDisplay(t.reasonCode)
-                  : tr("stockTimelineReduced", "ลดสต๊อก"),
-                class: "tag-out"
-              };
-
-              const cfg = typeMap[t.type] || { text: t.type, class: "" };
-              const stockEventOrderSuffix = t.type === "OUT" && t.orderId
-                ? ` · ${esc(formatOrderIdForDisplay(t.orderId))}`
-                : "";
-
-              return `
-                <div class="card">
-                  <div class="timeline-card-with-thumb">
-                    ${renderCartItemThumb({
-                      productId: t.productId,
-                      name: t.productName || t.productId || tr("productLabel", "สินค้า"),
-                      image: t.image || ""
-                    })}
-                    <div class="timeline-main">
-                      <div class="timeline-tag ${escAttr(cfg.class)}">
-                        ${esc(cfg.text)}${stockEventOrderSuffix}
-                      </div>
-
-                      <div class="timeline-row">
-                        <strong>${esc(t.productId)}</strong>
-                        ${t.productName ? ` — ${esc(t.productName)}` : ""}
-                      </div>
-                      <div class="timeline-row">
-                        ${
-                          Number.isFinite(Number(t.qty))
-                            ? `${tr("qtyChanged", "จำนวนที่เปลี่ยน")}: ${Number(t.qty) > 0 ? "+" : ""}${Number(t.qty)}`
-                            : ""
-                        }
-                        ${
-                          Number.isFinite(Number(t.before)) &&
-                          Number.isFinite(Number(t.after))
-                            ? `<span class="timeline-muted">
-                                · ${tr("stock", "สต๊อก")} ${Number(t.before)} → ${Number(t.after)}
-                              </span>`
-                            : ""
-                        }
-                      </div>
-
-                  ${
-                    t.note
-                      ? `
-                        <div class="timeline-detail-wrap">
-                          <button
-                            type="button"
-                            class="timeline-detail-toggle"
-                            data-open-label="${escAttr(viewMoreLabel)}"
-                            data-close-label="${escAttr(hideDetailsLabel)}"
-                            onclick="
-                              const panel = this.nextElementSibling;
-                              if (!panel) return;
-                              panel.classList.toggle('show');
-                              this.textContent = panel.classList.contains('show')
-                                ? this.dataset.closeLabel
-                                : this.dataset.openLabel;
-                            "
-                          >
-                            ${viewMoreLabel}
-                          </button>
-                          <div class="timeline-detail-panel">
-                            <div class="timeline-detail-meta">
-                              ${tr("note", "หมายเหตุ")}: ${esc(t.note)}
-                            </div>
-                          </div>
-                        </div>
-                      `
-                      : ""
-                  }
-
-                  ${
-                    t.type === "OUT" && t.orderId
-                      ? `
-                        <button
-                          class="btn btn-outline"
-                          type="button"
-                          style="margin-top:10px;width:100%"
-                          onclick="openRelatedOrderFromContext(${toInlineJsStringLiteral(t.orderId)})">
-                          ${tr("viewRelatedOrder", "ดูออเดอร์ที่เกี่ยวข้อง")}
-                        </button>
-                      `
-                      : ""
-                  }
-
-                      <div style="font-size:12px;color:var(--muted);margin-top:6px">
-                        ${t.time.toLocaleDateString("th-TH")}
-                        ${t.time.toLocaleTimeString("th-TH")}
-                        · ${tr("by", "โดย")} ${esc(t.by)}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              `;
-            }).join("")
-          : `
-            <div style="text-align:center;color:var(--muted);margin-top:32px">
-              ${t("noStockTimelineData", "ไม่มีข้อมูลประวัติสต๊อก")}
-            </div>
-          `
-      }
-    `;
-
-  } catch (err) {
-    console.error(err);
-
-    targetSheet.innerHTML = `
-      <div class="admin-sheet-topbar">
-        <button class="app-back-btn" type="button" onclick="${backAction}">
-          <span class="app-back-btn-icon" aria-hidden="true">‹</span>
-          <span>${t("back", "กลับ")}</span>
-        </button>
-        <h3 id="${stockTimelineTitleId}">
-          <span class="dashboard-title-main">${stockTimelineTitle}</span>
-        </h3>
-      </div>
-      <div style="text-align:center;color:#d93025;margin-top:32px">
-        ${t("stockTimelineLoadError", "ไม่สามารถโหลดข้อมูลได้")}
-      </div>
-    `;
+  } catch(err) {
+    if (!stillActive()) return;
+    if (isAuthError(err.message)) { exitAdmin(); return; }
+    console.warn('stock history load failed',err);
+    const retryOptions = {returnToAdminMenu,focusProductId:normalizeProductId(options.focusProductId || ''),filters:options.filters || {}};
+    adminStockSheet.innerHTML = `<div class="sh-view">${renderStockHistoryHeader(backAction)}<div class="sh-empty"><strong>ยังโหลดประวัติสต๊อกไม่ได้</strong><span>กรุณาลองโหลดข้อมูลอีกครั้ง</span><button type="button" onclick="openStockTimeline(true,JSON.parse(${toInlineJsStringLiteral(JSON.stringify(retryOptions))}))">ลองใหม่</button></div></div>`;
   }
 }
 
@@ -36680,6 +36478,8 @@ function loadAdminSession() {
 
 // ================= STEP A7: SINGLE LOGOUT SOURCE OF TRUTH =================
 function clearAdminSession(){
+  stockHistoryView = null;
+  stockHistoryLoadSeq++;
   resetAdminOrdersRead();
   adminDashboardLoadSeq++;
   state.admin.dashboardAnalyticsData = null;
