@@ -28218,6 +28218,7 @@ async function submitProductEdit(){
  
   let imageUrl = p.image || "";
   let updateAccepted = false;
+  let loadingClosed = false;
 
   try {
     showLoading(t("savingProductEdit", "กำลังบันทึกการแก้ไขสินค้า..."));
@@ -28252,6 +28253,8 @@ async function submitProductEdit(){
     const res = await postFormAction(form);
     updateAccepted = true;
 
+    safeHideLoading();
+    loadingClosed = true;
     showToast(t("editSaved", "บันทึกการแก้ไขเรียบร้อย"), "success");
 
     state.selectedProduct = null;
@@ -28259,12 +28262,16 @@ async function submitProductEdit(){
     // cleanup
     state.editImageFile = null;
     closeProductEdit();
-    await refreshProducts();
-    // Audit data is supplementary here. A slow orders/stockLogs request must
-    // not turn an already accepted product update into a save failure.
-    void refreshAdminAuditSnapshot().catch(err => {
-      console.warn("admin audit refresh delayed after product save", err?.message || err);
-    });
+    // Read-only refreshes happen after the confirmed save, without holding the
+    // save overlay open. Do not retry updateProduct if one of these times out.
+    void (async () => {
+      try {
+        await refreshProducts({ retry: false, throwOnError: true });
+        await refreshAdminAuditSnapshot();
+      } catch (err) {
+        console.warn("product data refresh delayed after save", err?.message || err);
+      }
+    })();
 
   } catch (err) {
     console.error("submitProductEdit failed", err);
@@ -28282,7 +28289,7 @@ async function submitProductEdit(){
 
   } finally {
     // ✅ CLEANUP กลางเดียว (หัวใจ STEP 9)
-    safeHideLoading();
+    if (!loadingClosed) safeHideLoading();
     state.admin.isSubmitting = false;
 
     if (saveBtn) {
