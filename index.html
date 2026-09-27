@@ -6286,6 +6286,21 @@ textarea.input{
 .sh-view button:focus-visible,.sh-view summary:focus-visible,.sh-view input:focus-visible,.sh-view select:focus-visible{outline:2px solid #74beff;outline-offset:3px}.sh-search:focus-within{border-color:#58b9ff;box-shadow:0 0 0 2px #2e8bca25}
 @media(max-width:370px){#adminStockSheet:has(.sh-view){padding-left:12px;padding-right:12px}.sh-header{grid-template-columns:20px minmax(0,1fr) auto;gap:6px}.sh-title h3{font-size:18px!important}.sh-title p{font-size:10px}.sh-date{font-size:10px;max-width:124px;padding:7px;gap:5px}.sh-summary strong{font-size:21px}.sh-summary .sh-summary-count{gap:5px}.sh-summary-count strong{font-size:16px}.sh-summary-count svg{width:18px;height:18px}.sh-summary-count small{font-size:11px}.sh-card{grid-template-columns:48px minmax(0,1fr) 59px;gap:8px;padding:10px 9px}.sh-thumb{width:48px;height:59px}.sh-product-head>strong{font-size:14px}.sh-badge{font-size:9px;padding:3px 6px}.sh-delta{font-size:23px}.sh-meta{font-size:9px}.sh-balance{font-size:11px;gap:3px 5px}.sh-side{min-width:0;max-width:59px}.sh-detail-button{font-size:10px}}
 
+/* PO detail: navy/blue visual system, scoped to the order sheet. */
+#adminOrderSheet.po-sheet{max-width:560px;margin:0 auto;height:calc(100dvh - max(24px,env(safe-area-inset-top,0px)));padding:18px 16px calc(24px + env(safe-area-inset-bottom,0px));border:1px solid #365d78;border-radius:24px 24px 0 0;background:linear-gradient(145deg,#0c1d2a,#0a1822 55%,#0b1923);color:#eff7ff;color-scheme:dark;box-shadow:0 16px 48px #0006;transition:none}
+.po-view{font:inherit;line-height:1.5;font-variant-numeric:tabular-nums}.po-view *{box-sizing:border-box}.po-view button{font-family:inherit;cursor:pointer}.po-view button:disabled{opacity:.5;cursor:default}.po-view button:focus-visible{outline:2px solid #83c5ff;outline-offset:3px}.po-view svg{width:21px;height:21px;flex-shrink:0}
+.po-topbar{position:sticky;top:-18px;z-index:2;padding:14px 16px 12px;margin:-18px -16px 17px!important;border-bottom:1px solid #29465c80;background:linear-gradient(125deg,#0d2030,#0b1b28);display:grid;grid-template-columns:36px minmax(0,1fr) auto;align-items:center;gap:8px;margin-bottom:17px}.po-back{display:grid;place-items:center;width:36px;height:44px;border:0;border-radius:10px;background:transparent;color:#d9ebfb;padding:0}.po-back svg{width:25px;height:25px}.po-topbar h3{font-size:19px;line-height:1.4;margin:0 0 2px!important;font-weight:800;overflow-wrap:anywhere}.po-topbar p{margin:0;font-size:11px;color:#a2bdd4}.po-status{font-size:10px;line-height:1.4;padding:6px 9px;border-radius:30px;border:1px solid #496275;max-width:105px;text-align:center;overflow-wrap:anywhere;font-weight:700}.po-status.status-approved{color:#91efd0;background:#144637;border-color:#2e8067}.po-status.status-pending{color:#ffe0a0;background:#514026;border-color:#8e7240}.po-status.status-rejected{color:#ffb0bd;background:#512837;border-color:#875069}.po-status.status-neutral{color:#c7dae9;background:#243b4b}.po-opening-label{font-size:10px;color:#84bbdf}
+.po-hero{padding:19px 19px 15px;border:1px solid #389fff;border-radius:19px;background:linear-gradient(117deg,#0975da 0%,#0a54b2 52%,#103a7a 100%);box-shadow:inset 0 1px 0 #b8e1ff30,0 8px 26px #00295b28;margin-bottom:12px;min-width:0}.po-hero-top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:19px}.po-hero-top>div{min-width:0}.po-eyebrow{font-size:11px;color:#c1e1ff}.po-hero h2{font-size:25px;line-height:1.35;margin:1px 0 0;letter-spacing:.1px;overflow-wrap:anywhere;font-weight:800}.po-hero-icon{display:grid;place-items:center;background:#83c9ff1c;border:1px solid #82c8ff30;border-radius:12px;width:45px;height:45px;flex-shrink:0;color:#d5ecff}.po-hero-icon svg{width:24px;height:24px}.po-total-label{display:block;font-size:12px;color:#d6eaff;margin-bottom:3px}.po-total{display:block;font-size:38px;line-height:1.25;letter-spacing:-.7px;font-weight:850;overflow-wrap:anywhere}.po-hero-counts{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:13px;padding-top:12px;border-top:1px solid #c2e2ff30;font-size:12px;color:#d9edff}.po-hero-counts>span{display:flex;align-items:center;gap:7px}.po-hero-counts svg{width:16px;height:16px}.po-hero-counts i{height:13px;border-left:1px solid #c4e5ff60}
+.po-primary-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-bottom:15px}.po-primary-actions button{display:flex;align-items:center;justify-content:center;gap:7px;min-height:45px;padding:9px 7px;border:1px solid #3e6380;border-radius:12px;background:linear-gradient(130deg,#1d3e57,#163047);color:#e0f0ff;font-size:12px;font-weight:600;line-height:1.4}.po-primary-actions svg{width:18px;height:18px}.po-primary-actions .po-print{background:linear-gradient(120deg,#087fe0,#0763b9);border-color:#339fff;color:#fff}
+.po-info-card{padding:15px 14px;border:1px solid #304f68;border-radius:15px;background:linear-gradient(130deg,#162e40,#102635);margin-bottom:12px}.po-info-card h4,.po-note h4{margin:0 0 12px;font-size:13px;font-weight:750;color:#e9f3fc}.po-info-card dl{display:grid;gap:10px;margin:0}.po-info-card dl>div{display:grid;grid-template-columns:90px minmax(0,1fr);gap:10px;align-items:baseline}.po-info-card dt{font-size:11px;color:#9cb9d1}.po-info-card dd{margin:0;font-size:12px;line-height:1.5;font-weight:600;text-align:right;color:#e3eff9;overflow-wrap:anywhere}
+.po-documents{border:1px solid #304f68;border-radius:15px;overflow:hidden;background:linear-gradient(130deg,#163044,#11293b);margin-bottom:21px}.po-documents button{display:grid;grid-template-columns:32px minmax(0,1fr) 12px;align-items:center;gap:9px;width:100%;min-height:54px;padding:9px 12px;border:0;background:transparent;text-align:left;color:#cfe7fa;font-size:12px;line-height:1.5}.po-documents button+button{border-top:1px solid #35546b80}.po-documents button>b{font-size:22px;font-weight:500;color:#88c9ff}.po-link-icon{display:grid;place-items:center;width:30px;height:30px;border-radius:8px;background:#2b56733b;color:#8fcfff}.po-link-icon svg{width:17px;height:17px}.po-documents button:hover,.po-primary-actions button:hover{filter:brightness(1.1)}
+.po-section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 1px 10px}.po-section-heading h4{font-size:18px;margin:0;font-weight:800}.po-section-heading>span{font-size:11px;border:1px solid #37546b;border-radius:20px;padding:3px 9px;color:#abcce6;background:#142f43}.po-fulfillment-notice{display:flex;align-items:center;justify-content:flex-start;gap:7px;margin:-1px 2px 11px;font-size:10px;color:#9fc4df;min-height:24px;line-height:1.5}.po-fulfillment-notice button{background:#1c3e56;border:1px solid #567181;border-radius:7px;color:#c9e7ff;padding:7px 12px;min-height:36px;font-size:11px;margin-left:auto;white-space:nowrap}.po-notice-error{color:#edc48a}.po-ready-dot{width:5px;height:5px;border-radius:50%;background:#48d4ac;flex-shrink:0}.po-spinner{display:inline-block;width:16px;height:16px;flex-shrink:0;border:2px solid #365b79;border-top-color:#63b9ff;border-radius:50%;animation:po-spin .9s linear infinite}
+.po-items{display:grid;gap:12px}.po-item{min-width:0;padding:13px;border:1px solid #345c78;border-radius:16px;background:linear-gradient(117deg,#1b394f,#102a3d 80%);box-shadow:inset 0 1px 0 #96ceff09}.po-item-top{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;align-items:start}.po-item .cart-thumb{width:64px;height:70px;border:1px solid #d5e3ee24;border-radius:11px;background:#f4f7fa;overflow:hidden;flex-shrink:0}.po-item .cart-thumb img{display:block;width:100%;height:100%;object-fit:contain}.po-item .cart-thumb-placeholder{display:grid;place-items:center;width:100%;height:100%;font-size:11px;background:linear-gradient(140deg,#d7e3ed,#f2f5f9);color:#698296}.po-item-info{min-width:0}.po-sku{display:block;font-size:14px;line-height:1.4;color:#c6e5ff;margin-bottom:3px;overflow-wrap:anywhere;letter-spacing:.1px}.po-item-info h5{font-size:13px;line-height:1.55;margin:0;font-weight:650;color:#f1f6fc;overflow-wrap:anywhere}.po-item-info p{font-size:11px;color:#a3c4de;margin:5px 0 0;overflow-wrap:anywhere}.po-item-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px}.po-product-link{display:flex;align-items:center;gap:6px;border:0;background:none;padding:7px 0;color:#8acaff;font-size:11px;min-height:40px;flex-shrink:0}.po-product-link span{font-size:18px}.po-item-bottom>div{display:flex;align-items:baseline;flex-wrap:wrap;justify-content:flex-end;gap:5px 8px;min-width:0}.po-item-bottom>div>span{font-size:10px;color:#9dbed8}.po-item-bottom strong{font-size:20px;color:#76b9ff;font-weight:800;overflow-wrap:anywhere;min-width:0;text-align:right}.po-fulfillment{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;padding-top:10px;margin-top:5px;border-top:1px solid #3b58705c}.po-fulfillment>div{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:0}.po-fulfillment>div+div{border-left:1px solid #3b58705c}.po-fulfillment span{font-size:10px;color:#9ebcd4}.po-fulfillment strong{font-size:14px;font-weight:700;max-width:100%;overflow-wrap:anywhere;color:#e7f2fc}.po-fulfillment .po-sent{color:#60dfba}.po-fulfillment .po-pending{color:#f2c87c}
+.po-note{border:1px solid #34516a;border-radius:13px;padding:13px 14px;margin-top:14px;background:#122a3b}.po-note h4{margin-bottom:5px}.po-note p{font-size:12px;color:#b5d0e5;line-height:1.65;margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.po-final-total{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:17px 3px 3px;border-top:1px solid #34516a;margin-top:18px}.po-final-total>div{display:flex;flex-direction:column;gap:3px;flex-shrink:0}.po-final-total span{font-size:13px;font-weight:700}.po-final-total small{font-size:10px;color:#9fbdd6}.po-final-total>strong{font-size:25px;line-height:1.4;color:#74baff;text-align:right;overflow-wrap:anywhere;min-width:0}.po-decision{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;margin-top:19px}.po-decision button{min-height:46px;padding:10px;border-radius:12px;font-size:14px;font-weight:700}.po-reject{background:#422435;color:#ffaabd;border:1px solid #8c4963}.po-approve{background:#11765e;color:#e0fff5;border:1px solid #36b294}
+.po-load-state{display:flex;align-items:center;gap:11px;color:#bdddf4;padding:12px 3px 8px;font-size:13px}.po-load-state p{font-size:11px;color:#97b6d0;margin:5px 0 0;overflow-wrap:anywhere}.po-load-state .po-spinner{width:21px;height:21px}.po-skeleton{height:90px;margin:14px 0;border:1px solid #284c65;border-radius:16px;background:linear-gradient(110deg,#18364b,#102636)}.po-skeleton-hero{height:200px;background:linear-gradient(120deg,#144b7c,#123552)}.po-load-error{display:flex;flex-direction:column;align-items:center;gap:10px;padding:35px 16px;border:1px solid #36546c;border-radius:16px;background:#112738;text-align:center;color:#a4bfd5;font-size:12px}.po-load-error>svg{width:34px;height:34px;color:#7fc1f4}.po-load-error h4{margin:0;font-size:17px;color:#e2f0fd}.po-load-error p{margin:0;overflow-wrap:anywhere}.po-load-error button{min-height:44px;margin-top:5px;padding:10px 25px;background:#0b77cf;border:1px solid #3f9fe7;border-radius:10px;color:white;font-size:13px}.po-empty{text-align:center;font-size:13px;padding:26px 12px;border:1px dashed #36546c;border-radius:14px;color:#a5c1d8}
+@keyframes po-spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.po-spinner{animation:none}}
+@media(max-width:370px){#adminOrderSheet.po-sheet{padding-left:12px;padding-right:12px}.po-topbar{padding-left:12px;padding-right:12px;margin-left:-12px!important;margin-right:-12px!important;grid-template-columns:28px minmax(0,1fr) auto;gap:7px}.po-back{width:28px}.po-topbar h3{font-size:16px}.po-status{font-size:9px;padding:5px 7px;max-width:90px}.po-hero{padding:16px 15px 13px}.po-hero h2{font-size:23px}.po-total{font-size:34px}.po-info-card dl>div{grid-template-columns:77px minmax(0,1fr);gap:8px}.po-info-card dd{font-size:11px}.po-primary-actions button{font-size:11px;gap:5px}.po-item{padding:11px}.po-item-top{grid-template-columns:56px minmax(0,1fr);gap:10px}.po-item .cart-thumb{width:56px;height:62px}.po-item-info h5{font-size:12px}.po-item-bottom strong{font-size:19px}.po-final-total>strong{font-size:22px}}
+
 </style>
 </head>
 <body>
@@ -11976,9 +11991,10 @@ async function fetchPendingDeliveries() {
     );
   }
 
-  return Array.isArray(res?.data)
-    ? res.data
-    : [];
+  if (!Array.isArray(res?.data)) {
+    throw new Error("Invalid pending delivery data");
+  }
+  return res.data;
 } 
 
 function getPendingDeliveryNumericValue(item, field, fallback) {
@@ -12054,29 +12070,7 @@ async function openAdminProductFromContext(productId) {
 }
 
 async function openRelatedOrderFromContext(orderId) {
-  const cleanOrderId = String(orderId || "").trim();
-  if (!cleanOrderId) return;
-  if (!Array.isArray(state.admin.orders) || !state.admin.orders.length) {
-    try {
-      state.admin.orders = await fetchOrders();
-    } catch (err) {
-      console.warn("openRelatedOrderFromContext: orders refresh failed", err);
-      showToast(t("loadDataFailed", "โหลดข้อมูลไม่สำเร็จ"), "error");
-      return;
-    }
-  }
-  const order = state.admin.orders.find(item =>
-    String(item?.orderId || "").trim() === cleanOrderId
-  );
-  if (!order) {
-    showToast(t("orderNotFound", "ไม่พบข้อมูลออเดอร์"), "warning");
-    return;
-  }
-  closeOverlay(adminStockSheet);
-  closeOverlay(pendingDeliverySheet);
-  closeOverlay(adminProductActionSheet);
-  allowOpenOrders = true;
-  openAdminOrder(cleanOrderId);
+  return openAdminOrder(orderId);
 }
 
 function openStockTimelineForProduct(productId) {
@@ -18375,116 +18369,93 @@ function printAdminPoOrder(orderId) {
   printWindow.document.close();
 }
 
+// PO detail uses the same navy/blue surfaces as the dashboard and stock history.
+let adminOrderView = null;
+let adminOrderViewSeq = 0;
+function poDetailNumber(value) {
+  if (value === null || value === undefined || String(value).trim() === '') return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+function poDetailQty(value) {
+  return value === null ? '—' : Number(value).toLocaleString('th-TH',{maximumFractionDigits:3});
+}
+function poDetailMoney(value) {
+  return value === null ? '—' : formatAdminPoSummaryMoney(value);
+}
+function poDetailTotals(order) {
+  const items = Array.isArray(order?.items) ? order.items : [];
+  const quantities = items.map(item=>poDetailNumber(item.qty));
+  const amounts = items.map(item=>{
+    const qty=poDetailNumber(item.qty),price=poDetailNumber(item.price);
+    return qty !== null && price !== null ? qty*price : null;
+  });
+  const total = poDetailNumber(order?.total);
+  return {items, count:items.length, qty:quantities.includes(null) ? null : quantities.reduce((a,b)=>a+b,0),
+    total:total !== null ? total : amounts.includes(null) ? null : amounts.reduce((a,b)=>a+b,0)};
+}
+function poDetailIcon(name) {
+  const paths={
+    copy:'<rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V3H3v13h5"/>',
+    print:'<path d="M6 8V3h12v5M6 17H3V8h18v9h-3M6 14h12v7H6zM17 11h1"/>',
+    truck:'<path d="M2 5h12v12H2zM14 9h4l4 5v3h-8"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/>',
+    file:'<path d="M5 3h10l4 4v14H5zM14 3v5h5M8 12h8m-8 4h6"/>',
+    clock:'<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/>'
+  };
+  return paths[name] ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]}</svg>` : dashboardAIcon(name);
+}
+function renderPoDetailHeader(order = null, opening = false) {
+  const status = String(order?.status || '').toUpperCase();
+  return `<div class="po-topbar"><button type="button" class="po-back" onclick="closeAdminOrderSheet()" aria-label="กลับหน้าก่อนหน้า">${poDetailIcon('back')}</button><div><h3 id="adminOrderSheetTitle">${t('adminOrderSummary','สรุปออเดอร์ / PO')}</h3><p>รายละเอียดคำสั่งซื้อ</p></div>${order ? `<span class="po-status ${getAdminOrderStatusClass(status)}">${esc(getAdminOrderStatusLabel(status))}</span>` : opening ? '<span class="po-opening-label">กำลังเปิด</span>' : ''}</div>`;
+}
 function renderAdminOrderSummary(order) {
-  const partnerRequestId = String(order?.partnerRequestId || "").trim();
-  const partnerName = String(order?.partnerNameSnapshot || order?.partnerId || "").trim();
-  const createdAt = getOrderDateValue(order);
-  const approvedAt = order?.approvedAt || "";
-  const status = String(order?.status || "-").trim();
-  const decisionTimestampLabel = String(status || "").toUpperCase() === "REJECTED"
-    ? t("rejectedAt", "ปฏิเสธเมื่อ")
-    : t("approvedAt", "อนุมัติเมื่อ");
-
-  return `
-    <div class="admin-detail-section">
-      <div class="admin-detail-title">${t("adminOrderSummary", "สรุปออเดอร์ / PO")}</div>
-      <div class="cart-summary" style="margin-top:0">
-        <div class="summary-row">
-          <span>PO</span>
-          <strong>${esc(order?.poNumber || "-")}</strong>
-        </div>
-        <div class="summary-row">
-          <span>${t("orderNumber", "เลขออเดอร์")}</span>
-          <strong title="${escAttr(order?.orderId || "")}">${esc(formatOrderIdForDisplay(order?.orderId))}</strong>
-        </div>
-        <div class="summary-row">
-          <span>${t("status", "สถานะ")}</span>
-          <span class="status-badge ${getAdminOrderStatusClass(status)}">
-            ${esc(getAdminOrderStatusLabel(status))}
-          </span>
-        </div>
-        <div class="summary-row">
-          <span>${t("source", "ที่มา")}</span>
-          <strong>${esc(getAdminOrderSourceDisplayLabel(order))}</strong>
-        </div>
-        ${
-          partnerRequestId
-            ? `
-              <div class="summary-row">
-                <span>${t("partnerRequestId", "เลขคำขอคู่ค้า")}</span>
-                <strong>${esc(partnerRequestId)}</strong>
-              </div>
-            `
-            : ""
-        }
-        ${
-          partnerName
-            ? `
-              <div class="summary-row">
-                <span>${t("partner", "คู่ค้า")}</span>
-                <strong>${esc(partnerName)}</strong>
-              </div>
-            `
-            : ""
-        }
-        ${
-          createdAt
-            ? `
-              <div class="summary-row">
-                <span>${t("createdAt", "สร้างเมื่อ")}</span>
-                <strong>${esc(formatThaiDate(createdAt))}</strong>
-              </div>
-            `
-            : ""
-        }
-        ${
-          approvedAt
-            ? `
-              <div class="summary-row">
-                <span>${decisionTimestampLabel}</span>
-                <strong>${esc(formatThaiDate(approvedAt))}</strong>
-              </div>
-            `
-            : ""
-        }
-      </div>
-      <button
-        class="btn btn-outline"
-        type="button"
-        style="margin-top:12px;width:100%"
-        onclick="copyAdminPoSummary(${toInlineJsStringLiteral(order?.orderId || "")})">
-        ${t("copyPoSummary", "คัดลอกสรุป PO")}
-      </button>
-      <button
-        class="btn btn-primary"
-        type="button"
-        style="margin-top:8px;width:100%"
-        onclick="printAdminPoOrder(${toInlineJsStringLiteral(order?.orderId || "")})">
-        ${t("printPo", "พิมพ์ PO")}
-      </button>
-      <button
-        class="btn btn-outline"
-        type="button"
-        style="margin-top:8px;width:100%"
-        onclick="openPendingDeliveryForOrder(${toInlineJsStringLiteral(order?.orderId || "")})">
-        ${t("viewRelatedPendingDelivery", "ดูค้างส่งของออเดอร์นี้")}
-      </button>
-      <button
-        class="btn btn-outline"
-        type="button"
-        style="margin-top:8px;width:100%"
-        onclick="openDeliveryNoteForOrder(${toInlineJsStringLiteral(order?.orderId || "")})">
-        ${t("openDeliveryNoteForOrder", "เปิดใบส่งของของ PO นี้")}
-      </button>
-      <button
-        class="btn btn-outline"
-        type="button"
-        style="margin-top:8px;width:100%"
-        onclick="openBillingNoteForOrder(${toInlineJsStringLiteral(order?.orderId || "")})">
-        ${t("openBillingNoteForOrder", "เปิดใบวางบิลของ PO นี้")}
-      </button>
-    </div>
-  `;
+  const totals = poDetailTotals(order),id=toInlineJsStringLiteral(order.orderId || '');
+  const status=String(order.status || '').toUpperCase(),createdAt=getOrderDateValue(order);
+  const decisionAt=status==='REJECTED' ? order.rejectedAt || order.approvedAt : order.approvedAt;
+  const fields=[
+    [t('orderNumber','เลขออเดอร์'),formatOrderIdForDisplay(order.orderId)],
+    [t('source','ที่มา'),getAdminOrderSourceDisplayLabel(order)],
+    ...(order.partnerNameSnapshot || order.partnerId ? [[t('partner','คู่ค้า'),order.partnerNameSnapshot || order.partnerId]] : []),
+    ...(order.partnerRequestId ? [[t('partnerRequestId','เลขคำขอคู่ค้า'),order.partnerRequestId]] : []),
+    ...(createdAt ? [[t('createdAt','สร้างเมื่อ'),formatThaiDate(createdAt)]] : []),
+    ...(decisionAt ? [[status==='REJECTED' ? t('rejectedAt','ปฏิเสธเมื่อ') : t('approvedAt','อนุมัติเมื่อ'),formatThaiDate(decisionAt)]] : [])
+  ];
+  return `<section class="po-hero" aria-label="ยอดรวมออเดอร์"><div class="po-hero-top"><div><span class="po-eyebrow">เลขที่ PO</span><h2>${esc(order.poNumber || 'ไม่ระบุ PO')}</h2></div><span class="po-hero-icon">${poDetailIcon('order')}</span></div><span class="po-total-label">ยอดรวมออเดอร์</span><strong class="po-total">${poDetailMoney(totals.total)}</strong><div class="po-hero-counts"><span>${poDetailIcon('box')} ${totals.count} รายการ</span><i aria-hidden="true"></i><span>${poDetailQty(totals.qty)} ชิ้น</span></div></section>
+    <div class="po-primary-actions"><button type="button" onclick="copyAdminPoSummary(${id})">${poDetailIcon('copy')} ${t('copyPoSummary','คัดลอกสรุป PO')}</button><button type="button" class="po-print" onclick="printAdminPoOrder(${id})">${poDetailIcon('print')} ${t('printPo','พิมพ์ PO')}</button></div>
+    <section class="po-info-card"><h4>ข้อมูลออเดอร์</h4><dl>${fields.map(([label,value])=>`<div><dt>${esc(label)}</dt><dd>${esc(value || '—')}</dd></div>`).join('')}</dl></section>
+    <section class="po-documents" aria-label="ค้างส่งและเอกสาร"><button type="button" onclick="openPendingDeliveryForOrder(${id})"><span class="po-link-icon">${poDetailIcon('truck')}</span><span>${t('viewRelatedPendingDelivery','ดูค้างส่งของออเดอร์นี้')}</span><b aria-hidden="true">›</b></button><button type="button" onclick="openDeliveryNoteForOrder(${id})"><span class="po-link-icon">${poDetailIcon('file')}</span><span>${t('openDeliveryNoteForOrder','เปิดใบส่งของของ PO นี้')}</span><b aria-hidden="true">›</b></button><button type="button" onclick="openBillingNoteForOrder(${id})"><span class="po-link-icon">${poDetailIcon('coins')}</span><span>${t('openBillingNoteForOrder','เปิดใบวางบิลของ PO นี้')}</span><b aria-hidden="true">›</b></button></section>`;
+}
+function poDetailFulfillment(order, item, view) {
+  const orderedQty=poDetailNumber(item.qty);
+  if (view.fulfillment !== 'ready') return {orderedQty,sentQty:null,remainingQty:null};
+  const rows=view.pendingRows.filter(row=>String(row.orderId || '').trim()===String(order.orderId || '').trim() && String(row.productId || '').trim()===String(item.productId || '').trim());
+  const remainingQty=rows.reduce((sum,row)=>sum+getPendingDeliveryRemainingQty(row),0);
+  return {orderedQty,remainingQty,sentQty:orderedQty === null ? null : Math.max(0,orderedQty-remainingQty)};
+}
+function renderPoFulfillmentItem(order,item,view) {
+  const summary=poDetailFulfillment(order,item,view);
+  return `<div><span>จำนวนสั่ง</span><strong>${poDetailQty(summary.orderedQty)}</strong></div><div><span>ส่งแล้ว</span><strong class="po-sent">${poDetailQty(summary.sentQty)}</strong></div><div><span>ค้างส่ง</span><strong class="${summary.remainingQty > 0 ? 'po-pending' : ''}">${poDetailQty(summary.remainingQty)}</strong></div>`;
+}
+function renderPoFulfillmentNotice(view) {
+  if (view.fulfillment==='loading') return `<span class="po-spinner" aria-hidden="true"></span><span>กำลังตรวจสอบยอดส่งแล้ว / ค้างส่ง...</span>`;
+  if (view.fulfillment==='error') return `<span class="po-notice-error">ยังโหลดข้อมูลการส่งไม่สำเร็จ</span><button type="button" onclick="retryAdminOrderFulfillment()">ลองใหม่</button>`;
+  return `<span class="po-ready-dot" aria-hidden="true"></span><span>อัปเดตข้อมูลการส่งแล้ว</span>`;
+}
+function renderPoDetailItem(order,item,index,view) {
+  const qty=poDetailNumber(item.qty),price=poDetailNumber(item.price),amount=qty!==null&&price!==null?qty*price:null;
+  const approved=String(order.status || '').toUpperCase()==='APPROVED';
+  return `<article class="po-item"><div class="po-item-top">${renderCartItemThumb({...item,image:getAdminPoPrintItemImage(item)})}<div class="po-item-info"><strong class="po-sku">${esc(item.productId || 'ไม่ระบุ SKU')}</strong><h5>${esc(item.name || item.productId || 'สินค้า')}</h5><p>${poDetailQty(qty)} ชิ้น × ${poDetailMoney(price)} / ชิ้น</p></div></div><div class="po-item-bottom"><button type="button" class="po-product-link" onclick="openAdminProductFromContext(${toInlineJsStringLiteral(item.productId || '')})" ${item.productId ? '' : 'disabled'}>${t('viewProduct','ดูสินค้า')} <span aria-hidden="true">›</span></button><div><span>รวมรายการ</span><strong>${poDetailMoney(amount)}</strong></div></div>${approved ? `<div class="po-fulfillment" data-po-fulfillment-index="${index}" aria-busy="${view.fulfillment==='loading'}">${renderPoFulfillmentItem(order,item,view)}</div>` : ''}</article>`;
+}
+function renderPoDetailView(view) {
+  const order=view.order,totals=poDetailTotals(order),status=String(order.status || '').toUpperCase();
+  const note=String(order.note || order.adminNote || order.message || '').trim();
+  return `<div class="po-view">${renderPoDetailHeader(order)}${renderAdminOrderSummary(order)}<div class="po-section-heading"><h4>${t('itemList','รายการสินค้า')}</h4><span>${totals.count} รายการ</span></div>${status==='APPROVED' ? `<div id="poFulfillmentNotice" class="po-fulfillment-notice" role="status" aria-live="polite">${renderPoFulfillmentNotice(view)}</div>` : ''}<div class="po-items">${totals.items.length ? totals.items.map((item,i)=>renderPoDetailItem(order,item,i,view)).join('') : '<div class="po-empty">ไม่มีรายการสินค้าในออเดอร์นี้</div>'}</div>${note ? `<div class="po-note"><h4>${t('note','หมายเหตุ')}</h4><p>${esc(note)}</p></div>` : ''}<div class="po-final-total"><div><span>ยอดรวมทั้งหมด</span><small>${totals.count} รายการ · ${poDetailQty(totals.qty)} ชิ้น</small></div><strong>${poDetailMoney(totals.total)}</strong></div>${status==='PENDING' ? `<div class="po-decision"><button type="button" class="po-reject" onclick="handleReject()">${t('reject','ปฏิเสธ')}</button><button type="button" class="po-approve" onclick="handleApprove()">${t('approve','อนุมัติ')}</button></div>` : ''}</div>`;
+}
+function renderPoDetailLoading(id) {
+  return `<div class="po-view">${renderPoDetailHeader(null,true)}<div class="po-load-state" role="status" aria-live="polite"><span class="po-spinner" aria-hidden="true"></span><div><strong>กำลังเปิดสรุปออเดอร์ / PO</strong><p>${esc(formatOrderIdForDisplay(id))}</p></div></div><div class="po-skeleton po-skeleton-hero" aria-hidden="true"></div><div class="po-skeleton" aria-hidden="true"></div><div class="po-skeleton" aria-hidden="true"></div></div>`;
+}
+function renderPoDetailError(view,notFound=false) {
+  return `<div class="po-view">${renderPoDetailHeader()}<div class="po-load-error" role="alert">${poDetailIcon('order')}<h4>${notFound ? 'ไม่พบออเดอร์นี้' : 'ยังเปิดข้อมูลออเดอร์ไม่ได้'}</h4><p>${esc(formatOrderIdForDisplay(view.id))}</p><span>${notFound ? 'ลองโหลดข้อมูลล่าสุด หรือกดกลับหน้าก่อนหน้า' : 'การโหลดข้อมูลไม่สำเร็จ กรุณาลองอีกครั้ง'}</span><button type="button" onclick="retryAdminOrderDetail()">โหลดใหม่</button></div></div>`;
 }
 
 
@@ -18757,169 +18728,113 @@ async function openStockTimeline(force = false, options = {}) {
   }
 }
 
-async function openAdminOrder(orderId){
-  // 🔒 A6 GUARD: ห้ามเปิด Admin Order UI ถ้าไม่ได้อยู่ admin หรือ session ไม่พร้อม
-  if (
-    state.mode !== "admin" ||
-    !state.admin.loggedIn ||
-    !state.admin.token ||
-    isAdminSessionExpired()
-  ) {
-    // ใช้มาตรฐานเดียวกับ admin dashboard
-    exitAdmin();
-    return;
-  }
-
-  const cleanOrderId = String(orderId || "").trim();
-
-   // 🔒 A6 HARDEN: กัน orders ยังไม่พร้อม/ไม่ใช่ array (กัน throw → กัน UI leak)
-  const orders = Array.isArray(state.admin.orders) ? state.admin.orders : [];
-  const order = orders.find(o => o.orderId === cleanOrderId);
-  if (!order) return;
-
-  const normalizedOrderStatus = String(order.status || "").toUpperCase();
-  const shouldShowOpeningFeedback = normalizedOrderStatus === "APPROVED";
-  if (shouldShowOpeningFeedback && isAdminOrderOpening(cleanOrderId)) return;
-
-  if (shouldShowOpeningFeedback) {
-    setApprovedOrderCardOpening(cleanOrderId, true);
-  }
-
+function isCurrentAdminOrderView(view) {
+  return !!view && adminOrderView===view && adminOrderViewSeq===view.seq && state.mode==='admin' && state.admin.loggedIn && state.admin.token===view.token && adminOrderSheet.classList.contains('show') && !!adminOrderSheet.querySelector('.po-view');
+}
+function captureAdminOrderOrigin() {
+  const source=[adminStockSheet,pendingDeliverySheet,adminProductActionSheet,adminDashboardSheet].find(sheet=>sheet.classList.contains('show'));
+  return source ? {sheet:source,scrollTop:source.scrollTop,focus:source.contains(document.activeElement)?document.activeElement:null} : null;
+}
+function updatePoFulfillmentParts(view) {
+  if (!isCurrentAdminOrderView(view)) return;
+  const notice=document.getElementById('poFulfillmentNotice');
+  if (notice) notice.innerHTML=renderPoFulfillmentNotice(view);
+  adminOrderSheet.querySelectorAll('[data-po-fulfillment-index]').forEach(element=>{
+    const item=view.order.items[Number(element.dataset.poFulfillmentIndex)];
+    if (!item) return;
+    element.innerHTML=renderPoFulfillmentItem(view.order,item,view);
+    element.setAttribute('aria-busy',String(view.fulfillment==='loading'));
+  });
+}
+async function loadAdminOrderFulfillment(view) {
+  if (!isCurrentAdminOrderView(view) || view.pendingTask) return;
+  view.fulfillment='loading'; updatePoFulfillmentParts(view);
+  const task=(async()=>{
+    try {
+      const rows=await fetchPendingDeliveries();
+      if (!isCurrentAdminOrderView(view)) return;
+      if (!Array.isArray(rows)) throw new Error('Invalid pending delivery data');
+      view.pendingRows=rows;view.fulfillment='ready';state.admin.pendingDeliveries=rows;
+    } catch(err) {
+      if (!isCurrentAdminOrderView(view)) return;
+      if (isAuthError(err?.message || '')) {exitAdmin();return;}
+      view.fulfillment='error';view.pendingRows=null;
+      console.warn('PO detail: fulfillment unavailable',err?.code || err?.message);
+    }
+    updatePoFulfillmentParts(view);
+  })();
+  view.pendingTask=task;
+  try {await task;} finally {if(view.pendingTask===task)view.pendingTask=null;}
+}
+function retryAdminOrderFulfillment() {
+  if (!isCurrentAdminOrderView(adminOrderView) || adminOrderView.fulfillment==='loading') return;
+  return loadAdminOrderFulfillment(adminOrderView);
+}
+function retryAdminOrderDetail() {
+  if (!isCurrentAdminOrderView(adminOrderView) || adminOrderView.phase!=='error') return;
+  return openAdminOrder(adminOrderView.id,{retry:true,origin:adminOrderView.origin});
+}
+async function openAdminOrder(orderId, options = {}) {
+  if (state.mode!=='admin' || !state.admin.loggedIn || !state.admin.token || isAdminSessionExpired()) {exitAdmin();return;}
+  const id=String(orderId || '').trim();if(!id)return;
+  if (!options.retry && isCurrentAdminOrderView(adminOrderView) && adminOrderView.id===id && adminOrderView.phase!=='error') return;
+  if (adminOrderView) setApprovedOrderCardOpening(adminOrderView.id,false);
+  const view={id,seq:++adminOrderViewSeq,token:state.admin.token,origin:options.retry?options.origin:captureAdminOrderOrigin(),phase:'loading',order:null,fulfillment:'loading',pendingRows:null,pendingTask:null};
+  adminOrderView=view;
+  state.admin.selectedOrder=null;state.admin.pendingDeliveryOrder=null;
+  setApprovedOrderCardOpening(id,true);
+  adminOrderSheet.classList.add('po-sheet');
+  adminOrderSheet.innerHTML=renderPoDetailLoading(id);adminOrderSheet.scrollTop=0;
+  // Show the destination before hiding the source: no frame with an empty overlay stack.
+  openOverlay(adminOrderSheet);
+  [adminStockSheet,pendingDeliverySheet,adminProductActionSheet,adminDashboardSheet].forEach(closeOverlay);
   try {
-    state.admin.selectedOrder = order;
-
-    state.admin.pendingDeliveryOrder = order;
-
-    // ✅ FIX: items เป็น array อยู่แล้ว ไม่ต้อง parse
-    const items = Array.isArray(order.items)
-      ? order.items
-      : [];
-
-    const isPending = order.status === "PENDING";
-    if (
-      normalizedOrderStatus === "APPROVED"
-    ) {
-      try {
-        state.admin.pendingDeliveries =
-          await fetchPendingDeliveries();
-      } catch (err) {
-        console.error("load pending deliveries for order detail failed:", err);
-        showToast(
-          t("pendingDeliveryLoadError", "ไม่สามารถโหลดข้อมูลค้างส่งได้"),
-          "error"
-        );
-        return;
-      }
+    let order=(Array.isArray(state.admin.orders)?state.admin.orders:[]).find(row=>String(row?.orderId || '').trim()===id);
+    if (!order || options.retry) {
+      const rows=await fetchOrders();
+      if (!isCurrentAdminOrderView(view)) return;
+      if (!Array.isArray(rows)) throw new Error('Invalid order data');
+      state.admin.orders=rows;order=rows.find(row=>String(row?.orderId || '').trim()===id);
     }
-    const orderStatusClass = {
-      PENDING: "status-pending",
-      APPROVED: "status-approved",
-      REJECTED: "status-rejected"
-    }[normalizedOrderStatus] || "status-neutral";
-
-  adminOrderSheet.innerHTML = `
-    <button
-      class="sheet-close-btn"
-      onclick="closeAdminOrderSheet()"
-      aria-label="${t("close", "ปิด")}">
-      ${renderAnimatedCloseIcon()}
-    </button>
-
-    <h3 id="adminOrderSheetTitle" title="${escAttr(order.orderId || "")}">${esc(formatOrderIdForDisplay(order.orderId))}</h3>
-
-    ${renderAdminOrderSummary(order)}
-
-      <div class="admin-detail-section">
-        <div class="admin-detail-title">${t("itemList", "รายการสินค้า")}</div>
-        <div class="admin-item-list">
-      ${items.map(i => `
-        <div class="cart-item cart-with-thumb">
-     ${renderCartItemThumb(i)}
-     <div class="cart-content">
-       <div class="name">${esc(i.name)}</div>
-       <div class="cart-meta">SKU: ${esc(i.productId || "-")}</div>
-       <div class="cart-qty">${t("quantity", "จำนวน")} ${Number(i.qty) || 0}</div>
-       ${renderOrderItemFulfillmentMeta(order, i)}
-       ${
-         i.productId
-           ? `
-             <button
-               class="btn btn-outline"
-               type="button"
-               style="margin-top:8px;width:auto;padding:8px 12px"
-               onclick="openAdminProductFromContext(${toInlineJsStringLiteral(i.productId)})">
-               ${t("viewProduct", "ดูสินค้า")}
-             </button>
-           `
-           : ""
-       }
-
-     </div>
-   <div class="price">
-     ฿${(Number(i.price) || 0) * (Number(i.qty) || 0)}
-   </div>
-        </div>
-      `).join("")}
-        </div>
-      </div>
-
-      <div class="cart-summary">
-        <div class="summary-row">
-          <span>${t("status", "สถานะ")}</span>
-          <span class="status-badge ${orderStatusClass}">
-            ${esc(getAdminOrderStatusLabel(order.status))}
-          </span>
-        </div>
-        <div class="summary-row">
-          <span>${t("totalItems", "จำนวนรายการ")}</span>
-          <strong>${items.length}</strong>
-        </div>
-        <div class="summary-row">
-          <span>${t("total", "ยอดรวม")}</span>
-          <strong>฿${Number(order.total) || 0}</strong>
-        </div>
-      </div>
-
-      ${
-        isPending
-          ? `
-            <div class="admin-action">
-              <button class="btn btn-success" onclick="handleApprove()">
-                ${t("approve", "อนุมัติ")}
-              </button>
-
-              <button class="btn btn-danger" onclick="handleReject()">
-                ${t("reject", "ปฏิเสธ")}
-              </button>
-            </div>
-          `
-          : ""
-      }
-    `;
-
-    // ❌ ห้ามปิดด้วย classList
-    closeOverlay(adminDashboardSheet);
-
-    // ✅ เปิดผ่าน Overlay Manager
-    openOverlay(adminOrderSheet);
+    if (!isCurrentAdminOrderView(view)) return;
+    if (!order) {const error=new Error('Order not found');error.code='ORDER_NOT_FOUND';throw error;}
+    view.order=order;view.phase='ready';
+    view.fulfillment=String(order.status || '').toUpperCase()==='APPROVED'?'loading':'not-needed';
+    state.admin.selectedOrder=order;state.admin.pendingDeliveryOrder=order;
+    adminOrderSheet.innerHTML=renderPoDetailView(view);
+    if (view.fulfillment==='loading') void loadAdminOrderFulfillment(view);
+  } catch(err) {
+    if (!isCurrentAdminOrderView(view)) return;
+    if (isAuthError(err?.message || '')) {exitAdmin();return;}
+    view.phase='error';
+    adminOrderSheet.innerHTML=renderPoDetailError(view,err?.code==='ORDER_NOT_FOUND');
+    console.warn('PO detail: order unavailable',err?.code || err?.message);
   } finally {
-    if (shouldShowOpeningFeedback) {
-      setApprovedOrderCardOpening(cleanOrderId, false);
-    }
+    if (adminOrderView===view) setApprovedOrderCardOpening(id,false);
   }
 }
 function closeAdminOrderSheet() {
-
-  closeOverlay(adminOrderSheet);
-
-  allowOpenOrders = true;
-
-  openAdminDashboard(
-    state.admin.dashboardMode || "SUMMARY",
-    true
-  );
+  const view=adminOrderView,origin=view?.origin;
+  adminOrderView=null;adminOrderViewSeq++;
+  if(view)setApprovedOrderCardOpening(view.id,false);
+  allowOpenOrders=true;
+  if (!state.admin.loggedIn || !state.admin.token || isAdminSessionExpired()) {exitAdmin();return;}
+  if (origin?.sheet && view.token===state.admin.token) {
+    // Keep the exact source DOM, including filters, expanded cards and scroll position.
+    openOverlay(origin.sheet);closeOverlay(adminOrderSheet);
+    const seq=adminOrderViewSeq;
+    setTimeout(()=>{
+      if(adminOrderViewSeq!==seq || !origin.sheet.classList.contains('show'))return;
+      origin.sheet.scrollTop=origin.scrollTop;
+      if(origin.focus?.isConnected)origin.focus.focus({preventScroll:true});
+    },0);
+  } else {
+    openAdminDashboard(state.admin.dashboardMode || 'SUMMARY',true);
+    closeOverlay(adminOrderSheet);
+  }
   scheduleAdminSheetViewportRepair();
-} 
+}
+
 
  function openBulkPendingDeliverySheet() {
 
@@ -36478,6 +36393,9 @@ function loadAdminSession() {
 
 // ================= STEP A7: SINGLE LOGOUT SOURCE OF TRUTH =================
 function clearAdminSession(){
+  adminOrderView = null;
+  adminOrderViewSeq++;
+  state.admin.openingOrderId = "";
   stockHistoryView = null;
   stockHistoryLoadSeq++;
   resetAdminOrdersRead();
