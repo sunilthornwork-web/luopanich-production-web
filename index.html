@@ -7046,6 +7046,11 @@ const UI_TEXT = {
     stockInError: "ไม่สามารถรับสต๊อกได้",
     stockAdjustSuccess: "ปรับสต๊อกแล้ว",
     stockAdjustError: "ไม่สามารถปรับสต๊อกได้",
+    stockAdjustAlreadyRunning: "กำลังดำเนินการกับสินค้านี้อยู่",
+    stockAdjustBackgroundSending: "กำลังปรับยอดคงเหลือ...",
+    stockAdjustBackgroundConfirming: "กำลังตรวจสอบผลการปรับยอด...",
+    stockAdjustBackgroundUnconfirmed: "ยังยืนยันผลการปรับยอดไม่ได้ กรุณาตรวจสอบก่อนทำรายการซ้ำ",
+    stockAdjustBackgroundConfirmFailed: "ตรวจสอบผลการปรับยอดไม่สำเร็จ กรุณาตรวจสอบก่อนทำรายการซ้ำ",
     productStatus: "สถานะสินค้า",
     sellPrice: "ราคาขาย",
     costPriceAdmin: "ราคาต้นทุน",
@@ -8057,6 +8062,11 @@ const UI_TEXT = {
     stockInError: "Could not save stock in",
     stockAdjustSuccess: "Stock adjusted",
     stockAdjustError: "Could not adjust stock",
+    stockAdjustAlreadyRunning: "A stock action is already running for this product",
+    stockAdjustBackgroundSending: "Adjusting stock balance...",
+    stockAdjustBackgroundConfirming: "Checking the stock adjustment result...",
+    stockAdjustBackgroundUnconfirmed: "Could not confirm the adjustment. Check the balance before trying again",
+    stockAdjustBackgroundConfirmFailed: "Could not check the adjustment result. Check the balance before trying again",
     productStatus: "Product status",
     sellPrice: "Selling price",
     costPriceAdmin: "Cost price",
@@ -10339,6 +10349,7 @@ function findActiveStockMutationTaskForProduct(productId) {
     isBackgroundTaskActive(task) &&
     (
       task.identity === `stockIn:${cleanProductId}` ||
+      task.identity === `stockAdjust:${cleanProductId}` ||
       (Array.isArray(task.productIds) && task.productIds.indexOf(cleanProductId) > -1)
     )
   ) || null;
@@ -12454,6 +12465,10 @@ function createSingleStockRequestId(productId) {
   return createStockMutationRequestId("stockIn", productId);
 }
 
+function createStockAdjustRequestId(productId) {
+  return createStockMutationRequestId("stockAdjust", productId);
+}
+
 function createBatchStockRequestId() {
   return createStockMutationRequestId("batchStockIn", "batch");
 }
@@ -12462,7 +12477,7 @@ function isAmbiguousStockMutationFailure(err) {
   const code = String(err?.code || "").trim();
   const name = String(err?.name || "").trim();
   const message = String(err?.message || err || "").trim();
-  if (code === "REQUEST_TIMEOUT" || name === "AbortError") return true;
+  if (code === "REQUEST_TIMEOUT" || code === "APPS_SCRIPT_RESPONSE_404" || name === "AbortError") return true;
   if (/^HTTP\s+\d+:/i.test(message)) return false;
   if (/forbidden|not authenticated|missing admin token|missing token|invalid token|session expired/i.test(message)) return false;
   if (/invalid stock|product not found|invalid product|invalid qty|invalid quantity/i.test(message)) return false;
@@ -12583,7 +12598,7 @@ async function checkBatchStockInRequestStatus(items, batchStockRequestId) {
 }
 
 
-async function adminStockAdjust(productId, newQty, reason){
+async function adminStockAdjust(productId, newQty, reason, stockAdjustRequestId = ""){
   if (!state.admin.token) {
     throw new Error("Not authenticated");
   }
@@ -12593,9 +12608,21 @@ async function adminStockAdjust(productId, newQty, reason){
   form.append("productId", productId);
   form.append("newQty", newQty);
   form.append("reason", reason || "");
+  if (stockAdjustRequestId) form.append("stockAdjustRequestId", stockAdjustRequestId);
   form.append("token", state.admin.token); // ✅ สำคัญที่สุด
 
   return await postFormAction(form);
+}
+
+async function checkStockAdjustRequestStatus(productId, newQty, stockAdjustRequestId) {
+  if (!state.admin.token) throw new Error("Not authenticated");
+  const form = new URLSearchParams();
+  form.append("action", "checkStockAdjustRequestStatus");
+  form.append("productId", productId);
+  form.append("newQty", newQty);
+  form.append("stockAdjustRequestId", stockAdjustRequestId);
+  form.append("token", state.admin.token);
+  return await postFormAction(form, { timeout: 10000 });
 }
 
   
@@ -20500,46 +20527,95 @@ async function submitStockAdjust(){
     return;
   }
 
-  // 🔒 disable ปุ่มกันกดซ้ำ
+  const productId = String(state.selectedProduct.productId || "").trim();
+  if (findActiveStockMutationTaskForProduct(productId)) {
+    showToast(t("stockAdjustAlreadyRunning", "กำลังดำเนินการกับสินค้านี้อยู่"), "warning");
+    return;
+  }
+
+  const stockAdjustRequestId = createStockAdjustRequestId(productId);
+  const task = registerBackgroundTask({
+    identity: `stockAdjust:${productId}`,
+    productIds: [productId],
+    label: t("setStockBalance", "ปรับยอดคงเหลือ"),
+    state: BACKGROUND_TASK_STATES.SENDING,
+    message: t("stockAdjustBackgroundSending", "กำลังปรับยอดคงเหลือ...")
+  });
+
+  // Follow the stock-in flow: close the sheet while the request runs.
   const buttons = adminStockActionSheet.querySelectorAll("button");
   buttons.forEach(b => b.disabled = true);
+  closeOverlay(adminStockActionSheet);
+  state.ui.backdropLocked = false;
+  syncOverlayBackdropState();
+  buttons.forEach(b => b.disabled = false);
 
-  try {
-    const res = await adminStockAdjust(
-      state.selectedProduct.productId,
-      newQty,
-      reason
-    );
-
-    if (res.error) {
-      throw new Error(res.error);
-    }
-
+  const finishStockAdjustBackgroundSuccess = after => {
+    // The server confirmed this exact request. Update the visible stock without
+    // making a second slow adminProducts/orders request.
+    completeBackgroundTask(task.id, t("stockAdjustSuccess", "ปรับสต๊อกแล้ว"));
     showToast(t("stockAdjustSuccess", "ปรับสต๊อกแล้ว"), "success");
+    try {
+      productRefreshRequestSeq += 1;
+      state.products = state.products.map(product =>
+        String(product.productId || "").trim() === productId
+          ? { ...product, stock: after }
+          : product
+      );
+      if (state.selectedProduct?.productId === productId) {
+        state.selectedProduct = { ...state.selectedProduct, stock: after };
+      }
+      state.productLoad.status = "success";
+      state.productLoad.error = "";
+      qtyInput.value = "";
+      reasonInput.value = "";
+      renderProducts();
+    } catch (displayErr) {
+      console.warn("stock adjusted but local display update failed", displayErr);
+    }
+  };
 
-    // 🔄 sync ข้อมูลหลัก + ข้อมูลย้อนหลังทันที
-    await refreshProducts();
-    await refreshAdminAuditSnapshot();
-
-    // 🧹 reset input
-    qtyInput.value = "";
-    reasonInput.value = "";
-
-    // ✅ ปิด Stock Action ผ่าน Overlay Manager
-    closeOverlay(adminStockActionSheet);
-
-    // 🔴 CHANGED: หลัง refresh ต้อง lookup object ล่าสุดก่อน
-    openAdminProductAction(
-      state.products.find(x => x.productId === state.selectedProduct?.productId)
-    );
-
-  } catch (err) {
-    console.error(err);
-    showToast(getUserFacingError(err, "stockAdjustError", "ไม่สามารถปรับสต๊อกได้"), "error");
-  } finally {
-    // 🔓 เปิดปุ่มกลับทุกกรณี
-    buttons.forEach(b => b.disabled = false);
-  }
+  (async () => {
+    try {
+      const response = await adminStockAdjust(productId, newQty, reason, stockAdjustRequestId);
+      const result = response?.data || {};
+      if (result.stockAdjustRequestId !== stockAdjustRequestId ||
+          result.productId !== productId || Number(result.after) !== newQty) {
+        throw new Error("Invalid stock adjust response");
+      }
+      finishStockAdjustBackgroundSuccess(newQty);
+    } catch (err) {
+      if (isAmbiguousStockMutationFailure(err)) {
+        updateBackgroundTask(task.id, {
+          state: BACKGROUND_TASK_STATES.CONFIRMING,
+          message: t("stockAdjustBackgroundConfirming", "กำลังตรวจสอบผลการปรับยอด...")
+        });
+        try {
+          const response = await checkStockAdjustRequestStatus(productId, newQty, stockAdjustRequestId);
+          const status = response?.data || {};
+          if (status.applied === true &&
+              status.stockAdjustRequestId === stockAdjustRequestId &&
+              status.productId === productId && Number(status.after) === newQty &&
+              Number(status.referenceCount) === 1) {
+            finishStockAdjustBackgroundSuccess(newQty);
+            return;
+          }
+          const message = t("stockAdjustBackgroundUnconfirmed", "ยังยืนยันผลการปรับยอดไม่ได้ กรุณาตรวจสอบก่อนทำรายการซ้ำ");
+          failBackgroundTask(task.id, message);
+          showToast(message, "warning");
+        } catch (confirmErr) {
+          console.error(confirmErr);
+          const message = t("stockAdjustBackgroundConfirmFailed", "ตรวจสอบผลการปรับยอดไม่สำเร็จ กรุณาตรวจสอบก่อนทำรายการซ้ำ");
+          failBackgroundTask(task.id, message);
+          showToast(message, "warning");
+        }
+        return;
+      }
+      console.error(err);
+      failBackgroundTask(task.id, getUserFacingError(err, "stockAdjustError", "ไม่สามารถปรับสต๊อกได้"));
+      showToast(getUserFacingError(err, "stockAdjustError", "ไม่สามารถปรับสต๊อกได้"), "error");
+    }
+  })();
 }
   
 function openStockAction(p){
