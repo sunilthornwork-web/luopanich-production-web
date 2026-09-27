@@ -10155,6 +10155,7 @@ function getNextProductId(currentValue = "") {
         .map(p => String(p.productId || "").trim().toUpperCase())
         .filter(Boolean)
     : [];
+  productIds.push(...addProductJobs.filter(job => job.state !== "EDITING").map(job => job.product.productId));
   const productIdSet = new Set(productIds);
 
   if (!prefix) {
@@ -10759,7 +10760,9 @@ function failLuopanichFrontendConfig(message) {
        showToast(t("sessionExpiredLoginAgain", "Session หมดอายุ กรุณา login ใหม่"), "warning");
        exitAdmin({ silent: true });
      }
-     throw new Error(json.message || json.error || "Request failed");
+     const rejection = new Error(json.message || json.error || "Request failed");
+     rejection.serverRejected = true;
+     throw rejection;
    }
 
    return json;
@@ -27124,6 +27127,7 @@ function openAddProduct(force = false, options = {}){
     </div>
   `;
 
+  renderAddProductJobs();
   openOverlay(adminAddProductSheet);
 }
 
@@ -28118,7 +28122,7 @@ function closeProductEdit(){
   closeOverlay(adminProductEditSheet);
 }
 
-async function uploadProductImage(file) {
+async function uploadProductImage(file, uploadToken = state.admin?.token) {
   return new Promise((resolve, reject) => {
     try {
       validateProductImageFile(file);
@@ -28128,7 +28132,7 @@ async function uploadProductImage(file) {
     }
 
     // 🔴 CHANGED: ให้ error เป็น Error object เสมอ
-    if (!state.admin || !state.admin.token) {
+    if (!uploadToken) {
       reject(localizedUiError("unauthorizedError", "ไม่มีสิทธิ์ใช้งานส่วนนี้"));
       return;
     }
@@ -28146,7 +28150,7 @@ async function uploadProductImage(file) {
 
         const formData = new FormData();
         formData.append("action", "uploadProductImage");
-        formData.append("token", state.admin.token);
+        formData.append("token", uploadToken);
         formData.append("filename", file.name);
         formData.append("mimeType", file.type || "image/jpeg");
         formData.append("data", base64);
@@ -28588,6 +28592,133 @@ function validateProductImageFile(file) {
   }
 } 
  
+const addProductJobs = [];
+let addProductQueue = Promise.resolve();
+
+function renderAddProductJobs() {
+  if (!adminAddProductSheet || state.mode !== "admin" || !state.admin.loggedIn) return;
+  let panel = document.getElementById("addProductJobsPanel");
+  if (!panel) {
+    panel = document.createElement("div");
+    panel.id = "addProductJobsPanel";
+    panel.className = "admin-detail-section";
+    const footer = adminAddProductSheet.querySelector(".sheet-action-footer");
+    if (!footer) return;
+    footer.before(panel);
+  }
+  panel.innerHTML = addProductJobs.map((job, index) => job.state === "EDITING" || job.owner !== state.admin.user ? "" : `
+    <div style="padding:8px 0;border-bottom:1px solid #555">
+      <strong>${esc(job.product.productId)}</strong> — ${esc(job.message)}
+      ${job.state === "FAILED" ? `<div>
+        <button type="button" class="btn btn-outline" onclick="retryAddProductJob(${index})">ลองใหม่ / ตรวจผล</button>
+        ${!job.uncertain ? `<button type="button" class="btn btn-outline" onclick="restoreAddProductJob(${index})">นำข้อมูลกลับมาแก้</button>` : ""}
+      </div>` : ""}
+    </div>`).join("");
+}
+
+function addProductJobForm(job, action) {
+  const form = new URLSearchParams();
+  Object.entries(job.product).forEach(([key, value]) => form.append(key, value));
+  form.set("action", action);
+  form.set("token", job.token);
+  form.set("addProductRequestId", job.requestId);
+  return form;
+}
+
+function enqueueAddProductJob(job) {
+  addProductQueue = addProductQueue.then(() => runAddProductJob(job)).catch(err => {
+    console.error("add product queue error", err);
+  });
+}
+
+async function runAddProductJob(job) {
+  job.state = "SENDING";
+  job.message = "กำลังบันทึก";
+  updateBackgroundTask(job.task.id, { state: BACKGROUND_TASK_STATES.SENDING, message: job.message });
+  renderAddProductJobs();
+  const finish = () => {
+    const sameSession = state.mode === "admin" && state.admin.loggedIn && state.admin.user === job.owner;
+    job.state = "SUCCESS";
+    job.message = "บันทึกเรียบร้อย";
+    completeBackgroundTask(job.task.id, `${job.product.productId}: ${job.message}`);
+    showToast(`${job.product.productId}: ${job.message}`, "success");
+    // Only update the list. Never clear or reset the currently open add form.
+    productRefreshRequestSeq += 1;
+    if (sameSession && !state.products.some(p => normalizeProductId(p.productId) === job.product.productId)) {
+      state.products = sortProducts([...state.products, { ...job.product }]);
+      state.productCreationOrderIds.push(job.product.productId);
+    }
+    job.imageFile = null;
+    job.preview = "";
+    job.token = "";
+    try { if (sameSession) renderProducts(); } catch (err) { console.warn("saved product display update failed", err); }
+    renderAddProductJobs();
+  };
+  const verify = async () => {
+    job.message = "กำลังตรวจสอบผล";
+    updateBackgroundTask(job.task.id, { state: BACKGROUND_TASK_STATES.CONFIRMING, message: job.message });
+    renderAddProductJobs();
+    const response = await postFormAction(addProductJobForm(job, "checkAddProductRequestStatus"), { timeout: 10000 });
+    return response?.data?.applied === true && response.data.addProductRequestId === job.requestId && response.data.productId === job.product.productId;
+  };
+  try {
+    if (!state.admin.loggedIn || state.admin.user !== job.owner) throw new Error("Not authenticated");
+    if (job.sent && await verify()) { finish(); return; }
+    if (job.imageFile && !job.product.image) {
+      job.message = "กำลังอัปโหลดรูป";
+      renderAddProductJobs();
+      job.product.image = await uploadProductImage(job.imageFile, job.token);
+    }
+    job.message = "กำลังบันทึก";
+    renderAddProductJobs();
+    job.sent = true;
+    const response = await postFormAction(addProductJobForm(job, "addProduct"));
+    if (response?.data?.addProductRequestId !== job.requestId || response?.data?.productId !== job.product.productId) {
+      throw new Error("ยังยืนยันผลการเพิ่มสินค้าไม่ได้");
+    }
+    finish();
+  } catch (err) {
+    job.uncertain = job.sent && !err.serverRejected;
+    if (job.uncertain) {
+      try { if (await verify()) { finish(); return; } } catch (checkErr) { console.warn("add product result unavailable", checkErr.message); }
+    }
+    job.state = "FAILED";
+    job.message = job.uncertain ? "ยังยืนยันผลไม่ได้ — กดตรวจผลก่อนส่งซ้ำ" : getWave2DisplayError(err, "unexpectedError", "บันทึกไม่สำเร็จ ข้อมูลยังเก็บไว้");
+    failBackgroundTask(job.task.id, `${job.product.productId}: ${job.message}`);
+    showToast(`${job.product.productId}: ${job.message} (ดูในหน้าเพิ่มสินค้า)`, "warning");
+    renderAddProductJobs();
+  }
+}
+
+function retryAddProductJob(index) {
+  const job = addProductJobs[index];
+  if (!job || job.state !== "FAILED" || job.owner !== state.admin.user || !state.admin?.loggedIn || !state.admin.token) return;
+  job.token = state.admin.token;
+  job.state = "QUEUED";
+  job.message = "รอตรวจผล / บันทึก";
+  updateBackgroundTask(job.task.id, { state: BACKGROUND_TASK_STATES.SENDING, message: job.message });
+  renderAddProductJobs();
+  enqueueAddProductJob(job);
+}
+
+function restoreAddProductJob(index) {
+  const job = addProductJobs[index];
+  if (!job || job.state !== "FAILED" || job.uncertain || job.owner !== state.admin.user || !state.admin.loggedIn) return;
+  if (!window.confirm("นำข้อมูลรายการนี้มาแทนฟอร์มที่กำลังกรอกหรือไม่?")) return;
+  const fields = { productId: "addProductId", name: "addName", price: "addPrice", costPrice: "addCostPrice",
+    stock: "addStock", displayExtraQty: "addDisplayExtraQty", status: "addStatus", note: "addNote", detailsText: "addDetailsText" };
+  Object.entries(fields).forEach(([key, id]) => { const input = document.getElementById(id); if (input) input.value = job.product[key] ?? ""; });
+  state.addImageFile = job.imageFile;
+  state.addImagePreviewDataUrl = job.preview;
+  state.addCompareImagesDraft = job.product.compareImages.split(",").filter(Boolean);
+  const image = document.getElementById("addImagePreview");
+  if (image) { image.src = job.preview || job.product.image || ""; image.style.display = image.src ? "block" : "none"; }
+  renderAddCompareImagesPreview();
+  job.state = "EDITING";
+  removeBackgroundTask(job.task.id);
+  renderAddProductJobs();
+}
+
 async function submitAddProduct(btn){
   // 🔒 guard
   if(state.mode !== "admin" || !state.admin.loggedIn){
@@ -28607,7 +28738,7 @@ async function submitAddProduct(btn){
 
   try {
     // 🔔 UX: แจ้งเริ่มกระบวนการ
-    showLoading(t("checkingProductData", "กำลังตรวจสอบข้อมูลสินค้า..."));
+
 
     const productId = normalizeProductId(
       document.getElementById("addProductId").value
@@ -28660,7 +28791,7 @@ async function submitAddProduct(btn){
     const dup = state.products.find(
       p => normalizeProductId(p.productId) === productId
     );
-    if (dup) {
+    if (dup || addProductJobs.some(job => job.state !== "EDITING" && job.product.productId === productId)) {
       document.getElementById("addProductId").focus();
       throw localizedUiError("productSkuDuplicate", "รหัสสินค้า (SKU) นี้มีอยู่แล้ว");
     }
@@ -28670,89 +28801,37 @@ async function submitAddProduct(btn){
       status = "out";
     }
 
-    /* ================= IMAGE UPLOAD ================= */
-
-    let imageUrl = "";
-    if (state.addImageFile) {
-      validateProductImageFile(state.addImageFile);
-      showLoading(t("uploadingProductImage", "กำลังอัปโหลดรูปสินค้า..."));
-      imageUrl = await uploadProductImage(state.addImageFile);
-      if (!imageUrl) {
-        throw localizedUiError("productImageUploadFailed", "อัปโหลดรูปไม่สำเร็จ");
-      }
+    if (state.addImageFile) validateProductImageFile(state.addImageFile);
+    const product = { productId, name, price, costPrice, stock, displayExtraQty,
+      active, status, note, detailsText, compareImages, image: "" };
+    const job = {
+      product: { ...product }, imageFile: state.addImageFile || null,
+      preview: state.addImagePreviewDataUrl || "", token: state.admin.token,
+      requestId: createStockMutationRequestId("addProduct", productId),
+      owner: state.admin.user, state: "QUEUED", sent: false, uncertain: false, message: "รอบันทึก"
+    };
+    job.task = registerBackgroundTask({ identity: `addProduct:${productId}`,
+      label: `เพิ่มสินค้า ${productId}`, state: BACKGROUND_TASK_STATES.SENDING,
+      message: "รอบันทึกสินค้า" });
+    addProductJobs.push(job);
+    state.smartAddDraft = { name, price, costPrice, stock, displayExtraQty, status, note, detailsText };
+    if (continueMode) {
+      const nextProductId = getNextProductId(productId);
+      resetAddProductImageState();
+      document.getElementById("addProductId").value = nextProductId;
+      document.getElementById("addProductId").focus();
+      document.getElementById("addProductId").select();
+    } else {
+      closeAddProduct();
     }
-
-    /* ================= SEND TO BACKEND ================= */
-    showLoading(t("savingProductData", "กำลังบันทึกข้อมูลสินค้า..."));
-    
-    const form = new URLSearchParams();
-    form.append("action", "addProduct"); // ✅ FIX จุดเดียวที่เป็นปัญหา
-    form.append("token", state.admin.token);
-    form.append("productId", productId);
-    form.append("name", name);
-    form.append("price", price);
-    form.append("costPrice", costPrice);
-    form.append("stock", stock);
-    form.append("displayExtraQty", displayExtraQty);
-  form.append("active", active);
-    form.append("status", status);
-    form.append("image", imageUrl);
-    form.append("note", note);
-    form.append("detailsText", detailsText);
-    form.append("compareImages", compareImages);
-
-    const res = await postFormAction(form);
-
-    if (res.error || res.success === false) {
-      throw new Error(res.message || res.error || "Add product failed");
-    }
-
-    showToast(t("addProductSuccess", "เพิ่มสินค้าเรียบร้อย 🎉"), "success");
-
-// 🧠 SMART MODE SAVE (จำค่าล่าสุดเสมอ)
- state.smartAddDraft = {
-   name,
-   price,
-   costPrice,
-   stock,
-   displayExtraQty,
-   status,
-   note,
-   detailsText
- };
- await refreshProducts();
-
- if (continueMode) {
-    // 🔴 CHANGED: คำนวณ SKU ถัดไปจาก state.products หลัง refreshProducts() แล้ว
-    const nextProductId = getNextProductId(productId);
-    resetAddProductImageState();
-
-    document.getElementById("addProductId").value = nextProductId;
-    document.getElementById("addName").value = state.smartAddDraft.name ?? "";
-   document.getElementById("addPrice").value = state.smartAddDraft.price ?? "";
-   document.getElementById("addCostPrice").value = state.smartAddDraft.costPrice ?? "";
-   document.getElementById("addStock").value = state.smartAddDraft.stock ?? "";
-   const addDisplayExtraInput = document.getElementById("addDisplayExtraQty");
-   if (addDisplayExtraInput) {
-     addDisplayExtraInput.value = state.smartAddDraft.displayExtraQty ?? "";
-   }
-   document.getElementById("addStatus").value = state.smartAddDraft.status ?? "ready";
-   document.getElementById("addNote").value = state.smartAddDraft.note ?? "";
-   const addDetailsInput = document.getElementById("addDetailsText");
-    if (addDetailsInput) {
-      addDetailsInput.value = state.smartAddDraft.detailsText ?? "";
-    }
-    document.getElementById("addProductId").focus();
-    document.getElementById("addProductId").select();
-  } else {
-   closeAddProduct();
- }
+    renderAddProductJobs();
+    enqueueAddProductJob(job);
 
   } catch(err){
     console.error(err);
     showToast(getWave2DisplayError(err, "unexpectedError", "เกิดข้อผิดพลาด"), "error");
   } finally {
-    safeHideLoading(); // 🔒 สำคัญ: ปิด loading ทุกกรณี
+
     state.admin.isSubmitting = false;
 
     if(btn){
