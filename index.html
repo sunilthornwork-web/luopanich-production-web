@@ -7598,6 +7598,11 @@ const UI_TEXT = {
     tooManyLoginAttempts: "พยายามเข้าสู่ระบบบ่อยเกินไป กรุณารอสักครู่",
     loginFailed: "ไม่สามารถเข้าสู่ระบบได้",
     loadProductsFailed: "ไม่สามารถโหลดข้อมูลสินค้าได้",
+    productRefreshUsingPrevious: "ยังโหลดข้อมูลล่าสุดไม่ได้ กำลังแสดงข้อมูลเดิม ยอดคงเหลืออาจเปลี่ยนแล้ว",
+    productRefreshInProgress: "กำลังตรวจสอบข้อมูลล่าสุด…",
+    productRecentSnapshot: "แสดงข้อมูลที่เพิ่งโหลดสำเร็จ กดอัปเดตเพื่อดูข้อมูลล่าสุดได้ทันที",
+    productLastLoaded: "โหลดสำเร็จล่าสุด",
+    productRefreshNow: "อัปเดตข้อมูล",
     loadingProductList: "กำลังโหลดรายการสินค้า...",
     retryAgain: "กรุณาลองใหม่อีกครั้ง",
     invalidImageFile: "ไฟล์รูปไม่ถูกต้อง",
@@ -8636,6 +8641,11 @@ const UI_TEXT = {
     tooManyLoginAttempts: "Too many login attempts. Please wait a moment",
     loginFailed: "Could not log in",
     loadProductsFailed: "Could not load product data",
+    productRefreshUsingPrevious: "The latest data could not be loaded. Showing previous data; stock may have changed.",
+    productRefreshInProgress: "Checking for the latest data…",
+    productRecentSnapshot: "Showing recently loaded data. Refresh any time to check for updates.",
+    productLastLoaded: "Last loaded",
+    productRefreshNow: "Refresh data",
     loadingProductList: "Loading product list...",
     retryAgain: "Please try again",
     invalidImageFile: "Invalid image file",
@@ -10829,7 +10839,7 @@ function safeHideLoading(fromTimeout = false) {
 
 // ---------- fetchWithTimeout ----------
 // JSON callers keep the deadline active through response-body consumption.
-async function fetchWithTimeout(input, init = {}, ms = 30000, readJson = false) {
+async function fetchWithTimeout(input, init = {}, ms = 30000, readJson = false, onResponse = null) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), ms);
   let phase = "network";
@@ -10838,6 +10848,7 @@ async function fetchWithTimeout(input, init = {}, ms = 30000, readJson = false) 
     const res = await fetch(input, { ...init, signal: controller.signal });
     phase = "response-headers";
     try { responseHost = new URL(res.url).hostname; } catch (_) {}
+    if (typeof onResponse === "function") onResponse({ httpStatus: res.status, responseHost });
     if (!res.ok) {
       const isGoogleNotFound = res.status === 404 &&
         /^https:\/\/(?:[^/]+\.)?(?:google\.com|googleusercontent\.com)(?:\/|$)/i.test(res.url || "");
@@ -10879,8 +10890,25 @@ async function fetchWithTimeout(input, init = {}, ms = 30000, readJson = false) 
   }
 }
 
-function fetchJsonWithTimeout(input, init = {}, ms = 30000) {
-  return fetchWithTimeout(input, init, ms, true);
+async function fetchJsonWithTimeout(input, init = {}, ms = 30000, onResponse = null) {
+  const action = String(init.body?.get?.("action") || "");
+  const changesProducts = String(init.method || "GET").toUpperCase() === "POST" &&
+    ["addProduct", "updateProduct", "deleteProduct", "bulkAddProducts", "bulkUpdateProducts",
+      "bulkUpsertProductMaster", "stockIn", "batchStockIn", "stockAdjust", "approveOrder",
+      "fulfillPendingDelivery", "closePendingDelivery"].includes(action);
+  if (changesProducts) {
+    pendingProductWrites++;
+    productSnapshotEpoch++;
+    adminProductSnapshot = null;
+  }
+  try { return await fetchWithTimeout(input, init, ms, true, onResponse); }
+  finally {
+    if (changesProducts) {
+      pendingProductWrites--;
+      productSnapshotEpoch++;
+      adminProductSnapshot = null;
+    }
+  }
 }
 
 function isTransientReadError(err) {
@@ -10896,7 +10924,7 @@ function supersededReadError() {
   return error;
 }
 
-const LUOPANICH_FRONTEND_BUILD = "20260928-stability-v1";
+const LUOPANICH_FRONTEND_BUILD = "20260928-navigation-recovery-v1";
 const luopanichRequestHistory = [];
 function recordLuopanichRequest(entry) {
   // Only allowlisted metadata: never store credentials, bodies or redirect URLs.
@@ -11101,8 +11129,9 @@ async function getPublicAction(action, { timeout = 30000, attempt = 1 } = {}) {
   url.searchParams.set("lpRequestId", requestId);
   const started = Date.now();
   let json = null;
+  let transport = {};
   try {
-    json = await fetchJsonWithTimeout(url.toString(), { cache: "no-store", redirect: "follow", credentials: "omit" }, timeout);
+    json = await fetchJsonWithTimeout(url.toString(), { cache: "no-store", redirect: "follow", credentials: "omit" }, timeout, meta => { transport = meta; });
     luopanichValidateResponse(json, requestId);
     if (json.error || json.success === false) throw luopanichServerError(json, requestId);
     if (json.success !== true || (action === "products" && !Array.isArray(json.data))) {
@@ -11110,14 +11139,14 @@ async function getPublicAction(action, { timeout = 30000, attempt = 1 } = {}) {
       error.code = "INVALID_JSON_RESPONSE";
       throw error;
     }
-    recordLuopanichRequest({ ...luopanichResponseMetadata(json), action, method: "GET", requestId, attempt,
+    recordLuopanichRequest({ ...luopanichResponseMetadata(json), ...transport, action, method: "GET", requestId, attempt,
       elapsedMs: Date.now() - started, result: "SUCCESS", phase: "complete" });
     return json;
   } catch (err) {
     err.requestId = requestId;
     const diagnostic = recordLuopanichRequest({ ...luopanichResponseMetadata(json), action, method: "GET", requestId, attempt,
-      elapsedMs: Date.now() - started, result: err.code || "REQUEST_FAILED", httpStatus: err.httpStatus,
-      serverCode: err.serverCode, phase: err.phase || "response", responseHost: err.responseHost });
+      elapsedMs: Date.now() - started, result: err.code || "REQUEST_FAILED", httpStatus: err.httpStatus || transport.httpStatus,
+      serverCode: err.serverCode, phase: err.phase || "response", responseHost: err.responseHost || transport.responseHost });
     console.info("[Luopanich public read] " + action + " " + diagnostic.result + "; ref=" + requestId, diagnostic);
     throw err;
   }
@@ -11129,6 +11158,9 @@ function luopanichConnectionReport() {
     frontendBuild: LUOPANICH_FRONTEND_BUILD,
     observedBackendBuilds: [...new Set(requests.map(row => row.backendBuild).filter(Boolean))],
     productLoadStatus: String(state.productLoad?.status || "unknown"),
+    productDataSource: ["network", "recent", "previous"].includes(state.productLoad?.source) ? state.productLoad.source : "unknown",
+    productDataAgeMs: state.productLoad?.loadedAt ? Math.max(0, Date.now() - state.productLoad.loadedAt) : null,
+    recentAdminProductReuseCount,
     sessionCheckPending: state.admin?.sessionCheckPending === true,
     requests
   };
@@ -11161,17 +11193,18 @@ async function postFormAction(form, {
     requestUrl.searchParams.set("lpRequestId", requestId);
     const started = Date.now();
     let json = null;
+    let transport = {};
     try {
       json = await fetchJsonWithTimeout(requestUrl.toString(), {
         method: "POST", body: form, cache: "no-store", redirect: "follow"
-      }, Math.max(1, Math.min(timeout, deadline - Date.now())));
+      }, Math.max(1, Math.min(timeout, deadline - Date.now())), meta => { transport = meta; });
       if (readOnly && !current()) throw supersededReadError();
       luopanichValidateResponse(json, requestId);
       if (json.error || json.success === false) {
         const error = luopanichServerError(json, requestId);
         const routing = error.code === "REQUEST_ROUTING_ERROR";
         if (!routing && returnFailure) {
-          recordLuopanichRequest({ ...luopanichResponseMetadata(json), action, requestId, attempt, elapsedMs: Date.now() - started, result: error.code, serverCode: error.serverCode });
+          recordLuopanichRequest({ ...luopanichResponseMetadata(json), ...transport, action, requestId, attempt, elapsedMs: Date.now() - started, result: error.code, serverCode: error.serverCode });
           return json;
         }
         if (!routing && handleAuthFailure && isAuthError(error.message) && requestToken && state.admin.token === requestToken) {
@@ -11180,13 +11213,13 @@ async function postFormAction(form, {
         }
         throw error;
       }
-      recordLuopanichRequest({ ...luopanichResponseMetadata(json), action, requestId, attempt, elapsedMs: Date.now() - started, result: "SUCCESS", phase: "complete" });
+      recordLuopanichRequest({ ...luopanichResponseMetadata(json), ...transport, action, requestId, attempt, elapsedMs: Date.now() - started, result: "SUCCESS", phase: "complete" });
       return json;
     } catch (err) {
       err.requestId = err.requestId || requestId;
       const diagnostic = recordLuopanichRequest({ ...luopanichResponseMetadata(json), action, requestId, attempt, elapsedMs: Date.now() - started,
-        result: err.code || "REQUEST_FAILED", httpStatus: err.httpStatus, serverCode: err.serverCode,
-        phase: err.phase || "response", responseHost: err.responseHost });
+        result: err.code || "REQUEST_FAILED", httpStatus: err.httpStatus || transport.httpStatus, serverCode: err.serverCode,
+        phase: err.phase || "response", responseHost: err.responseHost || transport.responseHost });
       if (readOnly && !current()) throw supersededReadError();
       const delay = 1200 + Math.floor(Math.random() * 400);
       if (attempt < maxAttempts && isTransientReadError(err) && Date.now() + delay < deadline) {
@@ -12562,14 +12595,48 @@ function productReadContextKey() {
 
 let activeProductRefreshKey = "";
 let loadedProductContextKey = "";
-function invalidateProductRefresh() {
+// A single in-memory snapshot for this verified session only; never written to storage.
+const ADMIN_PRODUCT_REUSE_MS = 30000;
+let adminProductSnapshot = null;
+let productSnapshotEpoch = 0;
+let pendingProductWrites = 0;
+let recentAdminProductReuseCount = 0;
+
+function restoreAdminProductSnapshot() {
+  const snapshot = adminProductSnapshot;
+  if (!snapshot || state.mode !== "admin" || !state.admin.loggedIn || isAdminSessionExpired() ||
+      snapshot.token !== state.admin.token || snapshot.sessionEpoch !== adminSessionEpoch ||
+      snapshot.mutationEpoch !== productSnapshotEpoch || pendingProductWrites > 0) {
+    adminProductSnapshot = null;
+    return null;
+  }
+  const age = Date.now() - snapshot.loadedAt;
+  // Older data is not carried back into the admin list, even as a fallback.
+  if (age < 0 || age > 300000) {
+    adminProductSnapshot = null;
+    return null;
+  }
+  const recent = snapshot.reusable && age >= 0 && age < ADMIN_PRODUCT_REUSE_MS;
+  state.products = snapshot.rows.map(product => ({ ...product }));
+  state.productCreationOrderIds = snapshot.creationOrderIds.slice();
+  loadedProductContextKey = "admin:" + snapshot.token;
+  Object.assign(state.productLoad, {
+    status: "success", error: "", loadedAt: snapshot.loadedAt,
+    source: recent ? "recent" : "previous"
+  });
+  if (recent) recentAdminProductReuseCount++;
+  return { recent };
+}
+
+function invalidateProductRefresh({ preserveAdminSnapshot = false } = {}) {
   productRefreshRequestSeq++;
   activeProductRefreshPromise = null;
   activeProductRefreshKey = "";
+  if (!preserveAdminSnapshot) adminProductSnapshot = null;
 }
 
-function resetProductReadContext() {
-  invalidateProductRefresh();
+function resetProductReadContext({ preserveAdminSnapshot = false } = {}) {
+  invalidateProductRefresh({ preserveAdminSnapshot });
   // Drop admin-only fields before a session/mode change can reuse the list.
   const publicFields = ["productId", "name", "price", "stock", "displayExtraQty", "image", "active", "status",
     "detailsText", "compareImages", "parentProductId", "variantType", "variantValue", "displayName", "variantSortOrder"];
@@ -12581,6 +12648,7 @@ function resetProductReadContext() {
   loadedProductContextKey = "viewer";
   state.productLoad.status = "idle";
   state.productLoad.error = "";
+  state.productLoad.source = state.productLoad.loadedAt ? "previous" : "";
 }
 
 async function fetchProductListWithRetry(fetcher, retryDelays = PRODUCT_LOAD_RETRY_DELAYS, isCurrent = () => true) {
@@ -12601,16 +12669,23 @@ async function refreshProducts({ retry = true, throwOnError = false } = {}) {
   let job = activeProductRefreshKey === key ? activeProductRefreshPromise : null;
   if (!job) {
     const requestId = ++productRefreshRequestSeq;
+    const mutationEpoch = productSnapshotEpoch;
     const current = () => requestId === productRefreshRequestSeq && productReadContextKey() === key;
     activeProductRefreshKey = key;
     productsLatencyDiagnosticState.refreshProducts++;
     logProductsRefreshLatencyDiagnostic();
-    if (loadedProductContextKey && loadedProductContextKey !== key) state.products = [];
+    if (loadedProductContextKey && loadedProductContextKey !== key) {
+      state.products = [];
+      state.productLoad.loadedAt = 0;
+    }
+    if (adminProductSnapshot?.token === state.admin.token && key.startsWith("admin:")) adminProductSnapshot.reusable = false;
     state.productLoad.status = "loading";
     state.productLoad.error = "";
+    state.productLoad.source = state.productLoad.loadedAt ? "previous" : "";
     state.productLoad.requestId = requestId;
     const app = document.getElementById("app");
     if (app && !state.products.length) app.innerHTML = renderProductSkeletonList();
+    else if (app) renderProducts();
     job = (async () => {
       // Ensure job is installed before synchronous failures/finally can run.
       await Promise.resolve();
@@ -12624,11 +12699,23 @@ async function refreshProducts({ retry = true, throwOnError = false } = {}) {
         loadedProductContextKey = key;
         state.productLoad.status = "success";
         state.productLoad.error = "";
+        state.productLoad.loadedAt = Date.now();
+        state.productLoad.source = "network";
+        if (key === "viewer") adminProductSnapshot = null;
+        if (key.startsWith("admin:") && mutationEpoch === productSnapshotEpoch && pendingProductWrites === 0) {
+          adminProductSnapshot = {
+            token: key.slice(6), sessionEpoch: adminSessionEpoch, mutationEpoch,
+            rows: state.products.map(product => ({ ...product })),
+            creationOrderIds: state.productCreationOrderIds.slice(),
+            loadedAt: state.productLoad.loadedAt, reusable: true
+          };
+        }
         renderProducts();
         return state.products;
       } catch (err) {
         if (!current()) throw supersededReadError();
         state.productLoad.status = "error";
+        state.productLoad.source = state.productLoad.loadedAt ? "previous" : "";
         state.productLoad.error = getUserFacingError(err, "loadProductsFailed", "ไม่สามารถโหลดข้อมูลสินค้าได้");
         renderProducts();
         throw err;
@@ -14181,6 +14268,24 @@ function renderProductLoadErrorState() {
   `;
 }
 
+function renderProductReadNotice() {
+  const load = state.productLoad || {};
+  const failed = load.status === "error";
+  const loading = load.status === "loading";
+  const recent = load.source === "recent";
+  if (!failed && !loading && !recent) return "";
+  const message = failed
+    ? t("productRefreshUsingPrevious", "ยังโหลดข้อมูลล่าสุดไม่ได้ กำลังแสดงข้อมูลเดิม ยอดคงเหลืออาจเปลี่ยนแล้ว")
+    : loading ? t("productRefreshInProgress", "กำลังตรวจสอบข้อมูลล่าสุด…")
+    : t("productRecentSnapshot", "แสดงข้อมูลที่เพิ่งโหลดสำเร็จ กดอัปเดตเพื่อดูข้อมูลล่าสุดได้ทันที");
+  const time = load.loadedAt
+    ? new Date(load.loadedAt).toLocaleTimeString(getCurrentLang() === "en" ? "en-GB" : "th-TH", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
+  return `<div class="product-read-notice" role="${failed ? "alert" : "status"}" style="grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 14px;margin-bottom:12px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font-size:13px;line-height:1.5">
+    <div style="flex:1;min-width:180px">${escapeHtml(message)}${time ? `<div style="color:var(--text-soft)">${escapeHtml(t("productLastLoaded", "โหลดสำเร็จล่าสุด"))}: ${escapeHtml(time)}</div>` : ""}</div>
+    <button type="button" class="btn btn-outline" style="width:auto;min-height:44px" onclick="refreshProducts()" ${loading ? "disabled" : ""}>${escapeHtml(loading ? t("loading", "กำลังโหลด…") : t("productRefreshNow", "อัปเดตข้อมูล"))}</button>
+  </div>`;
+}
+
 function renderProducts(){
   const app = document.getElementById("app");
   if (app) {
@@ -14263,6 +14368,7 @@ function renderProducts(){
   const pageItems = filteredProducts.slice(startIndex, startIndex + pageSize);
 
   app.innerHTML = "";
+  app.insertAdjacentHTML("beforeend", renderProductReadNotice());
   if (state.mode === "viewer") {
     const productCount = document.createElement("div");
     productCount.id = "viewerProductCount";
@@ -15628,18 +15734,29 @@ async function enterAdmin() {
   const job = (async () => {
     await Promise.resolve();
     let result = "success";
+    let loadingGeneration = null;
     try {
       if (state.admin.token !== token || epoch !== adminSessionEpoch || adminEntryPromise?.promise !== job) {
         result = "READ_SUPERSEDED";
         return false;
       }
-      showLoading(t("loadingData", "กำลังโหลดข้อมูล..."), 70000);
       state.mode = "admin";
       state.search = "";
       state.pagination.page = 1;
       state.viewerSearchOpen = false;
       state.selectedProduct = null;
       renderHeader();
+      const snapshot = restoreAdminProductSnapshot();
+      if (snapshot) {
+        renderProducts();
+        if (snapshot.recent) {
+          result = "RECENT_DATA";
+          return current();
+        }
+      } else {
+        showLoading(t("loadingData", "กำลังโหลดข้อมูล..."), 70000);
+        loadingGeneration = _loadingGeneration;
+      }
       // Orders are fetched on demand by dashboard/order screens and share fetchOrders' in-flight read.
       await refreshProducts({ throwOnError: true });
       return current();
@@ -15652,7 +15769,8 @@ async function enterAdmin() {
     } finally {
       logAdminPreloadLatencyDiagnostic({ phase: "enterAdmin.products", attempt: 1, startMs: started, endMs: Date.now(), elapsedMs: Date.now() - started, result });
       if (adminEntryPromise?.promise === job) {
-        if (state.admin.token === token && epoch === adminSessionEpoch) safeHideLoading();
+        if (loadingGeneration !== null && loadingGeneration === _loadingGeneration &&
+            state.admin.token === token && epoch === adminSessionEpoch) safeHideLoading();
         adminEntryPromise = null;
       }
     }
@@ -15665,7 +15783,7 @@ async function enterAdmin() {
 // ✅ STEP 1: UI-only mode switch (ไม่ยุ่ง session/token)
 function leaveAdminMode(){
   cancelAdminEntry();
-  resetProductReadContext();
+  resetProductReadContext({ preserveAdminSnapshot: true });
   // 🔒 ปิด overlay ทั้งหมดแบบเดิม (UI layer)
   document
     .querySelectorAll(".sheet.show, .side-menu.show")
