@@ -6301,6 +6301,9 @@ textarea.input{
 @keyframes po-spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.po-spinner{animation:none}}
 @media(max-width:370px){#adminOrderSheet.po-sheet{padding-left:12px;padding-right:12px}.po-topbar{padding-left:12px;padding-right:12px;margin-left:-12px!important;margin-right:-12px!important;grid-template-columns:28px minmax(0,1fr) auto;gap:7px}.po-back{width:28px}.po-topbar h3{font-size:16px}.po-status{font-size:9px;padding:5px 7px;max-width:90px}.po-hero{padding:16px 15px 13px}.po-hero h2{font-size:23px}.po-total{font-size:34px}.po-info-card dl>div{grid-template-columns:77px minmax(0,1fr);gap:8px}.po-info-card dd{font-size:11px}.po-primary-actions button{font-size:11px;gap:5px}.po-item{padding:11px}.po-item-top{grid-template-columns:56px minmax(0,1fr);gap:10px}.po-item .cart-thumb{width:56px;height:62px}.po-item-info h5{font-size:12px}.po-item-bottom strong{font-size:19px}.po-final-total>strong{font-size:22px}}
 
+/* Document choice belongs to the existing cart; both flows use the same receipt layout. */
+.cart-document-choice{min-width:0;border:0;padding:0;margin:16px 0 12px}.cart-document-choice legend{font-size:13px;font-weight:700;color:var(--text);padding:0;margin-bottom:9px}.cart-document-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.cart-document-options label{min-width:0;display:flex;align-items:flex-start;gap:8px;border:1px solid var(--border-strong);border-radius:13px;padding:13px 11px;background:var(--surface-2);cursor:pointer;line-height:1.5}.cart-document-options label:has(input:checked){border-color:#409eff;background:rgba(35,128,214,.16);box-shadow:inset 0 0 0 1px rgba(64,158,255,.2)}.cart-document-options input[type=radio]{appearance:auto;-webkit-appearance:radio;flex:0 0 17px;width:17px;height:17px;padding:0;margin:2px 0 0;accent-color:#168aff}.cart-document-options span{min-width:0;display:flex;flex-direction:column;gap:4px}.cart-document-options strong{font-size:13px;color:var(--text);overflow-wrap:anywhere}.cart-document-options small{font-size:11px;color:var(--text-soft)}.cart-document-options label:focus-within{outline:2px solid #68b7ff;outline-offset:3px}.cart-document-choice:disabled{opacity:.6}.cart-document-choice:disabled label{cursor:default}.cart-document-notice{padding:10px 12px;margin:12px 0;border:1px solid #2b78a566;border-radius:11px;background:#1684c410;color:var(--text-soft);font-size:12px;line-height:1.65}.cart-document-return-note{border-color:#2786b388;background:#197ea818}.cart-document-confirm-title{line-height:1.5;overflow-wrap:anywhere}@media(max-width:370px){.cart-document-options{gap:7px}.cart-document-options label{padding:11px 8px;gap:6px}.cart-document-options strong{font-size:12px}.cart-document-options small{font-size:10px}}
+
 </style>
 </head>
 <body>
@@ -6673,6 +6676,8 @@ Object.assign(window, {
   
 /* ================= GLOBAL STATE (UPGRADED / SAFE) ================= */
 
+const CART_DOCUMENT_TYPES = Object.freeze({ ORDER: "ORDER", DISPLAY_RETURN: "DISPLAY_RETURN" });
+
 const state = {
   mode: "viewer",
 
@@ -6700,6 +6705,9 @@ const state = {
   addCompareImagesDraft: [],
   qty: 1,
   cart: [],
+  cartDocumentType: CART_DOCUMENT_TYPES.ORDER,
+  cartConfirmationType: null,
+  cartConfirmationSeq: 0,
   lastOrder: null,
 
   // 🔒 viewer submit guard (ใช้กับ createOrder)
@@ -7053,6 +7061,23 @@ const UI_TEXT = {
     total: "ยอดรวม",
     itemUnit: "รายการ",
     pieceUnit: "ชิ้น",
+    cartDocumentChoice: "เลือกประเภทเอกสาร",
+    displayReturnDocumentTitle: "ใบคืนสินค้าตัวโชว์",
+    cartOrderChoiceHint: "ส่งให้แอดมินอนุมัติ",
+    cartReturnChoiceHint: "สร้างเอกสารหลักฐาน",
+    cartDocumentBusy: "กรุณารอรายการปัจจุบันให้เสร็จก่อนเปลี่ยนประเภท",
+    displayReturnNotice: "เอกสารหลักฐานเท่านั้น ไม่ส่งรออนุมัติและไม่ปรับสต๊อก",
+    createDisplayReturn: "สร้างใบคืนสินค้าตัวโชว์",
+    confirmDisplayReturn: "ยืนยันใบคืนสินค้าตัวโชว์",
+    confirmCreateDisplayReturn: "ยืนยันสร้างใบคืนสินค้าตัวโชว์",
+    displayReturnCreated: "สร้างใบคืนสินค้าตัวโชว์เรียบร้อยแล้ว",
+    displayReturnCreatedTitle: "สร้างใบคืนสินค้าตัวโชว์สำเร็จ",
+    displayReturnDocumentNumber: "เลขที่เอกสาร",
+    displayReturnSuccessNote: "สร้างเอกสารหลักฐานแล้ว ไม่มีการส่งออเดอร์หรือเปลี่ยนสต๊อก สามารถเปิดซ้ำจากบิลล่าสุดได้",
+    downloadDisplayReturn: "ดาวน์โหลดใบคืนสินค้าตัวโชว์",
+    displayReturnInvalidData: "กรุณาตรวจสอบเลข PO และรายการสินค้า",
+    displayReturnStorageFailed: "ยังบันทึกบิลล่าสุดไม่ได้ ข้อมูลในตะกร้ายังอยู่ กรุณาลองใหม่",
+    displayReturnCreateFailed: "สร้างใบคืนสินค้าตัวโชว์ไม่สำเร็จ",
     cart: "ตะกร้า",
     cartEmpty: "ยังไม่มีสินค้าในตะกร้า",
     cartEmptyHint: "เลือกสินค้าแล้วกดเพิ่มลงตะกร้าเพื่อเริ่มสร้างใบสั่งซื้อ",
@@ -8069,6 +8094,23 @@ const UI_TEXT = {
     total: "Total",
     itemUnit: "items",
     pieceUnit: "pcs",
+    cartDocumentChoice: "Document type",
+    displayReturnDocumentTitle: "Display Item Return Note",
+    cartOrderChoiceHint: "Send for admin approval",
+    cartReturnChoiceHint: "Create a supporting document",
+    cartDocumentBusy: "Please wait for the current submission to finish before changing type.",
+    displayReturnNotice: "Document only. No approval request or stock changes.",
+    createDisplayReturn: "Create display return note",
+    confirmDisplayReturn: "Confirm display return note",
+    confirmCreateDisplayReturn: "Confirm create return note",
+    displayReturnCreated: "Display return note created.",
+    displayReturnCreatedTitle: "Display return note created",
+    displayReturnDocumentNumber: "Document number",
+    displayReturnSuccessNote: "Supporting document created. No order was submitted and stock is unchanged. Reopen it from Latest Bill.",
+    downloadDisplayReturn: "Download display return note",
+    displayReturnInvalidData: "Please check the PO number and product data.",
+    displayReturnStorageFailed: "Unable to save Latest Bill. Your cart is intact. Please try again.",
+    displayReturnCreateFailed: "Unable to create display return note.",
     cart: "Cart",
     cartEmpty: "Your cart is empty",
     cartEmptyHint: "Select products and add them to cart to create an order.",
@@ -9134,7 +9176,7 @@ function setCurrentLang(lang) {
     if (cartSheet?.classList?.contains("show")) {
       renderCart();
     }
-    if (confirmSheet?.classList?.contains("show") && state.cart.length > 0) {
+    if (confirmSheet?.classList?.contains("show") && confirmSheet.dataset.view === "checkout" && state.cart.length > 0) {
       renderConfirmSheet();
     } else if (confirmSheet?.classList?.contains("show") && state.lastOrder) {
       renderLastOrderSheet();
@@ -10007,11 +10049,109 @@ function sanitizePublicOrderItemForViewer(item) {
   return cleanItem;
 }
 
+// Cart documents share the existing receipt template. DISPLAY_RETURN never creates an order.
+function normalizeCartDocumentType(value) {
+  return value === CART_DOCUMENT_TYPES.DISPLAY_RETURN ? CART_DOCUMENT_TYPES.DISPLAY_RETURN : CART_DOCUMENT_TYPES.ORDER;
+}
+function getCartDocumentType() {
+  return normalizeCartDocumentType(state.cartDocumentType);
+}
+function isDisplayReturnDocument(document) {
+  return normalizeCartDocumentType(document?.documentType) === CART_DOCUMENT_TYPES.DISPLAY_RETURN;
+}
+function getCartDocumentTitle(document) {
+  return isDisplayReturnDocument(document)
+    ? t('displayReturnDocumentTitle','ใบคืนสินค้าตัวโชว์')
+    : t('legacyOrderDocumentTitle','ใบสั่งซื้อ');
+}
+function hasCartOrderInFlight() {
+  const id=String(state.createRequestId || '').trim();
+  return !!(id && findActiveBackgroundTaskByIdentity(getCreateOrderBackgroundTaskIdentity(id)));
+}
+function setCartDocumentType(value) {
+  if (![CART_DOCUMENT_TYPES.ORDER,CART_DOCUMENT_TYPES.DISPLAY_RETURN].includes(value)) return;
+  if (state.isSubmitting || hasCartOrderInFlight() || confirmSheet.classList.contains('show')) {
+    showToast(t('cartDocumentBusy','กรุณารอรายการปัจจุบันให้เสร็จก่อนเปลี่ยนประเภท'),'warning');
+    if(cartSheet.classList.contains('show'))renderCart();
+    return;
+  }
+  state.cartDocumentType=value;
+  state.cartConfirmationType=null;
+  const scrollTop=cartSheet.scrollTop;
+  renderCart();cartSheet.scrollTop=scrollTop;
+  document.getElementById(value===CART_DOCUMENT_TYPES.ORDER?'cartDocumentOrder':'cartDocumentReturn')?.focus({preventScroll:true});
+}
+function renderCartDocumentSelector() {
+  const type=getCartDocumentType(),disabled=state.isSubmitting || hasCartOrderInFlight();
+  return `<fieldset class="cart-document-choice" ${disabled?'disabled':''}><legend>${t('cartDocumentChoice','เลือกประเภทเอกสาร')}</legend><div class="cart-document-options"><label><input id="cartDocumentOrder" type="radio" name="cartDocumentType" value="ORDER" ${type===CART_DOCUMENT_TYPES.ORDER?'checked':''} onchange="setCartDocumentType(this.value)"><span><strong>${t('submitOrder','ส่งคำสั่งซื้อ')}</strong><small>${t('cartOrderChoiceHint','ส่งให้แอดมินอนุมัติ')}</small></span></label><label><input id="cartDocumentReturn" type="radio" name="cartDocumentType" value="DISPLAY_RETURN" ${type===CART_DOCUMENT_TYPES.DISPLAY_RETURN?'checked':''} onchange="setCartDocumentType(this.value)"><span><strong>${t('displayReturnDocumentTitle','ใบคืนสินค้าตัวโชว์')}</strong><small>${t('cartReturnChoiceHint','สร้างเอกสารหลักฐาน')}</small></span></label></div></fieldset>`;
+}
+function isCartConfirmationFor(type) {
+  return confirmSheet.classList.contains('show') && confirmSheet.dataset.view==='checkout' &&
+    state.cartConfirmationType===type && getCartDocumentType()===type;
+}
+function submitCartDocument() {
+  if (isCartConfirmationFor(CART_DOCUMENT_TYPES.DISPLAY_RETURN)) return submitDisplayReturnDocument();
+  if (isCartConfirmationFor(CART_DOCUMENT_TYPES.ORDER)) return submitOrder();
+}
+function buildDisplayReturnDocument(items, poNumber) {
+  const po=String(poNumber || '').trim();
+  if (!po || !Array.isArray(items) || !items.length) throw new Error(t('displayReturnInvalidData','กรุณาตรวจสอบเลข PO และรายการสินค้า'));
+  const safeItems=items.map(item=>{
+    const qty=Number(item?.qty),price=Number(item?.price);
+    if (!String(item?.productId || '').trim() || !Number.isInteger(qty) || qty<=0 ||
+      item?.price===null || item?.price===undefined || String(item.price).trim()==='' || !Number.isFinite(price) || price<0) {
+      throw new Error(t('displayReturnInvalidData','กรุณาตรวจสอบเลข PO และรายการสินค้า'));
+    }
+    return sanitizePublicOrderItemForViewer({...item,qty,price,image:getCartItemImageUrl(item)});
+  });
+  const total=safeItems.reduce((sum,item)=>sum+item.qty*item.price,0);
+  if (!Number.isFinite(total)) throw new Error(t('displayReturnInvalidData','กรุณาตรวจสอบเลข PO และรายการสินค้า'));
+  // orderId is retained only for compatibility with the local latest-receipt schema.
+  // RET identifies a document reference; it is never inserted into the Orders sheet.
+  return {documentType:CART_DOCUMENT_TYPES.DISPLAY_RETURN,orderId:'RET-'+generateCreateOrderRequestId().toUpperCase(),poNumber:po,
+    items:safeItems,total,createdAt:new Date().toISOString()};
+}
+function submitDisplayReturnDocument() {
+  if (!isCartConfirmationFor(CART_DOCUMENT_TYPES.DISPLAY_RETURN) || state.isSubmitting || !state.cart.length) return;
+  if (hasCartOrderInFlight()) {showToast(t('cartDocumentBusy','กรุณารอรายการปัจจุบันให้เสร็จก่อนเปลี่ยนประเภท'),'warning');return;}
+  if (!validateCartQuantities()) return;
+  const po=String(state.poNumber || '').trim();
+  if (!po) {showToast(t('poRequired','กรุณากรอกเลข PO'),'warning');document.getElementById('poInput')?.focus();return;}
+  state.isSubmitting=true;
+  const button=document.getElementById('submitBtn');
+  if(button){button.disabled=true;button.setAttribute('aria-busy','true');}
+  let saved=false;
+  try {
+    const receipt=buildDisplayReturnDocument(state.cart,po);
+    // Persist before clearing the draft. Storage failures must leave both the cart and prior receipt intact.
+    saveLastOrder(receipt,{required:true});saved=true;
+    state.cart=[];state.poNumber='';state.createOrderPartnerId='';state.createRequestId='';
+    state.cartDocumentType=CART_DOCUMENT_TYPES.ORDER;
+    try {clearCartStorage();} catch(err) {console.warn('clear return document cart failed',err);saveCart();}
+    renderLastOrderSheet();
+    state.ui.backdropLocked=false;
+    if(typeof renderBadge==='function')renderBadge();
+    if(typeof renderFloatingBar==='function')renderFloatingBar();
+    showToast(t('displayReturnCreated','สร้างใบคืนสินค้าตัวโชว์เรียบร้อยแล้ว'),'success');
+  } catch(err) {
+    console.warn('display return document failed',err);
+    if(saved){renderLastOrderSheet();state.ui.backdropLocked=false;}
+    else showToast(err?.code==='LAST_DOCUMENT_STORAGE_FAILED'
+      ? t('displayReturnStorageFailed','ยังบันทึกบิลล่าสุดไม่ได้ ข้อมูลในตะกร้ายังอยู่ กรุณาลองใหม่')
+      : err?.message || t('displayReturnCreateFailed','สร้างใบคืนสินค้าตัวโชว์ไม่สำเร็จ'),'error');
+  } finally {
+    state.isSubmitting=false;
+    if(button){button.disabled=false;button.setAttribute('aria-busy','false');}
+    syncOverlayBackdropState();
+  }
+}
+
 function sanitizePublicLastOrderForViewer(order) {
   if (!order || !order.orderId) return null;
 
   return {
     orderId: order.orderId,
+    documentType: normalizeCartDocumentType(order.documentType),
     items: Array.isArray(order.items)
       ? order.items.map(sanitizePublicOrderItemForViewer)
       : [],
@@ -10078,13 +10218,18 @@ function renderLastOrderSheet() {
     0
   );
   const total = Number(order.total) || 0;
+  const isReturn = isDisplayReturnDocument(order);
+  state.cartConfirmationSeq++;
+  state.cartConfirmationType = null;
+  confirmSheet.dataset.view = "last-document";
+  confirmSheet.dataset.documentId = String(order.orderId || "");
 
   confirmSheet.innerHTML = `
-    <h3 id="confirmSheetTitle">${t("orderCreatedTitle", "สร้างใบสั่งซื้อสำเร็จ")}</h3>
+    <h3 id="confirmSheetTitle" class="cart-document-confirm-title">${isReturn ? t("displayReturnCreatedTitle", "สร้างใบคืนสินค้าตัวโชว์สำเร็จ") : t("orderCreatedTitle", "สร้างใบสั่งซื้อสำเร็จ")}</h3>
 
     <div class="order-success-card success-enter">
       <div class="summary-row">
-        <span>${t("orderId", "เลขที่ใบสั่งซื้อ")}</span>
+        <span>${isReturn ? t("displayReturnDocumentNumber", "เลขที่เอกสาร") : t("orderId", "เลขที่ใบสั่งซื้อ")}</span>
         <strong title="${escapeHtml(order.orderId)}">${escapeHtml(formatOrderIdForDisplay(order.orderId))}</strong>
       </div>
       <div class="summary-row">
@@ -10102,13 +10247,13 @@ function renderLastOrderSheet() {
     </div>
 
     <div class="success-note">
-      ${t("orderSuccessNote", "ระบบบันทึกใบสั่งซื้อแล้ว และกำลังรอแอดมินตรวจสอบ/อนุมัติคำสั่งซื้อ")}
+      ${isReturn ? t("displayReturnSuccessNote", "สร้างเอกสารหลักฐานแล้ว ไม่มีการส่งออเดอร์หรือเปลี่ยนสต๊อก สามารถเปิดซ้ำจากบิลล่าสุดได้") : t("orderSuccessNote", "ระบบบันทึกใบสั่งซื้อแล้ว และกำลังรอแอดมินตรวจสอบ/อนุมัติคำสั่งซื้อ")}
     </div>
 
     <button class="btn btn-primary"
       style="margin-top:16px"
       onclick="downloadLastOrderAndCloseSuccess()">
-      ${t("downloadOrder", "ดาวน์โหลดใบสั่งซื้อ")}
+      ${isReturn ? t("downloadDisplayReturn", "ดาวน์โหลดใบคืนสินค้าตัวโชว์") : t("downloadOrder", "ดาวน์โหลดใบสั่งซื้อ")}
     </button>
     <button class="btn btn-outline"
       style="margin-top:8px"
@@ -10156,20 +10301,34 @@ function downloadLastOrderAndCloseSuccess() {
     return;
   }
 
-  exportOrderPrint();
-  closeOrderSuccessSheetAfterDownload();
+  if (exportOrderPrint()) closeOrderSuccessSheetAfterDownload();
 }
  
-function saveLastOrder() {
+function saveLastOrder(order = state.lastOrder, { required = false } = {}) {
   try {
-    if (!state.lastOrder) return;
-    const cleanOrder = sanitizePublicLastOrderForViewer(state.lastOrder);
-    if (!cleanOrder) return;
-    state.lastOrder = cleanOrder;
+    const cleanOrder = sanitizePublicLastOrderForViewer(order);
+    if (!cleanOrder) {
+      if (required) throw new Error("Invalid latest document");
+      return false;
+    }
     localStorage.setItem(LAST_ORDER_KEY, JSON.stringify(cleanOrder));
+    state.lastOrder = cleanOrder;
+    return true;
   } catch (e) {
     console.warn("saveLastOrder failed", e);
+    if (required) {
+      const error = new Error("Unable to save latest document");
+      error.code = "LAST_DOCUMENT_STORAGE_FAILED";
+      throw error;
+    }
+    return false;
   }
+}
+
+function closeLatestDocumentAfterPrint(documentId) {
+  if (confirmSheet.dataset.view !== "last-document" ||
+      confirmSheet.dataset.documentId !== String(documentId || "")) return;
+  closeOrderSuccessSheetAfterDownload();
 }
 
 function loadLastOrder() {
@@ -12365,6 +12524,9 @@ function generateCreateOrderRequestId() {
 }
 
 async function createOrder(createRequestId, snapshot = null) {
+  if (snapshot?.documentType && snapshot.documentType !== CART_DOCUMENT_TYPES.ORDER) {
+    throw new Error("Document-only type cannot create an order");
+  }
   const orderItems = Array.isArray(snapshot?.items) ? snapshot.items : state.cart;
   const orderPoNumber = Object.prototype.hasOwnProperty.call(snapshot || {}, "poNumber")
     ? String(snapshot.poNumber || "").trim()
@@ -14748,8 +14910,11 @@ function renderCart(){
 const cartTotals = getCartTotals();
 
 cartSheet.innerHTML += `
+  ${renderCartDocumentSelector()}
   <div class="product-stock-message">
-    ${t("pendingStockApprovalMessage", "ระบบจะยังไม่ตัดสต๊อกจนกว่าคำสั่งซื้อได้รับการอนุมัติ")}
+    ${getCartDocumentType() === CART_DOCUMENT_TYPES.DISPLAY_RETURN
+      ? t("displayReturnNotice", "เอกสารหลักฐานเท่านั้น ไม่ส่งรออนุมัติและไม่ปรับสต๊อก")
+      : t("pendingStockApprovalMessage", "ระบบจะยังไม่ตัดสต๊อกจนกว่าคำสั่งซื้อได้รับการอนุมัติ")}
   </div>
   <div class="cart-summary">
     <div class="summary-row">
@@ -14773,7 +14938,7 @@ cartSheet.innerHTML += `
   <div class="sheet-action-footer">
     <button class="btn btn-primary cart-sticky-cta"
       onclick="openConfirmFromCart()">
-      <span>${t("submitOrder", "ส่งคำสั่งซื้อ")}</span>
+      <span>${getCartDocumentType() === CART_DOCUMENT_TYPES.DISPLAY_RETURN ? t("createDisplayReturn", "สร้างใบคืนสินค้าตัวโชว์") : t("submitOrder", "ส่งคำสั่งซื้อ")}</span>
       <span id="cartStickyTotalValue" class="cart-sticky-total">${formatViewerMoney(cartTotals.money)}</span>
     </button>
   </div>
@@ -14906,7 +15071,11 @@ function renderConfirmSheet(){
   if (!confirmSheet) return;
   let total = 0;
 
-  confirmSheet.innerHTML = `<h3 id="confirmSheetTitle">${t("confirmOrder", "ยืนยันใบสั่งซื้อ")}</h3>`;
+  const isReturn = state.cartConfirmationType === CART_DOCUMENT_TYPES.DISPLAY_RETURN;
+  confirmSheet.dataset.view = "checkout";
+  delete confirmSheet.dataset.documentId;
+  confirmSheet.innerHTML = `<h3 id="confirmSheetTitle" class="cart-document-confirm-title">${isReturn ? t("confirmDisplayReturn", "ยืนยันใบคืนสินค้าตัวโชว์") : t("confirmOrder", "ยืนยันใบสั่งซื้อ")}</h3>
+    ${isReturn ? `<div class="cart-document-notice cart-document-return-note">${t("displayReturnNotice", "เอกสารหลักฐานเท่านั้น ไม่ส่งรออนุมัติและไม่ปรับสต๊อก")}</div>` : ""}`;
 
   state.cart.forEach(i=>{
     const sum = i.price * i.qty;
@@ -14937,7 +15106,7 @@ function renderConfirmSheet(){
       </div>
     </div>
 
-    ${renderCreateOrderPartnerSelector()}
+    ${isReturn ? "" : renderCreateOrderPartnerSelector()}
 
     <div class="form-group">
      <label>${t("poNumber", "เลข PO")} <span style="color:#ff3b30">*</span></label>
@@ -14955,8 +15124,8 @@ function renderConfirmSheet(){
     id="submitBtn"
     ${state.isSubmitting ? "disabled" : ""}
     aria-busy="${state.isSubmitting ? "true" : "false"}"
-    onclick="submitOrder()">
-    ${t("confirmCreateOrder", "ยืนยันสร้างใบสั่งซื้อ")}
+    onclick="submitCartDocument()">
+    ${isReturn ? t("confirmCreateDisplayReturn", "ยืนยันสร้างใบคืนสินค้าตัวโชว์") : t("confirmCreateOrder", "ยืนยันสร้างใบสั่งซื้อ")}
   </button>
 
   <button class="btn btn-outline"
@@ -15492,37 +15661,33 @@ function closeStockError(){
 }
   
 async function openConfirm(){
-  if (state.cart.length === 0) return;
+  if (!state.cart.length || state.isSubmitting) return;
   if (!validateCartQuantities()) return;
-
-  state.ui.backdropLocked = true; // 🔒 ล็อก backdrop ระหว่าง confirm
-
-  // ปิด cart ก่อน
-  closeOverlay(cartSheet);
-
-  const partnerOptionsPromise = ensureCreateOrderPartnerOptions();
-  if (!isAdminCreateOrderPartnerSelectorEnabled()) {
-    state.createOrderPartnerId = "";
+  if (hasCartOrderInFlight()) {
+    showToast(t("createOrderAlreadyRunning", "กำลังสร้างใบสั่งซื้อรายการนี้อยู่"), "warning");
+    return;
   }
-
-  // render เนื้อหา
+  const type=getCartDocumentType(),seq=++state.cartConfirmationSeq;
+  state.cartConfirmationType=type;
+  state.ui.backdropLocked=true;
   renderConfirmSheet();
-
-  // 🔥 หัวใจ: ต้องเปิด sheet จริง
   openOverlay(confirmSheet);
-
-  await partnerOptionsPromise;
-  if (confirmSheet?.classList?.contains("show")) {
-    renderConfirmSheet();
-  }
+  closeOverlay(cartSheet);
+  if (type === CART_DOCUMENT_TYPES.DISPLAY_RETURN) return;
+  if (!isAdminCreateOrderPartnerSelectorEnabled()) state.createOrderPartnerId="";
+  await ensureCreateOrderPartnerOptions();
+  if (state.cartConfirmationSeq===seq && isCartConfirmationFor(type) && !state.isSubmitting) renderConfirmSheet();
 }
 
-  
 function cancelConfirm(){
-  state.createOrderPartnerId = "";
-  state.ui.backdropLocked = false;
-  closeOverlay(confirmSheet);
+  if (state.isSubmitting) return;
+  state.cartConfirmationSeq++;
+  state.cartConfirmationType=null;
+  state.createOrderPartnerId="";
+  state.ui.backdropLocked=false;
+  renderCart();
   openOverlay(cartSheet);
+  closeOverlay(confirmSheet);
 }
 
 function closeQty(){
@@ -27255,6 +27420,7 @@ function cloneCreateOrderItems(items) {
 function createCreateOrderSubmissionSnapshot(createRequestId, poNumber) {
   return {
     createRequestId: String(createRequestId || "").trim(),
+    documentType: CART_DOCUMENT_TYPES.ORDER,
     poNumber: String(poNumber || "").trim(),
     partnerId: isAdminCreateOrderPartnerSelectorEnabled()
       ? String(state.createOrderPartnerId || "").trim()
@@ -27280,7 +27446,8 @@ function createOrderItemsMatchSnapshot(currentItems, snapshotItems) {
 
 function isCreateOrderDraftUnchanged(snapshot) {
   if (!snapshot) return false;
-  return String(state.createRequestId || "").trim() === String(snapshot.createRequestId || "").trim() &&
+  return getCartDocumentType() === normalizeCartDocumentType(snapshot.documentType) &&
+    String(state.createRequestId || "").trim() === String(snapshot.createRequestId || "").trim() &&
     String(state.poNumber || "").trim() === String(snapshot.poNumber || "").trim() &&
     String(state.createOrderPartnerId || "").trim() === String(snapshot.partnerId || "").trim() &&
     createOrderItemsMatchSnapshot(state.cart, snapshot.items);
@@ -27289,6 +27456,7 @@ function isCreateOrderDraftUnchanged(snapshot) {
 function resetCreateOrderDraftAfterBackgroundSuccess(snapshot) {
   if (isCreateOrderDraftUnchanged(snapshot)) {
     state.cart = [];
+    state.cartDocumentType = CART_DOCUMENT_TYPES.ORDER;
     clearCartStorage();
     state.poNumber = "";
     state.createOrderPartnerId = "";
@@ -27326,6 +27494,7 @@ async function finishCreateOrderBackgroundSuccess(res, snapshot, task) {
     backendTotal >= 0;
 
   state.lastOrder = {
+    documentType: CART_DOCUMENT_TYPES.ORDER,
     orderId: res.data.orderId,
     items: (hasValidBackendItems ? backendItems : localItems)
       .map(sanitizePublicOrderItemForViewer),
@@ -27344,6 +27513,7 @@ async function finishCreateOrderBackgroundSuccess(res, snapshot, task) {
 }
 
 async function submitOrder(){
+  if (!isCartConfirmationFor(CART_DOCUMENT_TYPES.ORDER)) return;
   // ❌ ห้ามใช้ state.loading เป็น guard
   if (state.isSubmitting || state.cart.length === 0) return;
   if (!validateCartQuantities()) return;
@@ -35779,7 +35949,7 @@ async function exportOrderPNG() {
     : "-";
   const printLang = getCurrentLang();
   const printLocale = printLang === "en" ? "en-US" : "th-TH";
-  const printDocumentTitle = t("legacyOrderDocumentTitle", "ใบสั่งซื้อ");
+  const printDocumentTitle = getCartDocumentTitle(order);
   const printOrderNumberLabel = t("legacyOrderNumber", "เลขที่");
   const printDateLabel = t("legacyOrderDate", "วันที่");
   const printProductLabel = t("legacyPrintProduct", "รายการ");
@@ -36029,7 +36199,7 @@ const rightX = canvas.width - cfg.padding;
 
   /* ================= DOWNLOAD (FIXED) ================= */
   const a = document.createElement("a");
-  a.download = `order-${order.orderId}.png`;
+  a.download = `${isDisplayReturnDocument(order) ? "display-return" : "order"}-${order.orderId}.png`;
   a.href = canvas.toDataURL("image/png");
 
   // 🔴 FIX: ต้อง append เข้า DOM (Mobile Safari / Chrome policy)
@@ -36053,9 +36223,9 @@ function exportOrderPrint() {
   const safePo = esc(po);
   const printLang = getCurrentLang();
   const printLocale = printLang === "en" ? "en-US" : "th-TH";
-  const printTitle = formatUiText("legacyOrderPrintTitle", { orderId: safeOrderId }, "ออเดอร์ {orderId}");
+  const printTitle = isDisplayReturnDocument(order) ? `${esc(getCartDocumentTitle(order))} ${safeOrderId}` : formatUiText("legacyOrderPrintTitle", { orderId: safeOrderId }, "ออเดอร์ {orderId}");
   const printTopMeta = formatUiText("legacyOrderPrintTopMeta", { orderId: safeDisplayOrderId }, "ออเดอร์ {orderId}");
-  const printDocumentTitle = t("legacyOrderDocumentTitle", "ใบสั่งซื้อ");
+  const printDocumentTitle = getCartDocumentTitle(order);
   const printOrderNumberLabel = t("legacyOrderNumber", "เลขที่");
   const printDateLabel = t("legacyOrderDate", "วันที่");
   const printImageLabel = t("imageLabel", "รูป");
@@ -36105,6 +36275,10 @@ function exportOrderPrint() {
   `).join("");
 
   const printWindow = window.open("", "_blank");
+  if (!printWindow) {
+    showToast(t("printWindowOpenError", "ไม่สามารถเปิดหน้าพิมพ์ได้"), "warning");
+    return false;
+  }
 
   printWindow.document.write(`
     <html>
@@ -36301,28 +36475,9 @@ function exportOrderPrint() {
           });
           window.onafterprint = function() {
          
-// 🔥 ปิด confirmSheet อัตโนมัติ (Safe + Clear State)
-    if (window.opener && window.opener.closeOverlay) {
-      const sheet = window.opener.document.getElementById("confirmSheet");
-      if (sheet) {
-        window.opener.closeOverlay(sheet);
-      }
-
-      // 🔴 NEW: clear lastOrder เพื่อกัน reopen state ค้าง
-      // ❌ ห้าม clear lastOrder ที่นี่
-      // ต้องคงไว้เพื่อให้ผู้ใช้กลับมาโหลดบิลล่าสุดได้ภายหลัง
-
-      // 🔴 NEW: reset backdrop lock กันค้าง
-      if (window.opener.state?.ui) {
-        window.opener.state.ui.backdropLocked = false;
-      }
-
-      // 🔥 เลื่อนกลับบนสุดอย่างนุ่มนวล
-      window.opener.scrollTo({
-        top: 0,
-        behavior: "smooth"
-      });
-    }
+          if (window.opener && !window.opener.closed && typeof window.opener.closeLatestDocumentAfterPrint === "function") {
+            window.opener.closeLatestDocumentAfterPrint(${toInlineJsStringLiteral(order.orderId)});
+          }
              window.close();
           };
         };
@@ -36333,6 +36488,7 @@ function exportOrderPrint() {
   `);
 
   printWindow.document.close();
+  return true;
 }
   
 function finishAdminAction({ refresh = true } = {}) {
