@@ -10896,7 +10896,7 @@ function supersededReadError() {
   return error;
 }
 
-const LUOPANICH_FRONTEND_BUILD = "20260928-session-recovery-v1";
+const LUOPANICH_FRONTEND_BUILD = "20260928-stability-v1";
 const luopanichRequestHistory = [];
 function recordLuopanichRequest(entry) {
   // Only allowlisted metadata: never store credentials, bodies or redirect URLs.
@@ -12562,10 +12562,14 @@ function productReadContextKey() {
 
 let activeProductRefreshKey = "";
 let loadedProductContextKey = "";
-function resetProductReadContext() {
+function invalidateProductRefresh() {
   productRefreshRequestSeq++;
   activeProductRefreshPromise = null;
   activeProductRefreshKey = "";
+}
+
+function resetProductReadContext() {
+  invalidateProductRefresh();
   // Drop admin-only fields before a session/mode change can reuse the list.
   const publicFields = ["productId", "name", "price", "stock", "displayExtraQty", "image", "active", "status",
     "detailsText", "compareImages", "parentProductId", "variantType", "variantValue", "displayName", "variantSortOrder"];
@@ -12720,21 +12724,9 @@ async function createOrder(createRequestId, snapshot = null) {
     form.append("partnerId", selectedPartnerId);
   }
  
-  // ใช้ fetchWithTimeout เพื่อป้องกัน request แขวน
-  const res = await fetchWithTimeout(API_URL, {
-    method: "POST",
-    body: form
-  }, 15000);
-
-  // 🔴 FIX: เช็ค HTTP status ก่อน
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(
-      `CreateOrder HTTP ${res.status}: ${text}`
-    );
-  }
-
-  const json = await res.json();
+  const json = await postFormAction(form, {
+    timeout: 15000, retryReads: false, returnFailure: true, handleAuthFailure: false
+  });
 
   if (json?.success === false || json?.error) {
     const err = new Error(
@@ -12743,12 +12735,15 @@ async function createOrder(createRequestId, snapshot = null) {
         : (json?.message || json?.error || "Create order failed")
     );
     err.code = json?.error || "CREATE_ORDER_FAILED";
+    err.serverRejected = true;
     throw err;
   }
 
   // 🔴 FIX: validate response shape
   if (!json || json.success !== true || !json.data?.orderId) {
-    throw new Error("Invalid createOrder response");
+    const error = new Error("Invalid createOrder response");
+    error.code = "INVALID_JSON_RESPONSE";
+    throw error;
   }
 
   return json;
@@ -12860,6 +12855,7 @@ function createBatchStockRequestId() {
 
 function isAmbiguousStockMutationFailure(err) {
   if (err?.serverRejected === true) return false;
+  if ([408, 429, 500, 502, 503, 504].includes(Number(err?.httpStatus))) return true;
   const code = String(err?.code || "").trim();
   if (["RESPONSE_MISMATCH", "INVALID_JSON_RESPONSE", "NETWORK_ERROR", "REQUEST_ROUTING_ERROR", "APPS_SCRIPT_RESPONSE_404"].includes(code)) return true;
   const name = String(err?.name || "").trim();
@@ -13019,10 +13015,12 @@ async function checkStockAdjustRequestStatus(productId, newQty, stockAdjustReque
 async function refreshAdminAuditSnapshot() {
   if (!state.admin.token) return;
 
+  const session = captureAdminSession();
   const [orders, logs] = await Promise.all([
     fetchOrders(),
     fetchStockLogs()
   ]);
+  if (!session.isCurrent()) return;
 
   state.admin.orders = Array.isArray(orders) ? orders : [];
   state.admin.logs = Array.isArray(logs) ? logs : [];
@@ -15151,11 +15149,10 @@ async function ensureCreateOrderPartnerOptions() {
     form.append("token", state.admin.token);
     form.append("status", "active");
 
-    const res = await fetchWithTimeout(API_URL, {
+    const json = await fetchJsonWithTimeout(API_URL, {
       method: "POST",
       body: form
     }, 30000);
-    const json = await res.json();
 
     if (json?.success !== true) {
       if (isAuthError(json?.error)) {
@@ -15569,7 +15566,24 @@ function selectFilter(status){
 let adminEntryPromise = null;
 let adminEntryGate = null;
 let adminEntryNavigationSeq = 0;
-function cancelAdminEntry() {
+let adminLoginAttempt = null;
+function cancelAdminLoginAttempt() {
+  if (!adminLoginAttempt) return;
+  adminLoginAttempt.cancelled = true;
+  adminLoginAttempt.release();
+}
+function captureAdminSession() {
+  const token = String(state.admin?.token || "");
+  const epoch = adminSessionEpoch;
+  return {
+    token,
+    isCurrent: () => !!token && state.admin.loggedIn &&
+      state.admin.token === token && adminSessionEpoch === epoch && !isAdminSessionExpired()
+  };
+}
+
+function cancelAdminEntry({ preserveLogin = false } = {}) {
+  if (!preserveLogin) cancelAdminLoginAttempt();
   adminEntryNavigationSeq++;
   if (adminEntryGate || adminEntryPromise) safeHideLoading();
   adminEntryGate = null;
@@ -17117,6 +17131,19 @@ async function handleAdminLogin(btn){
     return;
   }
 
+  let loginEpoch = adminSessionEpoch;
+  let loginNavigation = adminEntryNavigationSeq;
+  const attempt = { cancelled: false, release: () => {
+    if (adminLoginAttempt !== attempt) return;
+    state.admin.isSubmitting = false;
+    if (btn) { btn.disabled = false; btn.textContent = t("login", "เข้าสู่ระบบ"); }
+    if (cancelBtn) cancelBtn.disabled = false;
+    adminLoginAttempt = null;
+  } };
+  adminLoginAttempt = attempt;
+  const current = () => !attempt.cancelled && loginEpoch === adminSessionEpoch && loginNavigation === adminEntryNavigationSeq;
+  let loadingGeneration = null;
+
   // ================= UX START =================
   state.admin.isSubmitting = true;
 
@@ -17126,16 +17153,15 @@ async function handleAdminLogin(btn){
   }
   if (cancelBtn) cancelBtn.disabled = true;
 
-  blurActiveElementForMobileKeyboard();
-  await waitForMobileViewportSettle();
-
-  showLoading(t("adminLoginLoading", "กำลังเข้าสู่ระบบแอดมิน..."));
-  // ================= UX END ===================
-
   let adminLoginRequestStartMs = 0;
   let adminLoginRequestLogged = false;
 
   try {
+    blurActiveElementForMobileKeyboard();
+    await waitForMobileViewportSettle();
+    if (!current()) return;
+    showLoading(t("adminLoginLoading", "กำลังเข้าสู่ระบบแอดมิน..."));
+    loadingGeneration = _loadingGeneration;
     // 🔐 CALL BACKEND LOGIN
     const form = new URLSearchParams();
     form.append("action", "adminLogin");
@@ -17145,7 +17171,8 @@ async function handleAdminLogin(btn){
     adminLoginRequestStartMs = Date.now();
     const json = await postFormAction(form, { timeout: 45000, returnFailure: true, handleAuthFailure: false });
 
-    if (!json.success || !json.token) {
+    if (!current()) return;
+    if (!json.success || !json.token || !json.username || isAdminSessionExpired(json.expiredAt)) {
       adminLoginRequestLogged = true;
       logAdminPreloadLatencyDiagnostic({
         phase: "adminLogin",
@@ -17169,8 +17196,10 @@ async function handleAdminLogin(btn){
     });
 
     // A delayed validation of the previous session must never overwrite this login.
-    cancelAdminEntry();
+    cancelAdminEntry({ preserveLogin: true });
     adminSessionEpoch++;
+    loginEpoch = adminSessionEpoch;
+    loginNavigation = adminEntryNavigationSeq;
     adminSessionValidation = null;
     resetAdminOrdersRead();
     resetProductReadContext();
@@ -17182,7 +17211,8 @@ async function handleAdminLogin(btn){
     state.admin.expiredAt = json.expiredAt;
 
     // ✅ SAVE SESSION (PERSIST)
-    saveAdminSession(json);
+    try { saveAdminSession(json); }
+    catch (_) { console.warn("Login succeeded; session could not be saved on this device"); }
 
     // 🧹 CLOSE LOGIN SHEET
     closeOverlay(adminLoginSheet);
@@ -17191,10 +17221,13 @@ async function handleAdminLogin(btn){
     state.ui.backdropLocked = false;
 
     // 🚀 ENTER ADMIN MODE
+    // Entry now owns its loading state. This login must not hide a newer operation.
+    loadingGeneration = null;
     await enterAdmin();
-    await repairMobileViewportAfterAdminLogin();
+    if (current()) await repairMobileViewportAfterAdminLogin();
 
   } catch (err) {
+    if (!current()) return;
     if (adminLoginRequestStartMs && !adminLoginRequestLogged) {
       logAdminPreloadLatencyDiagnostic({
         phase: "adminLogin",
@@ -17210,14 +17243,10 @@ async function handleAdminLogin(btn){
 
   } finally {
     // ================= CLEANUP =================
-    safeHideLoading();
-    state.admin.isSubmitting = false;
-
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = t("login", "เข้าสู่ระบบ");
+    if (current()) {
+      if (loadingGeneration !== null && loadingGeneration === _loadingGeneration) safeHideLoading();
     }
-    if (cancelBtn) cancelBtn.disabled = false;
+    attempt.release();
   }
 }
 
@@ -20423,7 +20452,24 @@ function editBatchStockIn() {
   renderBatchStockInSheet();
 }
 
+async function refreshAfterConfirmedStockWrite(session) {
+  if (!session.isCurrent() || state.mode !== "admin") return;
+  try {
+    invalidateProductRefresh();
+    await refreshProducts({ throwOnError: true });
+    if (!session.isCurrent() || state.mode !== "admin") return;
+    await refreshAdminAuditSnapshot();
+  } catch (err) {
+    console.warn("Confirmed stock write; refresh delayed", err?.code || err?.message);
+    if (session.isCurrent() && state.mode === "admin") {
+      showToast(t("savedStockRefreshDelayed", "บันทึกสต๊อกแล้ว แต่โหลดข้อมูลล่าสุดไม่สำเร็จ กรุณากดโหลดใหม่"), "warning");
+    }
+  }
+}
+
 async function submitBatchStockIn() {
+  const session = captureAdminSession();
+  if (!session.isCurrent() || state.mode !== "admin") return;
   const batchState = state.admin.batchStockIn;
 
   const validation = validateBatchStockInItems();
@@ -20461,13 +20507,10 @@ async function submitBatchStockIn() {
   buttons.forEach(b => b.disabled = false);
 
   const finishBatchStockInBackgroundSuccess = async () => {
-    await refreshProducts();
-    await refreshAdminAuditSnapshot();
-
-    resetBatchStockInState();
-    finishAdminAction({ refresh: true });
-    showToast(t("stockInSuccess", "รับสต๊อกเข้าแล้ว"), "success");
     completeBackgroundTask(task.id, t("stockInSuccess", "รับสต๊อกเข้าแล้ว"));
+    if (session.isCurrent()) showToast(t("stockInSuccess", "รับสต๊อกเข้าแล้ว"), "success");
+    // Never close or reset a newer form opened while this background job ran.
+    await refreshAfterConfirmedStockWrite(session);
   };
 
   (async () => {
@@ -20479,6 +20522,10 @@ async function submitBatchStockIn() {
 
       await finishBatchStockInBackgroundSuccess();
     } catch (err) {
+      if (!session.isCurrent()) {
+        failBackgroundTask(task.id, t("stockResultSessionChanged", "เปลี่ยนการเข้าสู่ระบบแล้ว กรุณาตรวจสอบผลสต๊อกก่อนทำรายการซ้ำ"));
+        return;
+      }
       if (isAmbiguousStockMutationFailure(err)) {
         updateBackgroundTask(task.id, {
           state: BACKGROUND_TASK_STATES.CONFIRMING,
@@ -20544,6 +20591,8 @@ async function submitStockIn(){
     return;
   }
 
+  const session = captureAdminSession();
+  if (!session.isCurrent()) return;
   const product = state.selectedProduct;
   const productId = String(product.productId || "").trim();
   const taskIdentity = `stockIn:${productId}`;
@@ -20570,19 +20619,10 @@ async function submitStockIn(){
   buttons.forEach(b => b.disabled = false);
 
   const finishStockInBackgroundSuccess = async () => {
-    showToast(t("stockInSuccess", "รับสต๊อกเข้าแล้ว"), "success");
-
-    // 🔄 sync ข้อมูลหลัก + ข้อมูลย้อนหลังทันที
-    await refreshProducts();
-    await refreshAdminAuditSnapshot();
-
-    // 🧹 reset input
-    qtyInput.value = "";
-    reasonInput.value = "";
-
-    // ✅ กลับสู่หน้าแม่ของ admin แบบนิ่ง
-    finishAdminAction({ refresh: true });
     completeBackgroundTask(task.id, t("stockInSuccess", "รับสต๊อกเข้าแล้ว"));
+    if (session.isCurrent()) showToast(t("stockInSuccess", "รับสต๊อกเข้าแล้ว"), "success");
+    // The input nodes may now belong to another stock operation; leave them alone.
+    await refreshAfterConfirmedStockWrite(session);
   };
 
   (async () => {
@@ -20601,6 +20641,10 @@ async function submitStockIn(){
       await finishStockInBackgroundSuccess();
 
     } catch (err) {
+      if (!session.isCurrent()) {
+        failBackgroundTask(task.id, t("stockResultSessionChanged", "เปลี่ยนการเข้าสู่ระบบแล้ว กรุณาตรวจสอบผลสต๊อกก่อนทำรายการซ้ำ"));
+        return;
+      }
       if (isAmbiguousStockMutationFailure(err)) {
         updateBackgroundTask(task.id, {
           state: BACKGROUND_TASK_STATES.CONFIRMING,
@@ -20646,6 +20690,9 @@ async function submitStockAdjust(){
     return;
   }
 
+  const session = captureAdminSession();
+  if (!session.isCurrent()) return;
+
   const qtyInput    = document.getElementById("stockQty");
   const reasonInput = document.getElementById("stockReason");
 
@@ -20686,9 +20733,10 @@ async function submitStockAdjust(){
     // The server confirmed this exact request. Update the visible stock without
     // making a second slow adminProducts/orders request.
     completeBackgroundTask(task.id, t("stockAdjustSuccess", "ปรับสต๊อกแล้ว"));
+    if (!session.isCurrent() || state.mode !== "admin") return;
     showToast(t("stockAdjustSuccess", "ปรับสต๊อกแล้ว"), "success");
     try {
-      productRefreshRequestSeq += 1;
+      invalidateProductRefresh();
       state.products = state.products.map(product =>
         String(product.productId || "").trim() === productId
           ? { ...product, stock: after }
@@ -20699,8 +20747,6 @@ async function submitStockAdjust(){
       }
       state.productLoad.status = "success";
       state.productLoad.error = "";
-      qtyInput.value = "";
-      reasonInput.value = "";
       renderProducts();
     } catch (displayErr) {
       console.warn("stock adjusted but local display update failed", displayErr);
@@ -20717,6 +20763,10 @@ async function submitStockAdjust(){
       }
       finishStockAdjustBackgroundSuccess(newQty);
     } catch (err) {
+      if (!session.isCurrent()) {
+        failBackgroundTask(task.id, t("stockResultSessionChanged", "เปลี่ยนการเข้าสู่ระบบแล้ว กรุณาตรวจสอบผลสต๊อกก่อนทำรายการซ้ำ"));
+        return;
+      }
       if (isAmbiguousStockMutationFailure(err)) {
         updateBackgroundTask(task.id, {
           state: BACKGROUND_TASK_STATES.CONFIRMING,
@@ -28291,18 +28341,9 @@ async function uploadProductImage(file, uploadToken = state.admin?.token) {
         formData.append("mimeType", file.type || "image/jpeg");
         formData.append("data", base64);
 
-        // 🔴 CHANGED: ใช้ fetchWithTimeout แบบเดียวกับ API อื่น
-        const res = await fetchWithTimeout(API_URL, {
-          method: "POST",
-          body: formData
-        }, 30000);
-
-        let json;
-        try {
-          json = await res.json();
-        } catch (_) {
-          throw localizedUiError("productImageUploadFailed", "อัปโหลดรูปไม่สำเร็จ");
-        }
+        const json = await postFormAction(formData, {
+          timeout: 30000, retryReads: false, returnFailure: true, handleAuthFailure: false
+        });
 
         if (!json || json.success !== true || !json.data?.imageUrl) {
           const rawMessage = json?.message || json?.error || "Upload failed";
@@ -28334,7 +28375,9 @@ async function submitProductEdit(){
   if (state.admin.isSubmitting) return;
 
   const p = state.selectedProduct;
-  if (!p) return;
+  const session = captureAdminSession();
+  if (!p || !session.isCurrent() || state.mode !== "admin") return;
+  const sameEditor = () => session.isCurrent() && state.mode === "admin" && state.selectedProduct === p;
 
   state.admin.isSubmitting = true;
 
@@ -28435,23 +28478,26 @@ async function submitProductEdit(){
   let imageUrl = p.image || "";
   let updateAccepted = false;
   let loadingClosed = false;
+  let loadingGeneration = null;
 
   try {
     showLoading(t("savingProductEdit", "กำลังบันทึกการแก้ไขสินค้า..."));
+    loadingGeneration = _loadingGeneration;
 
     // ถ้ามีการเลือกภาพใหม่ → upload ก่อน
     if (state.editImageFile) {
       validateProductImageFile(state.editImageFile);
-      imageUrl = await uploadProductImage(state.editImageFile);
+      imageUrl = await uploadProductImage(state.editImageFile, session.token);
       if (!imageUrl) {
         throw localizedUiError("productImageUploadFailed", "อัปโหลดรูปไม่สำเร็จ");
       }
     }
 
+    if (!sameEditor()) return;
     // Update product
     const form = new URLSearchParams();
     form.append("action", "updateProduct");
-    form.append("token", state.admin.token);
+    form.append("token", session.token);
     form.append("oldProductId", oldProductId);
     form.append("newProductId", newProductId);
     form.append("name", name);
@@ -28468,20 +28514,21 @@ async function submitProductEdit(){
 
     const res = await postFormAction(form);
     updateAccepted = true;
+    if (!session.isCurrent() || state.mode !== "admin") return;
 
-    safeHideLoading();
+    if (loadingGeneration === _loadingGeneration) safeHideLoading();
     loadingClosed = true;
     showToast(t("editSaved", "บันทึกการแก้ไขเรียบร้อย"), "success");
 
-    state.selectedProduct = null;
-
-    // cleanup
-    state.editImageFile = null;
-    closeProductEdit();
+    if (sameEditor()) {
+      state.selectedProduct = null;
+      state.editImageFile = null;
+      closeProductEdit();
+    }
     // The server has confirmed the update. Reflect those same values in the
     // current list; a full adminProducts/orders reload is unnecessary here.
     // A pre-existing refresh must not overwrite this confirmed edit later.
-    productRefreshRequestSeq += 1;
+    invalidateProductRefresh();
     state.products = sortProducts(state.products.map(product =>
       normalizeProductId(product.productId) === oldProductId
         ? {
@@ -28509,6 +28556,7 @@ async function submitProductEdit(){
     renderProducts();
 
   } catch (err) {
+    if (!session.isCurrent()) return;
     console.error("submitProductEdit failed", err);
     if (updateAccepted) {
       showToast("บันทึกสินค้าแล้ว แต่แสดงรายการล่าสุดไม่สำเร็จ กรุณาโหลดหน้าใหม่เพื่อตรวจสอบ", "warning");
@@ -28524,10 +28572,12 @@ async function submitProductEdit(){
 
   } finally {
     // ✅ CLEANUP กลางเดียว (หัวใจ STEP 9)
-    if (!loadingClosed) safeHideLoading();
-    state.admin.isSubmitting = false;
+    if (session.isCurrent()) {
+      if (!loadingClosed && loadingGeneration === _loadingGeneration) safeHideLoading();
+      state.admin.isSubmitting = false;
+    }
 
-    if (saveBtn) {
+    if (session.isCurrent() && saveBtn) {
       saveBtn.disabled = false;
       saveBtn.textContent = originalText;
     }
@@ -28773,13 +28823,14 @@ async function runAddProductJob(job) {
   updateBackgroundTask(job.task.id, { state: BACKGROUND_TASK_STATES.SENDING, message: job.message });
   renderAddProductJobs();
   const finish = () => {
-    const sameSession = state.mode === "admin" && state.admin.loggedIn && state.admin.user === job.owner;
+    const sameSession = state.mode === "admin" && state.admin.loggedIn &&
+      state.admin.user === job.owner && state.admin.token === job.token;
     job.state = "SUCCESS";
     job.message = "บันทึกเรียบร้อย";
     completeBackgroundTask(job.task.id, `${job.product.productId}: ${job.message}`);
     showToast(`${job.product.productId}: ${job.message}`, "success");
     // Only update the list. Never clear or reset the currently open add form.
-    productRefreshRequestSeq += 1;
+    if (sameSession) invalidateProductRefresh();
     if (sameSession && !state.products.some(p => normalizeProductId(p.productId) === job.product.productId)) {
       state.products = sortProducts([...state.products, { ...job.product }]);
       state.productCreationOrderIds.push(job.product.productId);
@@ -28798,13 +28849,14 @@ async function runAddProductJob(job) {
     return response?.data?.applied === true && response.data.addProductRequestId === job.requestId && response.data.productId === job.product.productId;
   };
   try {
-    if (!state.admin.loggedIn || state.admin.user !== job.owner) throw new Error("Not authenticated");
+    if (!state.admin.loggedIn || state.admin.user !== job.owner || state.admin.token !== job.token) throw new Error("Not authenticated");
     if (job.sent && await verify()) { finish(); return; }
     if (job.imageFile && !job.product.image) {
       job.message = "กำลังอัปโหลดรูป";
       renderAddProductJobs();
       job.product.image = await uploadProductImage(job.imageFile, job.token);
     }
+    if (!state.admin.loggedIn || state.admin.user !== job.owner || state.admin.token !== job.token) throw new Error("Not authenticated");
     job.message = "กำลังบันทึก";
     renderAddProductJobs();
     job.sent = true;
@@ -29757,11 +29809,10 @@ async function applySelectedVariantScanGroups(btn) {
     form.append("token", state.admin.token);
     form.append("items", JSON.stringify(items));
 
-    const res = await fetchWithTimeout(API_URL, {
+    const json = await fetchJsonWithTimeout(API_URL, {
       method: "POST",
       body: form
     }, 45000);
-    const json = await res.json();
 
     if (json?.success === true) {
       const updated = Number(json.updated || json.data?.updated || items.length || 0);
@@ -31209,11 +31260,10 @@ async function submitBulkProductImport(btn) {
     form.append("token", state.admin.token);
     form.append("items", JSON.stringify(bulkState.items));
 
-    const res = await fetchWithTimeout(API_URL, {
+    const json = await fetchJsonWithTimeout(API_URL, {
       method: "POST",
       body: form
     }, 45000);
-    const json = await res.json();
 
     if (json?.success === true) {
       const imported = Number(json.imported || json.data?.imported || 0);
@@ -32091,11 +32141,10 @@ async function submitBulkProductUpdate(btn) {
     form.append("token", state.admin.token);
     form.append("items", JSON.stringify(items));
 
-    const res = await fetchWithTimeout(API_URL, {
+    const json = await fetchJsonWithTimeout(API_URL, {
       method: "POST",
       body: form
     }, 45000);
-    const json = await res.json();
 
     if (json?.success === true) {
       const updated = Number(json.updated || json.data?.updated || 0);
@@ -33089,11 +33138,10 @@ async function submitProductMasterBulk(btn) {
     form.append("action", "bulkUpsertProductMaster");
     form.append("token", state.admin.token);
     form.append("rows", JSON.stringify(rows));
-    const res = await fetchWithTimeout(API_URL, {
+    const json = await fetchJsonWithTimeout(API_URL, {
       method: "POST",
       body: form
     }, 45000);
-    const json = await res.json();
     const backendRows = Array.isArray(json?.data?.rows) ? json.data.rows : [];
     bulkState.backendRows = backendRows;
     bulkState.summary = json?.success === true ? (json.data?.summary || productMasterSummary(backendRows)) : null;
@@ -33838,11 +33886,10 @@ async function fetchPartners(options = {}) {
       form.append("status", partnerState.status);
     }
 
-    const res = await fetchWithTimeout(API_URL, {
+    const json = await fetchJsonWithTimeout(API_URL, {
       method: "POST",
       body: form
     }, 30000);
-    const json = await res.json();
 
     if (json?.success !== true) {
       if (isAuthError(json?.error)) {
@@ -34028,11 +34075,10 @@ async function createPartnerFromAdmin() {
       form.append(field, String(draft[field] || "").trim());
     });
 
-    const res = await fetchWithTimeout(API_URL, {
+    const json = await fetchJsonWithTimeout(API_URL, {
       method: "POST",
       body: form
     }, 30000);
-    const json = await res.json();
 
     if (json?.success !== true) {
       if (isAuthError(json?.error)) {
@@ -34567,11 +34613,10 @@ async function createPartnerCatalogLink(btn) {
     form.append("productIds", JSON.stringify(validation.productIds));
     form.append("label", validation.label);
 
-    const res = await fetchWithTimeout(API_URL, {
+    const json = await fetchJsonWithTimeout(API_URL, {
       method: "POST",
       body: form
     }, 45000);
-    const json = await res.json();
 
     if (json?.success === true) {
       state.admin.partnerCatalog.result = json.data || {};
@@ -34695,11 +34740,10 @@ async function loadPartnerLinks() {
       form.append("q", partnerState.linkQ.trim());
     }
 
-    const res = await fetchWithTimeout(API_URL, {
+    const json = await fetchJsonWithTimeout(API_URL, {
       method: "POST",
       body: form
     }, 30000);
-    const json = await res.json();
 
     if (json?.success !== true) {
       if (isAuthError(json?.error)) {
@@ -34748,11 +34792,10 @@ async function openPartnerLinkDetail(linkId) {
     form.append("token", state.admin.token);
     form.append("linkId", cleanLinkId);
 
-    const res = await fetchWithTimeout(API_URL, {
+    const json = await fetchJsonWithTimeout(API_URL, {
       method: "POST",
       body: form
     }, 30000);
-    const json = await res.json();
 
     if (json?.success !== true) {
       if (isAuthError(json?.error)) {
@@ -34797,11 +34840,10 @@ async function updatePartnerLinkStatusFromAdmin(linkId, status) {
     form.append("linkId", cleanLinkId);
     form.append("status", cleanStatus);
 
-    const res = await fetchWithTimeout(API_URL, {
+    const json = await fetchJsonWithTimeout(API_URL, {
       method: "POST",
       body: form
     }, 30000);
-    const json = await res.json();
 
     if (json?.success !== true) {
       if (isAuthError(json?.error)) {
@@ -35251,11 +35293,10 @@ async function updatePartnerRequestStatusFromAdmin(requestId, status) {
     form.append("requestId", cleanRequestId);
     form.append("status", cleanStatus);
 
-    const res = await fetchWithTimeout(API_URL, {
+    const json = await fetchJsonWithTimeout(API_URL, {
       method: "POST",
       body: form
     }, 30000);
-    const json = await res.json();
 
     if (json?.success !== true) {
       if (isAuthError(json?.error)) {
@@ -35345,11 +35386,10 @@ async function checkDuplicatePo(poNumber) {
   form.append("action", "checkDuplicatePo");
   form.append("poNumber", String(poNumber || "").trim());
 
-  const res = await fetchWithTimeout(API_URL, {
+  const json = await fetchJsonWithTimeout(API_URL, {
     method: "POST",
     body: form
   }, 8000);
-  const json = await res.json();
 
   if (!json || json.success !== true) {
     throw new Error(json?.message || json?.error || "Duplicate PO lookup failed");
@@ -35365,11 +35405,10 @@ async function checkCreateOrderRequestStatus(createRequestId, poNumber, items) {
   form.append("poNumber", String(poNumber || "").trim());
   form.append("items", JSON.stringify(items || []));
 
-  const res = await fetchWithTimeout(API_URL, {
+  const json = await fetchJsonWithTimeout(API_URL, {
     method: "POST",
     body: form
   }, 8000);
-  const json = await res.json();
 
   if (!json || json.success !== true) {
     throw new Error(json?.message || json?.error || "Create order status lookup failed");
@@ -35482,11 +35521,10 @@ async function convertPartnerRequestToOrderFromAdmin(requestId) {
     form.append("requestId", cleanRequestId);
     form.append("poNumber", poNumber);
 
-    const res = await fetchWithTimeout(API_URL, {
+    const json = await fetchJsonWithTimeout(API_URL, {
       method: "POST",
       body: form
     }, 30000);
-    const json = await res.json();
 
     if (json?.success !== true) {
       if (isAuthError(json?.error)) {
@@ -35553,11 +35591,10 @@ async function loadPartnerRequests() {
       form.append("q", requestState.q.trim());
     }
 
-    const res = await fetchWithTimeout(API_URL, {
+    const json = await fetchJsonWithTimeout(API_URL, {
       method: "POST",
       body: form
     }, 30000);
-    const json = await res.json();
 
     if (json?.success !== true) {
       if (isAuthError(json?.error)) {
@@ -35608,11 +35645,10 @@ async function openPartnerRequestDetail(requestId) {
     form.append("token", state.admin.token);
     form.append("requestId", cleanRequestId);
 
-    const res = await fetchWithTimeout(API_URL, {
+    const json = await fetchJsonWithTimeout(API_URL, {
       method: "POST",
       body: form
     }, 30000);
-    const json = await res.json();
 
     if (json?.success !== true) {
       if (isAuthError(json?.error)) {
@@ -36673,6 +36709,7 @@ function loadAdminSession() {
 
 // ================= STEP A7: SINGLE LOGOUT SOURCE OF TRUTH =================
 function clearAdminSession(){
+  cancelAdminLoginAttempt();
   if (adminEntryPromise) safeHideLoading();
   adminEntryPromise = null;
   adminSessionEpoch++;
