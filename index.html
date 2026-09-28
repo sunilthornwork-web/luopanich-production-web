@@ -10924,7 +10924,7 @@ function supersededReadError() {
   return error;
 }
 
-const LUOPANICH_FRONTEND_BUILD = "20260928-navigation-recovery-v1";
+const LUOPANICH_FRONTEND_BUILD = "20260928-feedback-v1";
 const luopanichRequestHistory = [];
 function recordLuopanichRequest(entry) {
   // Only allowlisted metadata: never store credentials, bodies or redirect URLs.
@@ -21011,6 +21011,9 @@ async function refreshProductsWithFeedback({
   successText = "อัปเดตสินค้าเรียบร้อย",
   silent = false
 } = {}) {
+  const contextKey = productReadContextKey();
+  const sessionEpoch = adminSessionEpoch;
+  const current = () => productReadContextKey() === contextKey && adminSessionEpoch === sessionEpoch;
   try {
     // 1️⃣ แสดงข้อมูลเดิมก่อน (UX ลื่น)
     if (Array.isArray(state.products) && state.products.length) {
@@ -21022,8 +21025,9 @@ async function refreshProductsWithFeedback({
       showToast(loadingText, "info", 1200);
     }
 
-    // 3️⃣ ใช้ CORE function (single source of truth)
-    await refreshProducts();
+    // The default refresh keeps old rows on failure; feedback needs the actual outcome.
+    await refreshProducts({ throwOnError: true });
+    if (!current()) return;
 
     // 4️⃣ แจ้งผลสำเร็จ
     if (!silent) {
@@ -21031,6 +21035,7 @@ async function refreshProductsWithFeedback({
     }
 
   } catch (err) {
+    if (!current() || err.code === "READ_SUPERSEDED") return;
     console.error(err);
 
     // 5️⃣ แจ้ง error แบบไม่พัง UI
