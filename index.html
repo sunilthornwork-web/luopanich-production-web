@@ -4660,6 +4660,16 @@ body[data-theme="cute"] #loading-overlay {
   line-height: 1.45;
 }
 
+#loading-admin-logout {
+  display: block;
+  margin: 16px auto 0;
+  min-height: 44px;
+}
+
+#loading-admin-logout[hidden] {
+  display: none !important;
+}
+
 @keyframes loading-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -7445,6 +7455,7 @@ const UI_TEXT = {
     backToViewer: "กลับสู่หน้าร้าน",
     changePassword: "เปลี่ยนรหัสผ่าน",
     logout: "ออกจากระบบ",
+    loggedOutOnDevice: "ออกจากระบบบนอุปกรณ์นี้แล้ว",
     loadingData: "กำลังโหลดข้อมูล",
     loadDataFailed: "โหลดข้อมูลไม่สำเร็จ",
     fromDate: "ตั้งแต่วันที่",
@@ -8481,6 +8492,7 @@ const UI_TEXT = {
     backToViewer: "Back to shop",
     changePassword: "Change password",
     logout: "Logout",
+    loggedOutOnDevice: "Signed out on this device",
     loadingData: "Loading data",
     loadDataFailed: "Could not load data",
     fromDate: "From date",
@@ -10733,11 +10745,18 @@ let _loadingShownAt = 0;
 let _loadingGeneration = 0;
 const MIN_LOADING_MS = 350; // กันกระพริบ
 
-function showLoading(message, timeoutMs = 60000) {
+function showLoading(message, timeoutMs = 60000, { allowAdminLogout = false } = {}) {
   const overlay = document.getElementById("loading-overlay");
   const text = document.getElementById("loading-text");
   if (!overlay || !text) return;
   _loadingGeneration++;
+
+  // Recovery is offered only while checking a saved session, never during writes.
+  const logoutButton = document.getElementById("loading-admin-logout");
+  if (logoutButton) {
+    logoutButton.hidden = !allowAdminLogout;
+    logoutButton.textContent = t("logout", "ออกจากระบบ");
+  }
 
   text.textContent = message;
   overlay.classList.remove("hidden");
@@ -10877,7 +10896,7 @@ function supersededReadError() {
   return error;
 }
 
-const LUOPANICH_FRONTEND_BUILD = "20260928-response-v2";
+const LUOPANICH_FRONTEND_BUILD = "20260928-session-recovery-v1";
 const luopanichRequestHistory = [];
 function recordLuopanichRequest(entry) {
   // Only allowlisted metadata: never store credentials, bodies or redirect URLs.
@@ -12147,37 +12166,45 @@ function logAdminPreloadLatencyDiagnostic(entry) {
   );
 }
 
-let adminLogoutPromise = null;
+const adminLogoutRequests = new Map();
+
+function getAdminLogoutToken() {
+  // A saved session can be cleared even before server validation succeeds.
+  return String(state.admin?.token || loadAdminSession()?.token || "").trim();
+}
 
 async function adminLogout(token) {
   const form = new URLSearchParams();
   form.append("action", "adminLogout");
   form.append("token", token);
 
-  return await postFormAction(form);
+  return await postFormAction(form, { retryReads: false, handleAuthFailure: false });
 }
 
 function handleAdminLogout() {
-  if (adminLogoutPromise) {
-    return adminLogoutPromise;
-  }
+  const token = getAdminLogoutToken();
+  // Clear access and saved credentials now; a failed connection must not trap the user.
+  // exitAdmin also invalidates in-flight validation/read results through their epochs.
+  exitAdmin({ silent: true });
+  showToast(t("loggedOutOnDevice", "ออกจากระบบบนอุปกรณ์นี้แล้ว"), "info");
 
-  const token = String(state.admin?.token || "").trim();
+  if (!token) return Promise.resolve(null);
+  if (adminLogoutRequests.has(token)) return adminLogoutRequests.get(token);
 
-  adminLogoutPromise = (async () => {
+  const job = (async () => {
+    await Promise.resolve();
     try {
-      if (token) {
-        await adminLogout(token);
-      }
+      return await adminLogout(token);
     } catch (err) {
       console.warn("Backend logout failed:", err);
+      return null;
     } finally {
-      exitAdmin();
-      adminLogoutPromise = null;
+      // Never clear state here: the user may already have signed in again.
+      if (adminLogoutRequests.get(token) === job) adminLogoutRequests.delete(token);
     }
   })();
-
-  return adminLogoutPromise;
+  adminLogoutRequests.set(token, job);
+  return job;
 }
 
 async function requestPasswordReset(username, email) {
@@ -15559,7 +15586,7 @@ async function openAdminEntry() {
     try {
       if (!current()) return false;
       if (loadAdminSession()?.token) {
-        showLoading(t("checkingAdminSession", "กำลังตรวจสอบการเข้าสู่ระบบ..."), 70000);
+        showLoading(t("checkingAdminSession", "กำลังตรวจสอบการเข้าสู่ระบบ..."), 70000, { allowAdminLogout: true });
         let restored = false;
         try { restored = await restoreAdminSessionIfValid(); }
         finally { if (current()) safeHideLoading(); }
@@ -26835,6 +26862,8 @@ function openMainMenu(triggerEl){
 
   // ✅ STEP A2: เงื่อนไข "ล็อกอินแล้ว" ต้องอิงสิทธิ์ (adminValid) ไม่ใช่โหมด UI
   const isAuthed = !!adminValid;
+  // Logout is a local recovery action, not an admin permission.
+  const canLogout = !!getAdminLogoutToken();
   const hasLastOrder = !!(state.lastOrder && state.lastOrder.orderId);
   const pendingCount = getPendingOrdersCount();
   const themeToggleLabel = t("switchMode", "เปลี่ยนโหมด");
@@ -27010,7 +27039,7 @@ function openMainMenu(triggerEl){
 
 
     ${
-      (isAuthed)
+      (canLogout)
         ? `
           <hr>
           <div class="menu-group danger">
@@ -37008,6 +37037,8 @@ const __domReady = new Promise((resolve) => {
       aria-hidden="true"></dotlottie-player>
     <div class="spinner"></div>
     <div id="loading-text">กำลังดำเนินการ...</div>
+    <button id="loading-admin-logout" class="btn btn-secondary" type="button"
+      hidden onclick="handleAdminLogout()">ออกจากระบบ</button>
   </div>
 </div>
 
