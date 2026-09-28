@@ -7061,6 +7061,9 @@ const UI_TEXT = {
     total: "ยอดรวม",
     itemUnit: "รายการ",
     pieceUnit: "ชิ้น",
+    checkingAdminSession: "กำลังตรวจสอบการเข้าสู่ระบบ...",
+    adminSessionCheckDelayed: "ยังตรวจสอบการเข้าสู่ระบบไม่ได้ กรุณาลองใหม่อีกครั้ง",
+    adminProductsLoadDelayed: "เข้าสู่ระบบแล้ว แต่ยังโหลดสินค้าไม่ได้ กรุณากดโหลดใหม่",
     cartDocumentChoice: "เลือกประเภทเอกสาร",
     displayReturnDocumentTitle: "ใบคืนสินค้าตัวโชว์",
     cartOrderChoiceHint: "ส่งให้แอดมินอนุมัติ",
@@ -8094,6 +8097,9 @@ const UI_TEXT = {
     total: "Total",
     itemUnit: "items",
     pieceUnit: "pcs",
+    checkingAdminSession: "Checking your session...",
+    adminSessionCheckDelayed: "Unable to verify your session yet. Please try again.",
+    adminProductsLoadDelayed: "Signed in, but products could not be loaded. Please reload the product list.",
     cartDocumentChoice: "Document type",
     displayReturnDocumentTitle: "Display Item Return Note",
     cartOrderChoiceHint: "Send for admin approval",
@@ -10724,12 +10730,14 @@ function renderBackgroundTaskIndicator() {
 // ---------- Central loading timer ----------
 let _loadingTimer = null;
 let _loadingShownAt = 0;
+let _loadingGeneration = 0;
 const MIN_LOADING_MS = 350; // กันกระพริบ
 
 function showLoading(message, timeoutMs = 60000) {
   const overlay = document.getElementById("loading-overlay");
   const text = document.getElementById("loading-text");
   if (!overlay || !text) return;
+  _loadingGeneration++;
 
   text.textContent = message;
   overlay.classList.remove("hidden");
@@ -10760,11 +10768,13 @@ function showLoading(message, timeoutMs = 60000) {
 
 function safeHideLoading(fromTimeout = false) {
   const overlay = document.getElementById("loading-overlay");
+  const generation = _loadingGeneration;
 
   const elapsed = Date.now() - (_loadingShownAt || 0);
   const delay = Math.max(0, MIN_LOADING_MS - elapsed);
 
   setTimeout(() => {
+    if (generation !== _loadingGeneration) return;
     try {
       if (overlay) {
         overlay.classList.add("hidden");
@@ -10799,42 +10809,88 @@ function safeHideLoading(fromTimeout = false) {
 
 
 // ---------- fetchWithTimeout ----------
-async function fetchWithTimeout(input, init = {}, ms = 30000) {
+// JSON callers keep the deadline active through response-body consumption.
+async function fetchWithTimeout(input, init = {}, ms = 30000, readJson = false) {
   const controller = new AbortController();
-  const signal = controller.signal;
   const id = setTimeout(() => controller.abort(), ms);
-
   try {
-    const res = await fetch(input, { ...init, signal });
-
-    // 🔒 เช็ค HTTP status ชัดเจน
+    const res = await fetch(input, { ...init, signal: controller.signal });
     if (!res.ok) {
-      // Apps Script ContentService redirects JSON through a Google-hosted URL.
-      // That URL may answer with an HTML error page; never surface its HTML or
-      // assume that a failed response means a POST was not processed.
       const isGoogleNotFound = res.status === 404 &&
         /^https:\/\/(?:[^/]+\.)?(?:google\.com|googleusercontent\.com)(?:\/|$)/i.test(res.url || "");
       const error = new Error(isGoogleNotFound
-        ? "บริการ Google ตอบกลับ 404 กรุณาตรวจสอบ URL และการเผยแพร่ Apps Script"
+        ? "ยังรับผลลัพธ์จาก Google ไม่สำเร็จ กรุณาลองโหลดข้อมูลอีกครั้ง"
         : `HTTP ${res.status}: ไม่สามารถรับคำตอบจากเซิร์ฟเวอร์`);
       error.code = isGoogleNotFound ? "APPS_SCRIPT_RESPONSE_404" : "HTTP_ERROR";
       error.httpStatus = res.status;
       throw error;
     }
-
-    return res;
-
-  } catch (err) {
-    if (err.name === "AbortError") {
-      const timeoutError = new Error(t("connectionSlowRetry", "การเชื่อมต่อช้าเกินไป กรุณาลองใหม่อีกครั้ง"));
-      timeoutError.code = "REQUEST_TIMEOUT";
-      throw timeoutError;
+    if (!readJson) return res;
+    try {
+      return await res.json();
+    } catch (err) {
+      if (controller.signal.aborted || err.name === "AbortError") throw err;
+      if (err instanceof TypeError) {
+        err.code = "NETWORK_ERROR";
+        throw err;
+      }
+      const error = new Error("รูปแบบข้อมูลตอบกลับไม่ถูกต้อง");
+      error.code = "INVALID_JSON_RESPONSE";
+      throw error;
     }
+  } catch (err) {
+    if (controller.signal.aborted || err.name === "AbortError") {
+      const error = new Error(t("connectionSlowRetry", "การเชื่อมต่อช้าเกินไป กรุณาลองใหม่อีกครั้ง"));
+      error.code = "REQUEST_TIMEOUT";
+      throw error;
+    }
+    if (err instanceof TypeError && !err.code) err.code = "NETWORK_ERROR";
     throw err;
   } finally {
     clearTimeout(id);
   }
 }
+
+function fetchJsonWithTimeout(input, init = {}, ms = 30000) {
+  return fetchWithTimeout(input, init, ms, true);
+}
+
+function isTransientReadError(err) {
+  if (err?.serverRejected) return false;
+  return ["REQUEST_TIMEOUT", "APPS_SCRIPT_RESPONSE_404", "REQUEST_ROUTING_ERROR", "NETWORK_ERROR"].includes(err?.code) ||
+    [408, 429, 500, 502, 503, 504].includes(err?.httpStatus) ||
+    /failed to fetch|networkerror|network error|load failed/i.test(String(err?.message || ""));
+}
+
+function supersededReadError() {
+  const error = new Error("Data read superseded");
+  error.code = "READ_SUPERSEDED";
+  return error;
+}
+
+const LUOPANICH_FRONTEND_BUILD = "20260928-admin-read-v1";
+const luopanichRequestHistory = [];
+function recordLuopanichRequest(entry) {
+  // Only allowlisted metadata: never store credentials, bodies or redirect URLs.
+  const row = {
+    at: new Date().toISOString(), frontendBuild: LUOPANICH_FRONTEND_BUILD,
+    action: String(entry.action || "").replace(/[^a-zA-Z0-9_]/g, "").slice(0, 64),
+    requestId: String(entry.requestId || "").replace(/[^a-zA-Z0-9-]/g, "").slice(0, 80),
+    attempt: Number(entry.attempt) || 1, elapsedMs: Math.max(0, Number(entry.elapsedMs) || 0),
+    result: String(entry.result || "").replace(/[^a-zA-Z0-9_]/g, "").slice(0, 64),
+    httpStatus: Number(entry.httpStatus) || 0,
+    handler: ["doPost", "doGet"].includes(entry.handler) ? entry.handler : "unknown",
+    backendBuild: String(entry.backendBuild || "").replace(/[^a-zA-Z0-9-]/g, "").slice(0, 64),
+    serverMs: Math.max(0, Number(entry.serverMs) || 0)
+  };
+  luopanichRequestHistory.push(row);
+  if (luopanichRequestHistory.length > 40) luopanichRequestHistory.shift();
+  if (window.LUOPANICH_CONFIG?.REQUEST_DIAGNOSTICS === true) console.info("[Luopanich request]", row);
+  return row;
+}
+window.luopanichRequestDiagnostics = () => luopanichRequestHistory.map(row => ({ ...row }));
+
+
 
 function isAuthError(message = "") {
    return [
@@ -10962,67 +11018,81 @@ function failLuopanichFrontendConfig(message) {
   throw new Error("Luopanich frontend configuration invalid");
 }
 
- let luopanichPostSequence = 0;
- async function postFormAction(form, { timeout = 30000, returnFailure = false } = {}) {
-   const action = String(form?.get?.("action") || "").trim();
-   if (!action) {
-     const error = new Error("ไม่ได้ระบุคำสั่งก่อนส่งข้อมูล (action)");
-     error.code = "CLIENT_MISSING_ACTION";
-     error.serverRejected = true;
-     throw error;
-   }
-   invalidateAdminOrdersRead(action);
-   // Retry only this read operation, never a mutation or an authentication failure.
-   const maxAttempts = action === "orders" ? 2 : 1;
-   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-     const requestId = Date.now().toString(36) + "-" + (++luopanichPostSequence) + "-" + Math.random().toString(36).slice(2, 10);
-     const requestUrl = new URL(API_URL);
-     requestUrl.searchParams.set("lpPost", "1");
-     requestUrl.searchParams.set("lpRequestId", requestId);
-     const res = await fetchWithTimeout(requestUrl.toString(), {
-       method: "POST",
-       body: form,
-       cache: "no-store",
-       redirect: "follow"
-     }, timeout);
+let luopanichPostSequence = 0;
+async function postFormAction(form, {
+  timeout = 30000, returnFailure = false, retryReads = true,
+  handleAuthFailure = true, isCurrent = null, onRetry = () => {}
+} = {}) {
+  const action = String(form?.get?.("action") || "").trim();
+  if (!action) {
+    const error = new Error("ไม่ได้ระบุคำสั่งก่อนส่งข้อมูล (action)");
+    error.code = "CLIENT_MISSING_ACTION";
+    error.serverRejected = true;
+    throw error;
+  }
+  invalidateAdminOrdersRead(action);
+  // Automatic retries are restricted to these reads. Login and every mutation run once.
+  const readOnly = ["orders", "adminProducts", "adminSessionProfile"].includes(action);
+  const maxAttempts = readOnly && retryReads ? 2 : 1;
+  const deadline = Date.now() + (readOnly ? Math.min(65000, timeout * maxAttempts + 2500) : timeout);
+  const requestToken = String(form.get("token") || "");
+  const current = () => typeof isCurrent !== "function" || isCurrent();
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    if (readOnly && !current()) throw supersededReadError();
+    const requestId = Date.now().toString(36) + "-" + (++luopanichPostSequence) + "-" + Math.random().toString(36).slice(2, 10);
+    const requestUrl = new URL(API_URL);
+    requestUrl.searchParams.set("lpPost", "1");
+    requestUrl.searchParams.set("lpRequestId", requestId);
+    const started = Date.now();
+    let json = null;
+    try {
+      json = await fetchJsonWithTimeout(requestUrl.toString(), {
+        method: "POST", body: form, cache: "no-store", redirect: "follow"
+      }, Math.max(1, Math.min(timeout, deadline - Date.now())));
+      if (readOnly && !current()) throw supersededReadError();
+      if (!json || typeof json !== "object" || Array.isArray(json)) {
+        const error = new Error("รูปแบบข้อมูลตอบกลับไม่ถูกต้อง");
+        error.code = "INVALID_JSON_RESPONSE"; throw error;
+      }
+      if (json.error || json.success === false) {
+        const message = String(json.message || json.error || "Request failed");
+        const routing = ["MISSING_ACTION", "POST_REQUIRED"].includes(json.code) || message === "Missing action";
+        const error = new Error(routing
+          ? "เซิร์ฟเวอร์รับคำสั่งไม่ครบ กรุณาลองโหลดข้อมูลอีกครั้ง (ref: " + requestId + ")"
+          : message);
+        error.code = routing ? "REQUEST_ROUTING_ERROR" : (isAuthError(json.error) ? "AUTH_REJECTED" : "APPLICATION_ERROR");
+        error.serverRejected = !routing;
+        error.requestId = requestId;
+        if (!routing && returnFailure) {
+          recordLuopanichRequest({ action, requestId, attempt, elapsedMs: Date.now() - started, result: error.code, ...json.requestMeta });
+          return json;
+        }
+        if (!routing && handleAuthFailure && isAuthError(json.error) && requestToken && state.admin.token === requestToken) {
+          showToast(t("sessionExpiredLoginAgain", "Session หมดอายุ กรุณา login ใหม่"), "warning");
+          exitAdmin({ silent: true });
+        }
+        throw error;
+      }
+      recordLuopanichRequest({ action, requestId, attempt, elapsedMs: Date.now() - started, result: "SUCCESS", ...json.requestMeta });
+      return json;
+    } catch (err) {
+      err.requestId = err.requestId || requestId;
+      const diagnostic = recordLuopanichRequest({ action, requestId, attempt, elapsedMs: Date.now() - started,
+        result: err.code || "REQUEST_FAILED", httpStatus: err.httpStatus, ...json?.requestMeta });
+      if (readOnly && !current()) throw supersededReadError();
+      const delay = 1200 + Math.floor(Math.random() * 400);
+      if (attempt < maxAttempts && isTransientReadError(err) && Date.now() + delay < deadline) {
+        console.info("[Luopanich read retry]", diagnostic);
+        try { onRetry(); } catch (_) {}
+        await wait(delay);
+        continue;
+      }
+      if (err.code !== "READ_SUPERSEDED") console.warn("[Luopanich request failed]", diagnostic);
+      throw err;
+    }
+  }
+}
 
-     let json;
-     try {
-       json = await res.json();
-     } catch (err) {
-       throw new Error("รูปแบบข้อมูลตอบกลับไม่ถูกต้อง");
-     }
-
-     if (json?.error || json?.success === false) {
-       const serverMessage = String(json.message || json.error || "Request failed");
-       const transportFailure = ["MISSING_ACTION", "POST_REQUIRED"].includes(json.code) || serverMessage === "Missing action";
-       if (transportFailure) {
-         // No credentials, request body, or redirected Google URL in diagnostics.
-         const diagnostic = { action, requestId, attempt, handler: json.handler || "unknown", code: json.code || "LEGACY_MISSING_ACTION" };
-         console.warn("[Luopanich request]", diagnostic);
-         if (attempt < maxAttempts) {
-           await new Promise(resolve => setTimeout(resolve, 500));
-           continue;
-         }
-         const error = new Error("เซิร์ฟเวอร์รับคำสั่งไม่ครบ กรุณาลองโหลดข้อมูลอีกครั้ง (" + diagnostic.code + "; ref: " + requestId + ")");
-         error.code = "REQUEST_ROUTING_ERROR";
-         error.requestId = requestId;
-         // A response-routing failure cannot prove that a prior write did not happen.
-         error.serverRejected = false;
-         throw error;
-       }
-       if (returnFailure) return json || {};
-       if (isAuthError(json.error)) {
-         showToast(t("sessionExpiredLoginAgain", "Session หมดอายุ กรุณา login ใหม่"), "warning");
-         exitAdmin({ silent: true });
-       }
-       const rejection = new Error(serverMessage);
-       rejection.serverRejected = true;
-       throw rejection;
-     }
-     return json;
-   }
- }
 
 function getBrandingFieldLabel(key) {
   return {
@@ -11926,7 +11996,7 @@ function loadBrandingSettingsForLiveUi() {
 }
 /* ================= API LAYER ================= */
 const PRODUCT_FETCH_TIMEOUT_MS = 30000;
-const PRODUCT_LOAD_RETRY_DELAYS = [800, 1800];
+const PRODUCT_LOAD_RETRY_DELAYS = [1200];
 
 let activeProductRefreshPromise = null;
 let productRefreshRequestSeq = 0;
@@ -12048,12 +12118,9 @@ const fetchProducts = async ({ attempt = 1 } = {}) => {
   const actualAttempt = Number(attempt) || 1;
   productsLatencyDiagnosticState.productAttempts += 1;
   try {
-    const res = await fetchWithTimeout(
-     `${API_URL}?action=products`,
-     {},
-     PRODUCT_FETCH_TIMEOUT_MS
-   );
-    const json = await res.json();
+    const requestUrl = new URL(API_URL);
+    requestUrl.searchParams.set("action", "products");
+    const json = await fetchJsonWithTimeout(requestUrl.toString(), { cache: "no-store", redirect: "follow" }, PRODUCT_FETCH_TIMEOUT_MS);
 
     // 🔒 enforce standard response
     if (!json || json.success !== true || !Array.isArray(json.data)) {
@@ -12083,28 +12150,19 @@ const fetchProducts = async ({ attempt = 1 } = {}) => {
   }
 };
 
-const fetchAdminProducts = async ({ attempt = 1 } = {}) => {
+const fetchAdminProducts = async ({ attempt = 1, token = state.admin.token, retry = true, isCurrent = () => state.admin.token === token } = {}) => {
   const requestStartMs = Date.now();
   const actualAttempt = Number(attempt) || 1;
   try {
-    if (!state.admin?.token) {
+    if (!token) {
       throw new Error("Not authenticated");
     }
 
     const form = new URLSearchParams();
     form.append("action", "adminProducts");
-    form.append("token", state.admin.token);
+    form.append("token", token);
 
-    const res = await fetchWithTimeout(
-      API_URL,
-      {
-        method: "POST",
-        body: form
-      },
-      15000
-    );
-
-    const json = await res.json();
+    const json = await postFormAction(form, { timeout: 30000, retryReads: retry, isCurrent });
 
     if (!json || json.success !== true || !Array.isArray(json.data)) {
       throw new Error(json?.error || t("loadProductsFailed", "ไม่สามารถโหลดข้อมูลสินค้าได้"));
@@ -12395,112 +12453,96 @@ function renderProductSkeletonList() {
   return `<div class="skeleton-list">${skeleton}</div>`;
 }
 
-async function fetchProductListWithRetry(fetcher, retryDelays = PRODUCT_LOAD_RETRY_DELAYS) {
-  let lastError = null;
+function productReadContextKey() {
+  const admin = state.mode === "admin" && state.admin?.loggedIn && state.admin?.token && !isAdminSessionExpired();
+  return admin ? "admin:" + state.admin.token : "viewer";
+}
 
+let activeProductRefreshKey = "";
+let loadedProductContextKey = "";
+function resetProductReadContext() {
+  productRefreshRequestSeq++;
+  activeProductRefreshPromise = null;
+  activeProductRefreshKey = "";
+  // Drop admin-only fields before a session/mode change can reuse the list.
+  const publicFields = ["productId", "name", "price", "stock", "displayExtraQty", "image", "active", "status",
+    "detailsText", "compareImages", "parentProductId", "variantType", "variantValue", "displayName", "variantSortOrder"];
+  state.products = (Array.isArray(state.products) ? state.products : []).map(product => {
+    const clean = {};
+    publicFields.forEach(key => { if (Object.prototype.hasOwnProperty.call(product, key)) clean[key] = product[key]; });
+    return clean;
+  });
+  loadedProductContextKey = "viewer";
+  state.productLoad.status = "idle";
+  state.productLoad.error = "";
+}
+
+async function fetchProductListWithRetry(fetcher, retryDelays = PRODUCT_LOAD_RETRY_DELAYS, isCurrent = () => true) {
   for (let attempt = 0; attempt <= retryDelays.length; attempt++) {
-    try {
-      return await fetcher({ attempt: attempt + 1 });
-    } catch (err) {
-      lastError = err;
-
-      if (attempt >= retryDelays.length) break;
-
-      console.warn(
-        `fetchProducts retry ${attempt + 1}/${retryDelays.length}`,
-        err
-      );
-      await wait(retryDelays[attempt]);
+    if (!isCurrent()) throw supersededReadError();
+    try { return await fetcher({ attempt: attempt + 1 }); }
+    catch (err) {
+      if (!isCurrent()) throw supersededReadError();
+      if (attempt >= retryDelays.length || !isTransientReadError(err)) throw err;
+      console.info("[Luopanich public products retry]", { attempt: attempt + 1, code: err.code || "NETWORK_ERROR" });
+      await wait(retryDelays[attempt] + Math.floor(Math.random() * 400));
     }
   }
-
-  throw lastError || new Error(t("loadProductsFailed", "ไม่สามารถโหลดข้อมูลสินค้าได้"));
 }
 
 async function refreshProducts({ retry = true, throwOnError = false } = {}) {
-  if (activeProductRefreshPromise) {
-    return activeProductRefreshPromise;
-  }
-
-  const requestId = ++productRefreshRequestSeq;
-  productsLatencyDiagnosticState.refreshProducts += 1;
-  logProductsRefreshLatencyDiagnostic();
-  activeProductRefreshPromise = (async () => {
-  const app = document.getElementById("app");
-  state.productLoad.status = "loading";
-  state.productLoad.error = "";
-  state.productLoad.requestId = requestId;
-
-  // ✅ Premium Skeleton เฉพาะตอน "ยังไม่มีรายการ" (ลดอาการวูบ/กระพริบ)
-  if (app && (!Array.isArray(state.products) || state.products.length === 0)) {
-    const skeleton = Array.from({ length: 6 }).map(() => `
-      <div class="skeleton-card" aria-hidden="true">
-        <div class="skeleton-row">
-          <div class="skeleton-thumb"></div>
-          <div class="skeleton-lines">
-            <div class="skeleton-line w70"></div>
-            <div class="skeleton-line w45"></div>
-            <div class="skeleton-line w30"></div>
-          </div>
-        </div>
-      </div>
-    `).join("");
-    app.innerHTML = `<div class="skeleton-list">${skeleton}</div>`;
-  }
-
-  try {
-    const useAdminProducts =
-      state.mode === "admin" &&
-      state.admin?.loggedIn &&
-      state.admin?.token &&
-      !isAdminSessionExpired();
-
-    const fetcher = useAdminProducts
-      ? fetchAdminProducts
-      : fetchProducts;
-
-    const list = retry
-      ? await fetchProductListWithRetry(fetcher)
-      : await fetcher();
-
-    if (requestId !== productRefreshRequestSeq) {
-      return state.products;
-    }
-   
-    state.productCreationOrderIds = Array.isArray(list)
-      ? list.map(product => String(product?.productId || "").trim().toUpperCase()).filter(Boolean)
-      : [];
-    state.products = sortProducts(list);
-    state.productLoad.status = "success";
+  const key = productReadContextKey();
+  let job = activeProductRefreshKey === key ? activeProductRefreshPromise : null;
+  if (!job) {
+    const requestId = ++productRefreshRequestSeq;
+    const current = () => requestId === productRefreshRequestSeq && productReadContextKey() === key;
+    activeProductRefreshKey = key;
+    productsLatencyDiagnosticState.refreshProducts++;
+    logProductsRefreshLatencyDiagnostic();
+    if (loadedProductContextKey && loadedProductContextKey !== key) state.products = [];
+    state.productLoad.status = "loading";
     state.productLoad.error = "";
-   
-    renderProducts();
-    return state.products;
-  } catch (err) {
-    console.error("refreshProducts failed:", err);
-    if (requestId === productRefreshRequestSeq) {
-      state.productLoad.status = "error";
-      state.productLoad.error = getUserFacingError(err, "loadProductsFailed", "ไม่สามารถโหลดข้อมูลสินค้าได้");
-      renderProducts();
-    }
-
+    state.productLoad.requestId = requestId;
+    const app = document.getElementById("app");
+    if (app && !state.products.length) app.innerHTML = renderProductSkeletonList();
+    job = (async () => {
+      // Ensure job is installed before synchronous failures/finally can run.
+      await Promise.resolve();
+      try {
+        const list = key.startsWith("admin:")
+          ? await fetchAdminProducts({ token: key.slice(6), retry, isCurrent: current })
+          : retry ? await fetchProductListWithRetry(fetchProducts, PRODUCT_LOAD_RETRY_DELAYS, current) : await fetchProducts();
+        if (!current()) throw supersededReadError();
+        state.productCreationOrderIds = list.map(product => String(product?.productId || "").trim().toUpperCase()).filter(Boolean);
+        state.products = sortProducts(list);
+        loadedProductContextKey = key;
+        state.productLoad.status = "success";
+        state.productLoad.error = "";
+        renderProducts();
+        return state.products;
+      } catch (err) {
+        if (!current()) throw supersededReadError();
+        state.productLoad.status = "error";
+        state.productLoad.error = getUserFacingError(err, "loadProductsFailed", "ไม่สามารถโหลดข้อมูลสินค้าได้");
+        renderProducts();
+        throw err;
+      } finally {
+        if (activeProductRefreshPromise === job) {
+          activeProductRefreshPromise = null;
+          activeProductRefreshKey = "";
+        }
+      }
+    })();
+    activeProductRefreshPromise = job;
+  }
+  // Each caller keeps its own error contract while sharing the same actual request.
+  try { return await job; }
+  catch (err) {
     if (throwOnError) throw err;
     return state.products;
   }
-  })();
-
-  try {
-    return await activeProductRefreshPromise;
-  } finally {
-    if (state.productLoad.requestId === requestId && state.productLoad.status === "loading") {
-      state.productLoad.status = "idle";
-    }
-
-    if (activeProductRefreshPromise) {
-      activeProductRefreshPromise = null;
-    }
-  }
 }
+
 
 function generateCreateOrderRequestId() {
   if (window.crypto && typeof window.crypto.randomUUID === "function") {
@@ -13072,9 +13114,10 @@ function invalidateAdminOrdersRead(action) {
   if (["createOrder", "approveOrder", "rejectOrder", "convertPartnerRequestToOrder"].includes(action)) resetAdminOrdersRead();
 }
 function isDashboardReadTransient(err) {
-  return ["REQUEST_TIMEOUT", "APPS_SCRIPT_RESPONSE_404", "REQUEST_ROUTING_ERROR"].includes(err?.code) || /failed to fetch|networkerror|network error|load failed/i.test(String(err?.message || "")) || [408,429,502,503,504].includes(err?.httpStatus);
+  return isTransientReadError(err) || err?.code === "READ_SUPERSEDED" || err?.code === "ORDERS_READ_SUPERSEDED";
 }
-async function fetchOrders({ timeout = 30000 } = {}) {
+
+async function fetchOrders({ timeout = 30000, onRetry = () => {} } = {}) {
   const token = state.admin.token;
   if (!token) throw new Error("Not authenticated");
   if (adminOrdersRead.token !== token) adminOrdersRead = { token, rows: null, loadedAt: 0, inFlight: null };
@@ -13084,7 +13127,7 @@ async function fetchOrders({ timeout = 30000 } = {}) {
   const job = (async () => {
     try {
       const form = new URLSearchParams({ action: "orders", token });
-      const json = await postFormAction(form, { timeout });
+      const json = await postFormAction(form, { timeout, onRetry, isCurrent: () => state.admin.token === token && adminOrdersRead === read });
       if (!Array.isArray(json.data)) throw new Error("รูปแบบข้อมูลออเดอร์ไม่ถูกต้อง");
       // An old session / a read begun before an order mutation must not refill the cache.
       if (state.admin.token !== token || adminOrdersRead !== read) {
@@ -13108,19 +13151,15 @@ async function loadDashboardOrders({ forceRefresh = false, allowStale = true, on
   if (!forceRefresh && cached && Date.now() - cached.loadedAt < 60000) {
     return { rows: cached.rows, loadedAt: cached.loadedAt, stale: false };
   }
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      const rows = await fetchOrders({ timeout: 45000 });
-      return { rows, loadedAt: adminOrdersRead.loadedAt, stale: false };
-    } catch (err) {
-      if (state.admin.token !== token) throw err;
-      const transient = isDashboardReadTransient(err) || err.code === "ORDERS_READ_SUPERSEDED";
-      if (!transient) throw err;
-      // Keep the last successful snapshot visible if refreshing fails. Never replace it with zero.
-      if (allowStale && cached && adminOrdersRead === cached) return { rows: cached.rows, loadedAt: cached.loadedAt, stale: true };
-      if (attempt === 0) { onRetry(); await new Promise(resolve => setTimeout(resolve, 700)); continue; }
-      throw err;
+  try {
+    const rows = await fetchOrders({ timeout: 30000, onRetry });
+    return { rows, loadedAt: adminOrdersRead.loadedAt, stale: false };
+  } catch (err) {
+    if (state.admin.token !== token) throw err;
+    if (allowStale && cached && adminOrdersRead === cached && isDashboardReadTransient(err)) {
+      return { rows: cached.rows, loadedAt: cached.loadedAt, stale: true };
     }
+    throw err;
   }
 }
 
@@ -15423,113 +15462,92 @@ function selectFilter(status){
    restoreTriggerFocus(); 
 }  
   
-function openAdminEntry(){
-  // 🔒 ถ้ามี session อยู่แล้ว → ต้อง valid ก่อนค่อยเข้า admin
-  if (state.admin.loggedIn && state.admin.token) {
-    if (isAdminSessionExpired()) {
-      showToast(t("sessionExpiredLoginAgain", "Session หมดอายุ กรุณา login ใหม่"), "warning");
-      clearAdminSession();
-    } else {
-      enterAdmin();
-      return;
+let adminEntryPromise = null;
+let adminEntryGate = null;
+let adminEntryNavigationSeq = 0;
+function cancelAdminEntry() {
+  adminEntryNavigationSeq++;
+  if (adminEntryGate || adminEntryPromise) safeHideLoading();
+  adminEntryGate = null;
+  adminEntryPromise = null;
+}
+async function openAdminEntry() {
+  if (adminEntryGate) return adminEntryGate;
+  if (state.admin.loggedIn && state.admin.token && !isAdminSessionExpired()) return enterAdmin();
+  if (state.admin.loggedIn && isAdminSessionExpired()) clearAdminSession();
+  const navigation = adminEntryNavigationSeq;
+  const current = () => navigation === adminEntryNavigationSeq;
+  const job = (async () => {
+    await Promise.resolve();
+    try {
+      if (!current()) return false;
+      if (loadAdminSession()?.token) {
+        showLoading(t("checkingAdminSession", "กำลังตรวจสอบการเข้าสู่ระบบ..."), 70000);
+        let restored = false;
+        try { restored = await restoreAdminSessionIfValid(); }
+        finally { if (current()) safeHideLoading(); }
+        if (!current()) return false;
+        if (restored) return await enterAdmin();
+        if (state.admin.sessionCheckPending) showToast(t("adminSessionCheckDelayed", "ยังตรวจสอบการเข้าสู่ระบบไม่ได้ กรุณาลองใหม่อีกครั้ง"), "warning");
+      }
+      if (current()) renderAdminLogin();
+      return false;
+    } finally {
+      if (adminEntryGate === job) adminEntryGate = null;
     }
-  }
-
-  // 🔓 ยังไม่ login → แสดงหน้า login
-  renderAdminLogin();
+  })();
+  adminEntryGate = job;
+  return job;
 }
 
-async function enterAdmin(){
-  const enterAdminStartMs = Date.now();
-  let enterAdminResult = "success";
-  try {
-    showLoading(t("loadingData", "กำลังโหลดข้อมูล..."));
-    state.mode = "admin";
-    state.search = ""; // ✅ reset
-    state.pagination.page = 1;
-    state.viewerSearchOpen = false;
-
-    // 🔴 CHANGED: render โครงก่อน เพื่อให้ header/admin mode ถูกต้อง
-    renderHeader();
-
-    // 🔴 CHANGED: ล้าง selection เก่าจาก viewer/admin รอบก่อน
-    state.selectedProduct = null;
-
-    const productsStartMs = Date.now();
-    let productsError = null;
-    const productsPromise = refreshProducts()
-      .then(() => {
-        logAdminPreloadLatencyDiagnostic({
-          phase: "enterAdmin.refreshProducts",
-          attempt: 1,
-          startMs: productsStartMs,
-          endMs: Date.now(),
-          elapsedMs: Date.now() - productsStartMs,
-          result: "success"
-        });
-      })
-      .catch(err => {
-        enterAdminResult = classifyAdminPreloadError(err);
-        logAdminPreloadLatencyDiagnostic({
-          phase: "enterAdmin.refreshProducts",
-          attempt: 1,
-          startMs: productsStartMs,
-          endMs: Date.now(),
-          elapsedMs: Date.now() - productsStartMs,
-          result: enterAdminResult
-        });
-        productsError = err;
-      });
-
-    const ordersStartMs = Date.now();
-    const ordersPromise = fetchOrders()
-      .then(orders => {
-        state.admin.orders = Array.isArray(orders) ? orders : [];
-        logAdminPreloadLatencyDiagnostic({
-          phase: "enterAdmin.orders",
-          attempt: 1,
-          startMs: ordersStartMs,
-          endMs: Date.now(),
-          elapsedMs: Date.now() - ordersStartMs,
-          result: "success"
-        });
-      })
-      .catch(err => {
-        logAdminPreloadLatencyDiagnostic({
-          phase: "enterAdmin.orders",
-          attempt: 1,
-          startMs: ordersStartMs,
-          endMs: Date.now(),
-          elapsedMs: Date.now() - ordersStartMs,
-          result: classifyAdminPreloadError(err)
-        });
-        console.warn("enterAdmin: preload orders failed", err);
-      });
-
-    await Promise.all([productsPromise, ordersPromise]);
-    if (productsError) {
-      throw productsError;
+async function enterAdmin() {
+  if (!state.admin.loggedIn || !state.admin.token || isAdminSessionExpired()) return openAdminEntry();
+  const token = state.admin.token;
+  if (adminEntryPromise?.token === token) return adminEntryPromise.promise;
+  const started = Date.now();
+  const epoch = adminSessionEpoch;
+  const current = () => state.admin.token === token && epoch === adminSessionEpoch && state.mode === "admin";
+  const job = (async () => {
+    await Promise.resolve();
+    let result = "success";
+    try {
+      if (state.admin.token !== token || epoch !== adminSessionEpoch || adminEntryPromise?.promise !== job) {
+        result = "READ_SUPERSEDED";
+        return false;
+      }
+      showLoading(t("loadingData", "กำลังโหลดข้อมูล..."), 70000);
+      state.mode = "admin";
+      state.search = "";
+      state.pagination.page = 1;
+      state.viewerSearchOpen = false;
+      state.selectedProduct = null;
+      renderHeader();
+      // Orders are fetched on demand by dashboard/order screens and share fetchOrders' in-flight read.
+      await refreshProducts({ throwOnError: true });
+      return current();
+    } catch (err) {
+      result = err.code || "ERROR";
+      if (current() && err.code !== "READ_SUPERSEDED") {
+        showToast(t("adminProductsLoadDelayed", "เข้าสู่ระบบแล้ว แต่ยังโหลดสินค้าไม่ได้ กรุณากดโหลดใหม่"), "warning");
+      }
+      return false;
+    } finally {
+      logAdminPreloadLatencyDiagnostic({ phase: "enterAdmin.products", attempt: 1, startMs: started, endMs: Date.now(), elapsedMs: Date.now() - started, result });
+      if (adminEntryPromise?.promise === job) {
+        if (state.admin.token === token && epoch === adminSessionEpoch) safeHideLoading();
+        adminEntryPromise = null;
+      }
     }
-  } catch (err) {
-    if (enterAdminResult === "success") {
-      enterAdminResult = classifyAdminPreloadError(err);
-    }
-    throw err;
-  } finally {
-    logAdminPreloadLatencyDiagnostic({
-      phase: "enterAdmin.total",
-      attempt: 1,
-      startMs: enterAdminStartMs,
-      endMs: Date.now(),
-      elapsedMs: Date.now() - enterAdminStartMs,
-      result: enterAdminResult
-    });
-    safeHideLoading();
-  }
+  })();
+  adminEntryPromise = { token, promise: job };
+  return job;
 }
+
 
 // ✅ STEP 1: UI-only mode switch (ไม่ยุ่ง session/token)
 function leaveAdminMode(){
+  cancelAdminEntry();
+  resetProductReadContext();
   // 🔒 ปิด overlay ทั้งหมดแบบเดิม (UI layer)
   document
     .querySelectorAll(".sheet.show, .side-menu.show")
@@ -17021,12 +17039,7 @@ async function handleAdminLogin(btn){
     form.append("password", password);
 
     adminLoginRequestStartMs = Date.now();
-    const res = await fetch(API_URL, {
-      method: "POST",
-      body: form
-    });
-
-    const json = await res.json();
+    const json = await postFormAction(form, { timeout: 45000, returnFailure: true, handleAuthFailure: false });
 
     if (!json.success || !json.token) {
       adminLoginRequestLogged = true;
@@ -17051,6 +17064,13 @@ async function handleAdminLogin(btn){
       result: "success"
     });
 
+    // A delayed validation of the previous session must never overwrite this login.
+    cancelAdminEntry();
+    adminSessionEpoch++;
+    adminSessionValidation = null;
+    resetAdminOrdersRead();
+    resetProductReadContext();
+    state.admin.sessionCheckPending = false;
     // ✅ SAVE SESSION (STATE)
     state.admin.loggedIn = true;
     state.admin.user = json.username;
@@ -35880,11 +35900,9 @@ function closeAdminProductAction(){
 }
 
 function isAdminSessionExpired(expiredAt = state.admin.expiredAt) {
-  // ❗ ไม่มี expiredAt = session invalid ทันที
-  if (!expiredAt) return true;
-
-  return Date.now() > new Date(expiredAt).getTime();
-}  
+  const value = new Date(expiredAt || "").getTime();
+  return !Number.isFinite(value) || Date.now() >= value;
+}
 
 /* =========================================================
    🔤 THAI BAHT TEXT CONVERTER
@@ -36549,6 +36567,12 @@ function loadAdminSession() {
 
 // ================= STEP A7: SINGLE LOGOUT SOURCE OF TRUTH =================
 function clearAdminSession(){
+  if (adminEntryPromise) safeHideLoading();
+  adminEntryPromise = null;
+  adminSessionEpoch++;
+  adminSessionValidation = null;
+  state.admin.sessionCheckPending = false;
+  resetProductReadContext();
   adminOrderView = null;
   adminOrderViewSeq++;
   state.admin.openingOrderId = "";
@@ -36578,6 +36602,7 @@ function clearAdminSession(){
 
 function exitAdmin(opts = {}){
   const { silent = false } = opts;
+  cancelAdminEntry();
 
   // 1) ปลดล็อก backdrop / loading เสมอ (กันค้าง)
   state.ui.backdropLocked = false;
@@ -36651,46 +36676,62 @@ window.forceUnlockUI = function(){
   showToast(t("systemResetDone", "รีเซ็ตระบบเรียบร้อย"), "info");
 };
 
-async function restoreAdminSessionIfValid() {
+let adminSessionEpoch = 0;
+let adminSessionValidation = null;
+
+function isDefinitiveSessionRejection(err) {
+  return err?.serverRejected === true &&
+    ["Invalid token", "Session expired", "Missing token", "Forbidden", "Unauthorized"].includes(String(err.message || "").trim());
+}
+
+async function restoreAdminSessionIfValid({ retry = true } = {}) {
   const restored = loadAdminSession();
   if (!restored?.token || !restored?.expiredAt) return false;
-
-  // expired guard
-  if (Date.now() > new Date(restored.expiredAt).getTime()) {
-    clearAdminSession();
+  if (isAdminSessionExpired(restored.expiredAt)) {
+    if (!state.admin.token || state.admin.token === restored.token) clearAdminSession();
     return false;
   }
-
-  try {
-    // ✅ lightweight validate (POST ให้ตรง backend)
-    const form = new URLSearchParams();
-    form.append("action", "orders");
-    form.append("token", restored.token);
-
-    const res = await fetch(API_URL, {
-      method: "POST",
-      body: form
-    });
-
-    const json = await res.json();
-
-    if (json?.success === true) {
+  if (adminSessionValidation?.token === restored.token) return adminSessionValidation.promise;
+  const epoch = adminSessionEpoch;
+  const current = () => epoch === adminSessionEpoch &&
+    (!state.admin.token || state.admin.token === restored.token) && loadAdminSession()?.token === restored.token;
+  const job = (async () => {
+    await Promise.resolve();
+    try {
+      const form = new URLSearchParams({ action: "adminSessionProfile", token: restored.token });
+      const json = await postFormAction(form, { timeout: 30000, retryReads: retry, handleAuthFailure: false, isCurrent: current });
+      if (!current()) return false;
+      if (json.success !== true || !json.username || !["ADMIN", "OWNER"].includes(json.role) ||
+          json.status !== "ACTIVE" || isAdminSessionExpired(json.expiredAt)) {
+        const error = new Error("รูปแบบข้อมูลยืนยันการเข้าสู่ระบบไม่ถูกต้อง");
+        error.code = "INVALID_SESSION_RESPONSE"; throw error;
+      }
       state.admin.loggedIn = true;
-      state.admin.user = restored.username || null;
+      state.admin.user = json.username;
       state.admin.token = restored.token;
-      state.admin.expiredAt = restored.expiredAt;
-
-      // ❗ ไม่ set state.mode ที่นี่ (กันกระทบ flow)
+      state.admin.expiredAt = json.expiredAt;
+      state.admin.sessionCheckPending = false;
+      try { saveAdminSession({ token: restored.token, username: json.username, expiredAt: json.expiredAt }); }
+      catch (_) { console.warn("Unable to persist refreshed session expiry"); }
       return true;
+    } catch (err) {
+      if (!current() || err.code === "READ_SUPERSEDED") return false;
+      if (isDefinitiveSessionRejection(err)) clearAdminSession();
+      else {
+        // Keep the saved token for revalidation, but do not grant admin access.
+        state.admin.sessionCheckPending = true;
+      }
+      return false;
+    } finally {
+      if (adminSessionValidation?.promise === job) adminSessionValidation = null;
     }
-  } catch (e) {
-    console.warn("restore admin failed", e);
-  }
-
-  clearAdminSession();
-  return false;
+  })();
+  adminSessionValidation = { token: restored.token, promise: job };
+  return job;
 }
-  
+
+
+
 /* ================= INIT APP (CLEAN / SAFE) ================= */
  /* ================= LIQUID HEADER SCROLL EFFECT ================= */
  let _lastScrollY = 0;
@@ -36832,52 +36873,14 @@ const __domReady = new Promise((resolve) => {
     state.mode = "viewer";
     state.search = "";
 
-    const restored = loadAdminSession();
-    let adminRestored = false;
-
-    if (
-      restored &&
-      restored.token &&
-      restored.expiredAt &&
-      Date.now() < new Date(restored.expiredAt).getTime()
-    ) {
-      try {
-        // ✅ FIX: ใช้ POST ให้ตรง backend
-        const form = new URLSearchParams();
-        form.append("action", "orders");
-        form.append("token", restored.token);
-
-        const res = await fetchWithTimeout(API_URL, {
-          method: "POST",
-          body: form
-        }, 15000);
-
-        const json = await res.json();
-
-        if (json && json.success === true) {
-          state.admin.loggedIn = true;
-          state.admin.user = restored.username;
-          state.admin.token = restored.token;
-          state.admin.expiredAt = restored.expiredAt;
-
-          adminRestored = true;
-        }
-      } catch (err) {
-        console.warn("Admin session validation failed", err);
-      }
-    }
-
-    // ❌ invalid / expired
-    if (!adminRestored) {
-      clearAdminSession();
-      // 🔴 CHANGED (STEP A5): mode ถูกบังคับเป็น viewer แล้วด้านบน ไม่ต้อง set ซ้ำ
-    }
-
+    // Restore the public page first; session validation never downloads Orders.
     // ✅ RESTORE VIEWER STATE ก่อน render ทุกอย่าง
     loadCart();
 
-    // ✅ ค่อยโหลด data หลังรู้ mode แล้ว
     await refreshProducts();
+    if (!state.admin.loggedIn && !adminEntryGate) {
+      void restoreAdminSessionIfValid({ retry: false }).then(() => renderHeader());
+    }
 
     // ✅ RENDER
     renderHeader();
@@ -36893,8 +36896,6 @@ const __domReady = new Promise((resolve) => {
   } catch (err) {
     console.error("[INIT ERROR]", err);
     showToast(t("initialLoadFailed", "ไม่สามารถโหลดข้อมูลเริ่มต้นได้"), "error");
-  } finally {
-    safeHideLoading();
   }
 })();
 
