@@ -10813,8 +10813,12 @@ function safeHideLoading(fromTimeout = false) {
 async function fetchWithTimeout(input, init = {}, ms = 30000, readJson = false) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), ms);
+  let phase = "network";
+  let responseHost = "";
   try {
     const res = await fetch(input, { ...init, signal: controller.signal });
+    phase = "response-headers";
+    try { responseHost = new URL(res.url).hostname; } catch (_) {}
     if (!res.ok) {
       const isGoogleNotFound = res.status === 404 &&
         /^https:\/\/(?:[^/]+\.)?(?:google\.com|googleusercontent\.com)(?:\/|$)/i.test(res.url || "");
@@ -10827,6 +10831,7 @@ async function fetchWithTimeout(input, init = {}, ms = 30000, readJson = false) 
     }
     if (!readJson) return res;
     try {
+      phase = "response-body";
       return await res.json();
     } catch (err) {
       if (controller.signal.aborted || err.name === "AbortError") throw err;
@@ -10842,9 +10847,13 @@ async function fetchWithTimeout(input, init = {}, ms = 30000, readJson = false) 
     if (controller.signal.aborted || err.name === "AbortError") {
       const error = new Error(t("connectionSlowRetry", "การเชื่อมต่อช้าเกินไป กรุณาลองใหม่อีกครั้ง"));
       error.code = "REQUEST_TIMEOUT";
+      error.phase = phase;
+      error.responseHost = responseHost;
       throw error;
     }
     if (err instanceof TypeError && !err.code) err.code = "NETWORK_ERROR";
+    err.phase = phase;
+    err.responseHost = responseHost;
     throw err;
   } finally {
     clearTimeout(id);
@@ -10857,7 +10866,7 @@ function fetchJsonWithTimeout(input, init = {}, ms = 30000) {
 
 function isTransientReadError(err) {
   if (err?.serverRejected) return false;
-  return ["REQUEST_TIMEOUT", "APPS_SCRIPT_RESPONSE_404", "REQUEST_ROUTING_ERROR", "NETWORK_ERROR"].includes(err?.code) ||
+  return ["REQUEST_TIMEOUT", "APPS_SCRIPT_RESPONSE_404", "REQUEST_ROUTING_ERROR", "NETWORK_ERROR", "RESPONSE_MISMATCH"].includes(err?.code) ||
     [408, 429, 500, 502, 503, 504].includes(err?.httpStatus) ||
     /failed to fetch|networkerror|network error|load failed/i.test(String(err?.message || ""));
 }
@@ -10868,7 +10877,7 @@ function supersededReadError() {
   return error;
 }
 
-const LUOPANICH_FRONTEND_BUILD = "20260928-admin-read-v1";
+const LUOPANICH_FRONTEND_BUILD = "20260928-response-v2";
 const luopanichRequestHistory = [];
 function recordLuopanichRequest(entry) {
   // Only allowlisted metadata: never store credentials, bodies or redirect URLs.
@@ -10881,7 +10890,12 @@ function recordLuopanichRequest(entry) {
     httpStatus: Number(entry.httpStatus) || 0,
     handler: ["doPost", "doGet"].includes(entry.handler) ? entry.handler : "unknown",
     backendBuild: String(entry.backendBuild || "").replace(/[^a-zA-Z0-9-]/g, "").slice(0, 64),
-    serverMs: Math.max(0, Number(entry.serverMs) || 0)
+    serverMs: Math.max(0, Number(entry.serverMs) || 0),
+    method: entry.method === "GET" ? "GET" : "POST",
+    phase: ["network", "response-headers", "response-body", "response", "complete"].includes(entry.phase) ? entry.phase : "response",
+    responseHost: ["script.google.com", "script.googleusercontent.com", "accounts.google.com"].includes(entry.responseHost) ? entry.responseHost : "",
+    serverCode: ["INVALID_TOKEN", "SESSION_EXPIRED", "MISSING_TOKEN", "FORBIDDEN", "UNAUTHORIZED", "APPLICATION_ERROR", "MISSING_ACTION", "POST_REQUIRED"].includes(entry.serverCode) ? entry.serverCode : "",
+    backendRequestId: String(entry.backendRequestId || "").replace(/[^a-zA-Z0-9-]/g, "").slice(0, 80)
   };
   luopanichRequestHistory.push(row);
   if (luopanichRequestHistory.length > 40) luopanichRequestHistory.shift();
@@ -11019,6 +11033,89 @@ function failLuopanichFrontendConfig(message) {
 }
 
 let luopanichPostSequence = 0;
+function luopanichNextRequestId() {
+  return Date.now().toString(36) + "-" + (++luopanichPostSequence) + "-" + Math.random().toString(36).slice(2, 10);
+}
+
+function luopanichResponseMetadata(json) {
+  const meta = json?.requestMeta || {};
+  return { handler: meta.handler || json?.handler, backendBuild: meta.backendBuild,
+    serverMs: meta.serverMs, backendRequestId: meta.requestId };
+}
+
+function luopanichValidateResponse(json, requestId) {
+  if (!json || typeof json !== "object" || Array.isArray(json)) {
+    const error = new Error("รูปแบบข้อมูลตอบกลับไม่ถูกต้อง");
+    error.code = "INVALID_JSON_RESPONSE";
+    throw error;
+  }
+  // Older deployments do not echo requestId. Keep them compatible and observable.
+  const echoed = json.requestMeta?.requestId;
+  if (echoed != null && String(echoed) !== requestId) {
+    const error = new Error("ได้รับคำตอบที่ไม่ตรงกับคำขอ กรุณาลองโหลดข้อมูลอีกครั้ง");
+    error.code = "RESPONSE_MISMATCH";
+    error.serverRejected = false;
+    throw error;
+  }
+}
+
+function luopanichServerError(json, requestId) {
+  const message = String(json.error || json.message || "Request failed");
+  const routing = ["MISSING_ACTION", "POST_REQUIRED"].includes(json.code) || message === "Missing action";
+  const error = new Error(routing
+    ? "เซิร์ฟเวอร์รับคำสั่งไม่ครบ กรุณาลองโหลดข้อมูลอีกครั้ง (ref: " + requestId + ")"
+    : message);
+  error.code = routing ? "REQUEST_ROUTING_ERROR" : isAuthError(message) ? "AUTH_REJECTED" : "APPLICATION_ERROR";
+  error.serverRejected = !routing;
+  error.requestId = requestId;
+  const serverCodes = { "Invalid token": "INVALID_TOKEN", "Session expired": "SESSION_EXPIRED", "Missing token": "MISSING_TOKEN", "Forbidden": "FORBIDDEN", "Unauthorized": "UNAUTHORIZED" };
+  error.serverCode = routing ? (["MISSING_ACTION", "POST_REQUIRED"].includes(json.code) ? json.code : "MISSING_ACTION") : serverCodes[message] || "APPLICATION_ERROR";
+  return error;
+}
+
+// Only the two existing public actions may use GET. Admin tokens stay in POST bodies.
+async function getPublicAction(action, { timeout = 30000, attempt = 1 } = {}) {
+  if (!["products", "getBrandSettings"].includes(action)) throw new Error("Public action not allowed");
+  const requestId = luopanichNextRequestId();
+  const url = new URL(API_URL);
+  url.searchParams.set("action", action);
+  url.searchParams.set("lpRequestId", requestId);
+  const started = Date.now();
+  let json = null;
+  try {
+    json = await fetchJsonWithTimeout(url.toString(), { cache: "no-store", redirect: "follow", credentials: "omit" }, timeout);
+    luopanichValidateResponse(json, requestId);
+    if (json.error || json.success === false) throw luopanichServerError(json, requestId);
+    if (json.success !== true || (action === "products" && !Array.isArray(json.data))) {
+      const error = new Error("รูปแบบข้อมูลตอบกลับไม่ถูกต้อง");
+      error.code = "INVALID_JSON_RESPONSE";
+      throw error;
+    }
+    recordLuopanichRequest({ ...luopanichResponseMetadata(json), action, method: "GET", requestId, attempt,
+      elapsedMs: Date.now() - started, result: "SUCCESS", phase: "complete" });
+    return json;
+  } catch (err) {
+    err.requestId = requestId;
+    const diagnostic = recordLuopanichRequest({ ...luopanichResponseMetadata(json), action, method: "GET", requestId, attempt,
+      elapsedMs: Date.now() - started, result: err.code || "REQUEST_FAILED", httpStatus: err.httpStatus,
+      serverCode: err.serverCode, phase: err.phase || "response", responseHost: err.responseHost });
+    console.info("[Luopanich public read] " + action + " " + diagnostic.result + "; ref=" + requestId, diagnostic);
+    throw err;
+  }
+}
+
+function luopanichConnectionReport() {
+  const requests = luopanichRequestHistory.map(row => ({ ...row }));
+  return {
+    frontendBuild: LUOPANICH_FRONTEND_BUILD,
+    observedBackendBuilds: [...new Set(requests.map(row => row.backendBuild).filter(Boolean))],
+    productLoadStatus: String(state.productLoad?.status || "unknown"),
+    sessionCheckPending: state.admin?.sessionCheckPending === true,
+    requests
+  };
+}
+window.luopanichConnectionReport = luopanichConnectionReport;
+
 async function postFormAction(form, {
   timeout = 30000, returnFailure = false, retryReads = true,
   handleAuthFailure = true, isCurrent = null, onRetry = () => {}
@@ -11039,7 +11136,7 @@ async function postFormAction(form, {
   const current = () => typeof isCurrent !== "function" || isCurrent();
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     if (readOnly && !current()) throw supersededReadError();
-    const requestId = Date.now().toString(36) + "-" + (++luopanichPostSequence) + "-" + Math.random().toString(36).slice(2, 10);
+    const requestId = luopanichNextRequestId();
     const requestUrl = new URL(API_URL);
     requestUrl.searchParams.set("lpPost", "1");
     requestUrl.searchParams.set("lpRequestId", requestId);
@@ -11050,35 +11147,27 @@ async function postFormAction(form, {
         method: "POST", body: form, cache: "no-store", redirect: "follow"
       }, Math.max(1, Math.min(timeout, deadline - Date.now())));
       if (readOnly && !current()) throw supersededReadError();
-      if (!json || typeof json !== "object" || Array.isArray(json)) {
-        const error = new Error("รูปแบบข้อมูลตอบกลับไม่ถูกต้อง");
-        error.code = "INVALID_JSON_RESPONSE"; throw error;
-      }
+      luopanichValidateResponse(json, requestId);
       if (json.error || json.success === false) {
-        const message = String(json.message || json.error || "Request failed");
-        const routing = ["MISSING_ACTION", "POST_REQUIRED"].includes(json.code) || message === "Missing action";
-        const error = new Error(routing
-          ? "เซิร์ฟเวอร์รับคำสั่งไม่ครบ กรุณาลองโหลดข้อมูลอีกครั้ง (ref: " + requestId + ")"
-          : message);
-        error.code = routing ? "REQUEST_ROUTING_ERROR" : (isAuthError(json.error) ? "AUTH_REJECTED" : "APPLICATION_ERROR");
-        error.serverRejected = !routing;
-        error.requestId = requestId;
+        const error = luopanichServerError(json, requestId);
+        const routing = error.code === "REQUEST_ROUTING_ERROR";
         if (!routing && returnFailure) {
-          recordLuopanichRequest({ action, requestId, attempt, elapsedMs: Date.now() - started, result: error.code, ...json.requestMeta });
+          recordLuopanichRequest({ ...luopanichResponseMetadata(json), action, requestId, attempt, elapsedMs: Date.now() - started, result: error.code, serverCode: error.serverCode });
           return json;
         }
-        if (!routing && handleAuthFailure && isAuthError(json.error) && requestToken && state.admin.token === requestToken) {
+        if (!routing && handleAuthFailure && isAuthError(error.message) && requestToken && state.admin.token === requestToken) {
           showToast(t("sessionExpiredLoginAgain", "Session หมดอายุ กรุณา login ใหม่"), "warning");
           exitAdmin({ silent: true });
         }
         throw error;
       }
-      recordLuopanichRequest({ action, requestId, attempt, elapsedMs: Date.now() - started, result: "SUCCESS", ...json.requestMeta });
+      recordLuopanichRequest({ ...luopanichResponseMetadata(json), action, requestId, attempt, elapsedMs: Date.now() - started, result: "SUCCESS", phase: "complete" });
       return json;
     } catch (err) {
       err.requestId = err.requestId || requestId;
-      const diagnostic = recordLuopanichRequest({ action, requestId, attempt, elapsedMs: Date.now() - started,
-        result: err.code || "REQUEST_FAILED", httpStatus: err.httpStatus, ...json?.requestMeta });
+      const diagnostic = recordLuopanichRequest({ ...luopanichResponseMetadata(json), action, requestId, attempt, elapsedMs: Date.now() - started,
+        result: err.code || "REQUEST_FAILED", httpStatus: err.httpStatus, serverCode: err.serverCode,
+        phase: err.phase || "response", responseHost: err.responseHost });
       if (readOnly && !current()) throw supersededReadError();
       const delay = 1200 + Math.floor(Math.random() * 400);
       if (attempt < maxAttempts && isTransientReadError(err) && Date.now() + delay < deadline) {
@@ -11087,7 +11176,7 @@ async function postFormAction(form, {
         await wait(delay);
         continue;
       }
-      if (err.code !== "READ_SUPERSEDED") console.warn("[Luopanich request failed]", diagnostic);
+      if (err.code !== "READ_SUPERSEDED") console.warn("[Luopanich request failed] " + action + " " + diagnostic.result + (diagnostic.serverCode ? " / " + diagnostic.serverCode : "") + "; ref=" + requestId, diagnostic);
       throw err;
     }
   }
@@ -11187,7 +11276,9 @@ function buildBrandingSettingsPatch(draft) {
 }
 
 function isAmbiguousBrandingSaveFailure(err) {
+  if (err?.serverRejected === true) return false;
   const code = String(err?.code || "").trim();
+  if (["RESPONSE_MISMATCH", "INVALID_JSON_RESPONSE", "NETWORK_ERROR", "REQUEST_ROUTING_ERROR", "APPS_SCRIPT_RESPONSE_404"].includes(code)) return true;
   const name = String(err?.name || "").trim();
   const message = String(err?.message || err || "").trim();
   if (code === "REQUEST_TIMEOUT" || name === "AbortError") return true;
@@ -11296,14 +11387,8 @@ function resolveDocumentBrandingFromSettings(settings = {}, defaultLogoUrl = get
 }
 
 async function fetchBrandSettingsForAdmin() {
-  const url = new URL(API_URL);
-  url.searchParams.set("action", "getBrandSettings");
-  const res = await fetchWithTimeout(url.toString(), {}, 30000);
-  const json = await res.json();
-  if (json?.error || json?.success === false) {
-    throw new Error(json.message || json.error || "Could not load brand settings");
-  }
-  return normalizeBrandingSettingsForUi(json?.data || json || {});
+  const json = await getPublicAction("getBrandSettings");
+  return normalizeBrandingSettingsForUi(json.data || {});
 }
 
 function renderBrandingField(key, options = {}) {
@@ -12118,17 +12203,7 @@ const fetchProducts = async ({ attempt = 1 } = {}) => {
   const actualAttempt = Number(attempt) || 1;
   productsLatencyDiagnosticState.productAttempts += 1;
   try {
-    const requestUrl = new URL(API_URL);
-    requestUrl.searchParams.set("action", "products");
-    const json = await fetchJsonWithTimeout(requestUrl.toString(), { cache: "no-store", redirect: "follow" }, PRODUCT_FETCH_TIMEOUT_MS);
-
-    // 🔒 enforce standard response
-    if (!json || json.success !== true || !Array.isArray(json.data)) {
-      console.error("fetchProducts invalid response:", json);
-      throw new Error(
-        json?.error || json?.message || t("productLoadFailedRetry", "โหลดสินค้าไม่สำเร็จ กรุณากดโหลดใหม่อีกครั้ง")
-      );
-    }
+    const json = await getPublicAction("products", { timeout: PRODUCT_FETCH_TIMEOUT_MS, attempt: actualAttempt });
 
     logProductsLatencyDiagnostic({
       attempt: actualAttempt,
@@ -12757,7 +12832,9 @@ function createBatchStockRequestId() {
 }
 
 function isAmbiguousStockMutationFailure(err) {
+  if (err?.serverRejected === true) return false;
   const code = String(err?.code || "").trim();
+  if (["RESPONSE_MISMATCH", "INVALID_JSON_RESPONSE", "NETWORK_ERROR", "REQUEST_ROUTING_ERROR", "APPS_SCRIPT_RESPONSE_404"].includes(code)) return true;
   const name = String(err?.name || "").trim();
   const message = String(err?.message || err || "").trim();
   if (code === "REQUEST_TIMEOUT" || code === "REQUEST_ROUTING_ERROR" || code === "APPS_SCRIPT_RESPONSE_404" || name === "AbortError") return true;
@@ -28408,7 +28485,7 @@ async function submitProductEdit(){
       showToast("บันทึกสินค้าแล้ว แต่แสดงรายการล่าสุดไม่สำเร็จ กรุณาโหลดหน้าใหม่เพื่อตรวจสอบ", "warning");
       return;
     }
-    const responseUnknown = err?.code === "APPS_SCRIPT_RESPONSE_404" ||
+    const responseUnknown = isAmbiguousBackgroundMutationFailure(err) ||
       err?.code === "REQUEST_TIMEOUT" || err?.httpStatus >= 500 ||
       err instanceof TypeError;
     showToast(responseUnknown
@@ -36878,8 +36955,8 @@ const __domReady = new Promise((resolve) => {
     loadCart();
 
     await refreshProducts();
-    if (!state.admin.loggedIn && !adminEntryGate) {
-      void restoreAdminSessionIfValid({ retry: false }).then(() => renderHeader());
+    if (state.productLoad.status === "success" && !state.admin.loggedIn && !adminEntryGate) {
+      void restoreAdminSessionIfValid().then(() => renderHeader());
     }
 
     // ✅ RENDER
