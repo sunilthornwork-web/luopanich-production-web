@@ -6421,6 +6421,7 @@ textarea.input{
 }());
 </script>
 <script src="assets/vendor/xlsx/xlsx.full.min.js"></script>
+<script src="github-bridge.js"></script>
 <script>
 /* ================= STEP 2: ประกาศ backdrop (UPGRADED) ================= */
 const backdrop = document.getElementById("globalBackdrop");
@@ -10924,7 +10925,7 @@ function supersededReadError() {
   return error;
 }
 
-const LUOPANICH_FRONTEND_BUILD = "20260930-startup-resilience-v2";
+const LUOPANICH_FRONTEND_BUILD = "20260930-github-bridge-v1";
 let brandingBootstrapApplied = false;
 const luopanichRequestHistory = [];
 function recordLuopanichRequest(entry) {
@@ -11121,10 +11122,22 @@ function luopanichServerError(json, requestId) {
   return error;
 }
 
-// Only the two existing public actions may use GET. Admin tokens stay in POST bodies.
+function luopanichTransportBridge(action) {
+  if (window.LUOPANICH_CONFIG?.READ_TRANSPORT !== "IFRAME_RPC_V1" ||
+      !["products", "getBrandSettings", "adminLogin", "adminSessionProfile", "adminProducts", "orders", "adminLogout"].includes(action)) return null;
+  if (!window.LuopanichBridge) {
+    const error = new Error("โหลดส่วนเชื่อมต่อไม่สำเร็จ กรุณาโหลดหน้าเว็บใหม่");
+    error.code = "BRIDGE_CLIENT_MISSING";
+    throw error;
+  }
+  return window.LuopanichBridge;
+}
+
+// Only the two existing public actions may use GET. Credentials never enter URLs.
 async function getPublicAction(action, { timeout = 30000, attempt = 1 } = {}) {
   if (!["products", "getBrandSettings"].includes(action)) throw new Error("Public action not allowed");
-  const requestId = luopanichNextRequestId();
+  const bridge = luopanichTransportBridge(action);
+  const requestId = bridge ? bridge.nextId() : luopanichNextRequestId();
   const url = new URL(API_URL);
   url.searchParams.set("action", action);
   if (action === "products") url.searchParams.set("includeBrandSettings", "1");
@@ -11133,7 +11146,9 @@ async function getPublicAction(action, { timeout = 30000, attempt = 1 } = {}) {
   let json = null;
   let transport = {};
   try {
-    json = await fetchJsonWithTimeout(url.toString(), { cache: "no-store", redirect: "follow", credentials: "omit" }, timeout, meta => { transport = meta; });
+    json = bridge
+      ? await bridge.public(action, requestId, timeout)
+      : await fetchJsonWithTimeout(url.toString(), { cache: "no-store", redirect: "follow", credentials: "omit" }, timeout, meta => { transport = meta; });
     luopanichValidateResponse(json, requestId);
     if (json.error || json.success === false) throw luopanichServerError(json, requestId);
     if (json.success !== true || (action === "products" && !Array.isArray(json.data))) {
@@ -11170,7 +11185,7 @@ function luopanichConnectionReport() {
 window.luopanichConnectionReport = luopanichConnectionReport;
 
 function downloadLuopanichConnectionReport() {
-  const report = { ...luopanichConnectionReport(), transport: "GITHUB_HTTP", generatedAt: new Date().toISOString() };
+  const report = { ...luopanichConnectionReport(), transport: window.LuopanichBridge?.enabled() ? "GITHUB_BRIDGE_READS_HTTP_WRITES" : "GITHUB_HTTP", generatedAt: new Date().toISOString() };
   const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)], { type: "application/json" }));
   const link = document.createElement("a");
   link.href = url;
@@ -11193,6 +11208,7 @@ async function postFormAction(form, {
     throw error;
   }
   invalidateAdminOrdersRead(action);
+  const bridge = luopanichTransportBridge(action);
   // Automatic retries are restricted to these reads. Login and every mutation run once.
   const readOnly = ["orders", "adminProducts", "adminSessionProfile"].includes(action);
   const maxAttempts = readOnly && retryReads ? 2 : 1;
@@ -11201,7 +11217,7 @@ async function postFormAction(form, {
   const current = () => typeof isCurrent !== "function" || isCurrent();
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     if (readOnly && !current()) throw supersededReadError();
-    const requestId = luopanichNextRequestId();
+    const requestId = bridge ? bridge.nextId() : luopanichNextRequestId();
     const requestUrl = new URL(API_URL);
     requestUrl.searchParams.set("lpPost", "1");
     requestUrl.searchParams.set("lpRequestId", requestId);
@@ -11209,7 +11225,7 @@ async function postFormAction(form, {
     let json = null;
     let transport = {};
     try {
-      json = await fetchJsonWithTimeout(requestUrl.toString(), {
+      json = bridge ? await bridge.post(form, requestId, Math.max(1, Math.min(timeout, deadline - Date.now()))) : await fetchJsonWithTimeout(requestUrl.toString(), {
         method: "POST", body: form, cache: "no-store", redirect: "follow"
       }, Math.max(1, Math.min(timeout, deadline - Date.now())), meta => { transport = meta; });
       if (readOnly && !current()) throw supersededReadError();
@@ -16109,6 +16125,7 @@ if (typeof renderFloatingBar === "function") renderFloatingBar();
 
 
 function renderAdminLogin(){
+  window.LuopanichBridge?.prepareLogin();
   adminLoginSheet.innerHTML = `
     <div class="sheet-topbar">
       <button class="btn btn-outline sheet-nav-btn"
