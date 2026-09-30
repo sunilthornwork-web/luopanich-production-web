@@ -10924,7 +10924,8 @@ function supersededReadError() {
   return error;
 }
 
-const LUOPANICH_FRONTEND_BUILD = "20260928-feedback-v1";
+const LUOPANICH_FRONTEND_BUILD = "20260930-github-entry-v1";
+let brandingBootstrapApplied = false;
 const luopanichRequestHistory = [];
 function recordLuopanichRequest(entry) {
   // Only allowlisted metadata: never store credentials, bodies or redirect URLs.
@@ -11126,6 +11127,7 @@ async function getPublicAction(action, { timeout = 30000, attempt = 1 } = {}) {
   const requestId = luopanichNextRequestId();
   const url = new URL(API_URL);
   url.searchParams.set("action", action);
+  if (action === "products") url.searchParams.set("includeBrandSettings", "1");
   url.searchParams.set("lpRequestId", requestId);
   const started = Date.now();
   let json = null;
@@ -11166,6 +11168,18 @@ function luopanichConnectionReport() {
   };
 }
 window.luopanichConnectionReport = luopanichConnectionReport;
+
+function downloadLuopanichConnectionReport() {
+  const report = { ...luopanichConnectionReport(), transport: "GITHUB_HTTP", generatedAt: new Date().toISOString() };
+  const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)], { type: "application/json" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "luopanich-github-connection-report.json";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
 async function postFormAction(form, {
   timeout = 30000, returnFailure = false, retryReads = true,
@@ -12264,6 +12278,13 @@ const fetchProducts = async ({ attempt = 1 } = {}) => {
   productsLatencyDiagnosticState.productAttempts += 1;
   try {
     const json = await getPublicAction("products", { timeout: PRODUCT_FETCH_TIMEOUT_MS, attempt: actualAttempt });
+    if (json.brandingSettings && typeof json.brandingSettings === "object" && !Array.isArray(json.brandingSettings)) {
+      try {
+        state.brandingSettings = normalizeBrandingSettingsForUi(json.brandingSettings);
+        applyBrandingToLiveUi();
+        brandingBootstrapApplied = true;
+      } catch (_) { console.warn("Optional branding preload could not be applied"); }
+    }
 
     logProductsLatencyDiagnostic({
       attempt: actualAttempt,
@@ -12601,6 +12622,19 @@ let adminProductSnapshot = null;
 let productSnapshotEpoch = 0;
 let pendingProductWrites = 0;
 let recentAdminProductReuseCount = 0;
+
+function primeAdminProductSnapshot(response, expectedMutationEpoch) {
+  if (!Array.isArray(response?.products) || !state.admin.loggedIn || !state.admin.token ||
+      isAdminSessionExpired() || expectedMutationEpoch !== productSnapshotEpoch || pendingProductWrites > 0) return false;
+  if (response.products.some(product => !product || typeof product !== "object" || !String(product.productId || "").trim())) return false;
+  adminProductSnapshot = {
+    token: state.admin.token, sessionEpoch: adminSessionEpoch, mutationEpoch: productSnapshotEpoch,
+    rows: sortProducts(response.products).map(product => ({ ...product })),
+    creationOrderIds: response.products.map(product => String(product.productId).trim().toUpperCase()),
+    loadedAt: Date.now(), reusable: true
+  };
+  return true;
+}
 
 function restoreAdminProductSnapshot() {
   const snapshot = adminProductSnapshot;
@@ -17285,8 +17319,10 @@ async function handleAdminLogin(btn){
     form.append("action", "adminLogin");
     form.append("username", username);
     form.append("password", password);
+    form.append("includeProducts", "1");
 
     adminLoginRequestStartMs = Date.now();
+    const loginProductEpoch = productSnapshotEpoch;
     const json = await postFormAction(form, { timeout: 45000, returnFailure: true, handleAuthFailure: false });
 
     if (!current()) return;
@@ -17327,6 +17363,7 @@ async function handleAdminLogin(btn){
     state.admin.user = json.username;
     state.admin.token = json.token;
     state.admin.expiredAt = json.expiredAt;
+    primeAdminProductSnapshot(json, loginProductEpoch);
 
     // ✅ SAVE SESSION (PERSIST)
     try { saveAdminSession(json); }
@@ -17339,7 +17376,8 @@ async function handleAdminLogin(btn){
     state.ui.backdropLocked = false;
 
     // 🚀 ENTER ADMIN MODE
-    // Entry now owns its loading state. This login must not hide a newer operation.
+    // A preloaded entry may finish without creating its own loading indicator.
+    if (loadingGeneration !== null && loadingGeneration === _loadingGeneration) safeHideLoading();
     loadingGeneration = null;
     await enterAdmin();
     if (current()) await repairMobileViewportAfterAdminLogin();
@@ -27211,6 +27249,12 @@ function openMainMenu(triggerEl){
       }
 
 
+    <div class="menu-group">
+      <button class="btn btn-secondary" type="button" onclick="downloadLuopanichConnectionReport()">
+        ${t("downloadConnectionReport", "ดาวน์โหลดรายงานการเชื่อมต่อ")}
+      </button>
+    </div>
+
     ${
       (canLogout)
         ? `
@@ -36964,7 +37008,8 @@ async function restoreAdminSessionIfValid({ retry = true } = {}) {
   const job = (async () => {
     await Promise.resolve();
     try {
-      const form = new URLSearchParams({ action: "adminSessionProfile", token: restored.token });
+      const productEpoch = productSnapshotEpoch;
+      const form = new URLSearchParams({ action: "adminSessionProfile", token: restored.token, includeProducts: "1" });
       const json = await postFormAction(form, { timeout: 30000, retryReads: retry, handleAuthFailure: false, isCurrent: current });
       if (!current()) return false;
       if (json.success !== true || !json.username || !["ADMIN", "OWNER"].includes(json.role) ||
@@ -36977,6 +37022,7 @@ async function restoreAdminSessionIfValid({ retry = true } = {}) {
       state.admin.token = restored.token;
       state.admin.expiredAt = json.expiredAt;
       state.admin.sessionCheckPending = false;
+      primeAdminProductSnapshot(json, productEpoch);
       try { saveAdminSession({ token: restored.token, username: json.username, expiredAt: json.expiredAt }); }
       catch (_) { console.warn("Unable to persist refreshed session expiry"); }
       return true;
@@ -37134,7 +37180,6 @@ const __domReady = new Promise((resolve) => {
   try {
     // ✅ ADD: wait until #floatingBar / #btnTop / etc are in DOM
     await __domReady;
-    void loadBrandingSettingsForLiveUi();
     // 🔴 CHANGED (STEP A5): Reload ต้องกลับ Viewer เสมอ (แม้ restore admin สำเร็จ)
     state.mode = "viewer";
     state.search = "";
@@ -37144,6 +37189,7 @@ const __domReady = new Promise((resolve) => {
     loadCart();
 
     await refreshProducts();
+    if (!brandingBootstrapApplied) void loadBrandingSettingsForLiveUi();
     if (state.productLoad.status === "success" && !state.admin.loggedIn && !adminEntryGate) {
       void restoreAdminSessionIfValid().then(() => renderHeader());
     }
