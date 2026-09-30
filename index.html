@@ -10924,7 +10924,7 @@ function supersededReadError() {
   return error;
 }
 
-const LUOPANICH_FRONTEND_BUILD = "20260930-github-entry-v1";
+const LUOPANICH_FRONTEND_BUILD = "20260930-startup-resilience-v2";
 let brandingBootstrapApplied = false;
 const luopanichRequestHistory = [];
 function recordLuopanichRequest(entry) {
@@ -37176,7 +37176,7 @@ const __domReady = new Promise((resolve) => {
   }
 });
   
-(async () => {
+async function initializeLuopanichApp() {
   try {
     // ✅ ADD: wait until #floatingBar / #btnTop / etc are in DOM
     await __domReady;
@@ -37184,9 +37184,13 @@ const __domReady = new Promise((resolve) => {
     state.mode = "viewer";
     state.search = "";
 
-    // Restore the public page first; session validation never downloads Orders.
+    // Navigation must be usable even while the public API is slow or unavailable.
     // ✅ RESTORE VIEWER STATE ก่อน render ทุกอย่าง
     loadCart();
+
+    renderHeader();
+    if (typeof renderBadge === "function") renderBadge();
+    if (typeof renderFloatingBar === "function") renderFloatingBar();
 
     await refreshProducts();
     if (!brandingBootstrapApplied) void loadBrandingSettingsForLiveUi();
@@ -37209,7 +37213,8 @@ const __domReady = new Promise((resolve) => {
     console.error("[INIT ERROR]", err);
     showToast(t("initialLoadFailed", "ไม่สามารถโหลดข้อมูลเริ่มต้นได้"), "error");
   }
-})();
+}
+void initializeLuopanichApp();
 
 </script>
   
