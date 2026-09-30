@@ -10893,6 +10893,7 @@ async function fetchWithTimeout(input, init = {}, ms = 30000, readJson = false, 
 
 async function fetchJsonWithTimeout(input, init = {}, ms = 30000, onResponse = null) {
   const action = String(init.body?.get?.("action") || "");
+  const finishViewWrite = beginAdminViewWrite(action, init.method);
   const changesProducts = String(init.method || "GET").toUpperCase() === "POST" &&
     ["addProduct", "updateProduct", "deleteProduct", "bulkAddProducts", "bulkUpdateProducts",
       "bulkUpsertProductMaster", "stockIn", "batchStockIn", "stockAdjust", "approveOrder",
@@ -10904,6 +10905,7 @@ async function fetchJsonWithTimeout(input, init = {}, ms = 30000, onResponse = n
   }
   try { return await fetchWithTimeout(input, init, ms, true, onResponse); }
   finally {
+    finishViewWrite();
     if (changesProducts) {
       pendingProductWrites--;
       productSnapshotEpoch++;
@@ -10925,7 +10927,7 @@ function supersededReadError() {
   return error;
 }
 
-const LUOPANICH_FRONTEND_BUILD = "20260930-github-bridge-v1";
+const LUOPANICH_FRONTEND_BUILD = "20260930-navigation-cache-v1";
 let brandingBootstrapApplied = false;
 const luopanichRequestHistory = [];
 function recordLuopanichRequest(entry) {
@@ -13343,6 +13345,187 @@ async function fetchStockLogs() {
   return json.data;
 }
 
+// Display snapshots only. Transaction checks continue to call the fresh fetchers.
+const ADMIN_VIEW_FRESH_MS = 60000;
+const ADMIN_VIEW_MAX_AGE_MS = 300000;
+const adminViewReads = new Map();
+let adminViewIdentity = "";
+let adminViewEpoch = 0;
+let adminViewWrites = 0;
+let pendingDeliveryViewSeq = 0;
+const adminPartnerListSeq = { partners: 0, links: 0, requests: 0 };
+function resetAdminViewReads() {
+  adminViewReads.clear();
+  adminViewEpoch++;
+  adminViewIdentity = "";
+}
+function clearAdminDisplaySnapshots() {
+  resetAdminViewReads();
+  state.admin.pendingDeliveries = [];
+  if (state.admin.partners) Object.assign(state.admin.partners, {items:[], total:0, readInfo:null, selectedPartnerSnapshot:null});
+  if (state.admin.partnerCatalog) Object.assign(state.admin.partnerCatalog, {links:[], linkTotal:0, linkReadInfo:null, linkDetail:null});
+  if (state.admin.partnerRequests) Object.assign(state.admin.partnerRequests, {requests:[], total:0, readInfo:null, detail:null});
+}
+function adminViewSession() {
+  if (!state.admin.loggedIn || !state.admin.token || isAdminSessionExpired()) return "";
+  return state.admin.token + ":" + adminSessionEpoch;
+}
+function adminViewEntry(key) {
+  const identity = adminViewSession();
+  if (!identity) return null;
+  if (adminViewIdentity !== identity) {
+    resetAdminViewReads();
+    adminViewIdentity = identity;
+  }
+  return adminViewReads.get(key) || null;
+}
+function adminViewSnapshot(key) {
+  const entry = adminViewEntry(key);
+  if (adminViewWrites || !entry || entry.rows === null || Date.now() - entry.loadedAt >= ADMIN_VIEW_MAX_AGE_MS) return null;
+  return { rows: structuredClone(entry.rows), loadedAt: entry.loadedAt,
+    stale: !!entry.error, refreshing: !!entry.inFlight, epoch: adminViewEpoch };
+}
+function beginAdminViewWrite(action, method) {
+  const changesData = String(method || "GET").toUpperCase() === "POST" &&
+    ["addProduct", "updateProduct", "deleteProduct", "bulkAddProducts", "bulkUpdateProducts", "bulkUpsertProductMaster",
+      "stockIn", "batchStockIn", "stockAdjust", "createOrder", "approveOrder", "rejectOrder",
+      "createPendingDelivery", "closePendingDelivery", "fulfillPendingDelivery", "createPartner", "updatePartner",
+      "createPartnerLink", "updatePartnerLinkStatus", "updatePartnerRequestStatus", "convertPartnerRequestToOrder",
+      "createBillingDocumentDraft", "updateBillingDocumentDraft", "finalizeBillingDocument", "updateBrandSettings"].includes(action);
+  if (!changesData) return () => {};
+  adminViewWrites++;
+  resetAdminViewReads();
+  resetAdminOrdersRead();
+  let finished = false;
+  return () => {
+    if (finished) return;
+    finished = true;
+    adminViewWrites--;
+    // Invalidate even on timeout: the server might have committed the write.
+    resetAdminViewReads();
+    resetAdminOrdersRead();
+  };
+}
+function adminViewReadCurrent(result) {
+  return !!result && result.epoch === adminViewEpoch && !!adminViewSession() && adminViewIdentity === adminViewSession() && !adminViewWrites;
+}
+function adminViewAuthFailure(err) {
+  return isAuthError(err?.message || "") || isDefinitiveSessionRejection(err);
+}
+async function loadAdminViewRead(key, fetcher, { forceRefresh = false } = {}) {
+  let entry = adminViewEntry(key);
+  const identity = adminViewSession(), epoch = adminViewEpoch;
+  if (!identity) throw new Error("Not authenticated");
+  if (adminViewWrites) throw supersededReadError();
+  if (!entry) {
+    // Bounded query/page variants; the session never goes to persistent storage.
+    if (adminViewReads.size >= 24) adminViewReads.delete(adminViewReads.keys().next().value);
+    entry = { rows: null, loadedAt: 0, inFlight: null, retryAt: 0, error: false };
+    adminViewReads.set(key, entry);
+  }
+  const current = () => adminViewSession() === identity && adminViewEpoch === epoch &&
+    adminViewReads.get(key) === entry && !adminViewWrites;
+  const cached = adminViewSnapshot(key);
+  const fresh = cached && Date.now() - cached.loadedAt < ADMIN_VIEW_FRESH_MS;
+  if (!forceRefresh && cached && !entry.inFlight && (fresh || Date.now() < entry.retryAt)) return cached;
+  if (!entry.inFlight) {
+    const job = (async () => {
+      try {
+        const rows = await Promise.resolve().then(fetcher);
+        if (!current()) throw supersededReadError();
+        entry.rows = structuredClone(rows);
+        entry.loadedAt = Date.now();
+        entry.error = false;
+        entry.retryAt = 0;
+        return { rows: structuredClone(rows), loadedAt: entry.loadedAt, stale: false, refreshing: false, epoch };
+      } catch (err) {
+        if (current()) {
+          entry.error = true;
+          entry.retryAt = Date.now() + 15000;
+          if (!isDashboardReadTransient(err)) entry.rows = null;
+        }
+        throw err;
+      } finally {
+        if (entry.inFlight === job) entry.inFlight = null;
+      }
+    })();
+    entry.inFlight = job;
+    // A view may close while the request is running. It still has one rejection handler.
+    void job.catch(() => {});
+  }
+  if (cached && !forceRefresh) return { ...cached, refreshing: true, refresh: entry.inFlight };
+  return entry.inFlight;
+}
+function followAdminViewRefresh(result, isCurrent, apply, fail) {
+  if (!result.refresh) return;
+  void result.refresh.then(next => {
+    if (isCurrent() && adminViewReadCurrent(next)) apply(next);
+  }).catch(err => {
+    if (isCurrent() && result.epoch === adminViewEpoch) fail(err);
+  });
+}
+function preserveAdminReadUi(sheet, render) {
+  const top = sheet.scrollTop;
+  const fields = [...sheet.querySelectorAll("input[id],select[id],textarea[id]")].map(el => ({ id: el.id, value: el.value }));
+  const details = [...sheet.querySelectorAll("details[id]")].map(el => ({ id: el.id, open: el.open }));
+  const expanded = [...sheet.querySelectorAll('[aria-controls][aria-expanded="true"]')].map(el => el.getAttribute("aria-controls"));
+  const focused = sheet.contains(document.activeElement) ? document.activeElement.id : "";
+  render();
+  fields.forEach(field => { const el = document.getElementById(field.id); if (el && sheet.contains(el)) el.value = field.value; });
+  details.forEach(detail => { const el = document.getElementById(detail.id); if (el && sheet.contains(el)) el.open = detail.open; });
+  expanded.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el || !sheet.contains(el)) return;
+    el.hidden = false;
+    sheet.querySelectorAll('[aria-controls]').forEach(button => {
+      if (button.getAttribute('aria-controls') === id) button.setAttribute('aria-expanded', 'true');
+    });
+  });
+  const focus = focused && document.getElementById(focused);
+  if (focus && sheet.contains(focus)) focus.focus({ preventScroll: true });
+  sheet.scrollTop = top;
+}
+function adminViewReadLabel(info) {
+  const time = new Date(info.loadedAt).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+  return `ข้อมูลที่โหลด ${time}${info.refreshing ? " • กำลังอัปเดต…" : info.stale ? " • อัปเดตไม่สำเร็จ แสดงข้อมูลเดิม" : ""}`;
+}
+function adminListViewKey(form) {
+  return JSON.stringify([...form.entries()].filter(([key]) => key !== "token").sort(([a], [b]) => a.localeCompare(b)));
+}
+async function loadAdminListView(form, { forceRefresh = false, current, apply, loading, fail, render }) {
+  const key = adminListViewKey(form), token = state.admin.token;
+  const paint = info => {
+    if (!current() || !adminViewReadCurrent(info)) return;
+    apply(info.rows, info); loading(false); render();
+  };
+  const onFailure = err => {
+    if (!current()) return;
+    if (adminViewAuthFailure(err)) { exitAdmin(); return; }
+    const cached = adminViewSnapshot(key);
+    if (cached && isDashboardReadTransient(err)) { paint({...cached, stale:true, refreshing:false}); return; }
+    loading(false); fail(err); render();
+  };
+  const cached = adminViewSnapshot(key);
+  if (cached) paint({...cached, refreshing:forceRefresh || Date.now()-cached.loadedAt >= ADMIN_VIEW_FRESH_MS});
+  else { loading(true); render(); }
+  try {
+    const info = await loadAdminViewRead(key, async () => {
+      const json = await fetchJsonWithTimeout(API_URL, {method:"POST", body:form}, 30000);
+      if (token !== state.admin.token) throw supersededReadError();
+      if (json?.success !== true) {
+        const error = new Error(json?.error || json?.message || "โหลดข้อมูลไม่สำเร็จ");
+        error.serverRejected = true;
+        throw error;
+      }
+      const field = {listPartners:"partners", listPartnerLinks:"links", listPartnerRequests:"requests"}[form.get("action")];
+      if (!field || !Array.isArray(json.data?.[field])) throw new Error("Invalid list response");
+      return json.data;
+    }, {forceRefresh});
+    paint(info);
+    followAdminViewRefresh(info, current, paint, onFailure);
+  } catch (err) { onFailure(err); }
+}
+
 // In-memory only, isolated by admin session. Never persist order data or credentials.
 let adminOrdersRead = { token: "", rows: null, loadedAt: 0, inFlight: null };
 let adminDashboardLoadSeq = 0;
@@ -13384,22 +13567,7 @@ async function fetchOrders({ timeout = 30000, onRetry = () => {} } = {}) {
   try { return await job; } finally { if (read.inFlight === job) read.inFlight = null; }
 }
 async function loadDashboardOrders({ forceRefresh = false, allowStale = true, onRetry = () => {} } = {}) {
-  const token = state.admin.token;
-  if (!token) throw new Error("Not authenticated");
-  const cached = adminOrdersRead.token === token && Array.isArray(adminOrdersRead.rows) ? adminOrdersRead : null;
-  if (!forceRefresh && cached && Date.now() - cached.loadedAt < 60000) {
-    return { rows: cached.rows, loadedAt: cached.loadedAt, stale: false };
-  }
-  try {
-    const rows = await fetchOrders({ timeout: 30000, onRetry });
-    return { rows, loadedAt: adminOrdersRead.loadedAt, stale: false };
-  } catch (err) {
-    if (state.admin.token !== token) throw err;
-    if (allowStale && cached && adminOrdersRead === cached && isDashboardReadTransient(err)) {
-      return { rows: cached.rows, loadedAt: cached.loadedAt, stale: true };
-    }
-    throw err;
-  }
+  return loadAdminViewRead("orders", () => fetchOrders({ timeout: 30000, onRetry }), { forceRefresh });
 }
 
 /* ================= STOCK CHECK ================= */
@@ -17373,6 +17541,7 @@ async function handleAdminLogin(btn){
     loginNavigation = adminEntryNavigationSeq;
     adminSessionValidation = null;
     resetAdminOrdersRead();
+    clearAdminDisplaySnapshots();
     resetProductReadContext();
     state.admin.sessionCheckPending = false;
     // ✅ SAVE SESSION (STATE)
@@ -17690,7 +17859,7 @@ function renderDashboardAView(orders, summary, from, to, pendingCount, readInfo)
     <div class="da-toolbar"><h2>สรุปอ่านง่าย</h2><div class="da-search"><label for="adminOrderPoSearch" class="da-sr-only">ค้นหาเลข PO</label>${dashboardAIcon('search')}<input id="adminOrderPoSearch" type="search" placeholder="ค้นหา PO..." value="${escAttr(state.admin.filters.poQueryDraft || '')}" oninput="state.admin.filters.poQueryDraft = this.value" onkeydown="if(event.key==='Enter') applyAdminOrderPoQuery()"><button type="button" aria-label="ค้นหา PO" onclick="applyAdminOrderPoQuery()">›</button></div><button type="button" class="da-filter-button" aria-label="ตัวกรองวันที่และ PO" onclick="document.getElementById('dashboardAFilters').open = !document.getElementById('dashboardAFilters').open">${dashboardAIcon('filter')}</button></div>
     <details id="dashboardAFilters" class="da-filters"><summary class="da-sr-only">ตัวกรอง</summary><div class="da-filter-fields"><label>ตั้งแต่วันที่<input id="dashboardDateFrom" type="date" value="${escAttr(from)}"></label><label>ถึงวันที่<input id="dashboardDateTo" type="date" value="${escAttr(to)}"></label></div><div class="da-filter-actions"><button type="button" onclick="applyAdminDashboardRange()">ดูสรุป</button><button type="button" onclick="resetAdminDashboardRange()">เดือนนี้</button><button type="button" onclick="clearAdminOrderPoQuery()">ล้าง PO</button></div></details>
     ${state.admin.filters.poQuery ? `<div class="da-active-filter">PO: ${esc(state.admin.filters.poQuery)}<button type="button" onclick="clearAdminOrderPoQuery()" aria-label="ล้าง PO">×</button></div>` : ''}
-    ${readInfo?.stale ? '<div class="da-stale" role="status">อัปเดตข้อมูลไม่สำเร็จ กำลังแสดงข้อมูลที่โหลดสำเร็จล่าสุด กดปุ่มรีเฟรชด้านล่างเพื่อลองอีกครั้ง</div>' : ''}
+    ${readInfo?.refreshing ? '<div class="da-stale" role="status">กำลังอัปเดตข้อมูลล่าสุด…</div>' : readInfo?.stale ? '<div class="da-stale" role="status">อัปเดตข้อมูลไม่สำเร็จ กำลังแสดงข้อมูลที่โหลดสำเร็จล่าสุด กดปุ่มรีเฟรชด้านล่างเพื่อลองอีกครั้ง</div>' : ''}
     <section class="da-hero" aria-label="ยอดขายรวม"><div><span>ยอดขาย</span><strong>${dashboardMoney(summary.totalSales)}</strong></div><div class="da-growth ${change !== null && change < 0 ? 'is-negative' : ''}"><span class="da-growth-icon">${dashboardAIcon('arrow')}</span><b>${change === null ? '—' : (change > 0 ? '+' : '')+change.toFixed(1)+'%'}</b><small>${change === null ? 'ไม่มีฐานเปรียบเทียบ' : 'จากช่วงก่อนหน้า'}</small></div></section>
     <div class="da-pair"><section class="da-card da-value"><span>ต้นทุน ${dashboardAIcon('coins')}</span><strong>${dashboardMoney(summary.totalCost)}</strong><small>${costPercent} ของยอดขาย</small></section><section class="da-card da-value"><span>กำไรขั้นต้น ${dashboardAIcon('profit')}</span><strong class="${summary.totalProfit < 0 ? 'da-negative' : ''}">${dashboardMoney(summary.totalProfit)}</strong><small>${margin} ของยอดขาย</small></section></div>
     <div class="da-pair da-counts"><section class="da-card">${dashboardAIcon('order')}<div><strong>${summary.orderCount.toLocaleString('th-TH')}</strong><span>ออเดอร์</span></div></section><section class="da-card">${dashboardAIcon('box')}<div><strong>${summary.totalQty.toLocaleString('th-TH')}</strong><span>ชิ้น</span></div></section></div>
@@ -17890,18 +18059,18 @@ async function openAdminDashboard(mode = "SUMMARY", force = false, reloadOrders 
     state.admin.filters.dashboardTo = today;
   }
 
-  adminDashboardSheet.innerHTML = `
+  const cachedDashboard = adminViewSnapshot("orders");
+  if (!cachedDashboard) adminDashboardSheet.innerHTML = `
     <div class="da-loading"><button class="app-back-btn" type="button" onclick="backToAdminMainMenu()">‹ กลับ</button><h3 id="adminDashboardSheetTitle">แดชบอร์ดแอดมิน</h3><div class="da-skeleton"></div><p id="dashboardLoadMessage" role="status">กำลังโหลดข้อมูลออเดอร์...</p></div>`;
   openOverlay(adminDashboardSheet);
 
+  let renderLoadedDashboard;
   try {
     // Products are already preloaded on admin entry. Do not hold order reads behind a second product load.
-    const readInfo = await loadDashboardOrders({ forceRefresh: reloadOrders || mode === "PENDING", allowStale: mode !== "PENDING", onRetry: () => {
-      if (!stillActive()) return;
-      const message = document.getElementById("dashboardLoadMessage");
-      if (message) message.textContent = "การเชื่อมต่อล่าช้า กำลังลองโหลดให้อีกครั้ง...";
-    }});
-    if (!stillActive()) return;
+    renderLoadedDashboard = (readInfo) => {
+    if (!stillActive() || !adminViewReadCurrent(readInfo)) return;
+    adminDashboardSheet.dataset.readLoadedAt = String(readInfo.loadedAt);
+    adminDashboardSheet.dataset.readEpoch = String(readInfo.epoch);
     state.admin.orders = readInfo.rows;
 
     const from = state.admin.filters.dashboardFrom || "";
@@ -17917,28 +18086,11 @@ async function openAdminDashboard(mode = "SUMMARY", force = false, reloadOrders 
         orderMatchesAdminPoQuery(o);
     });
 
-   console.log(
-  "APPROVED ORDERS",
-  approvedOrders.map(o => ({
-    orderId: o.orderId,
-    status: o.status,
-    createdAt: o.createdAt
-  }))
-);
-
     const pendingOrders = (Array.isArray(state.admin.orders)
       ? state.admin.orders
       : []
-    ).filter(o =>
-      String(o.status || "").toUpperCase() === "PENDING" &&
-      orderMatchesAdminPoQuery(o)
-    );
-
-    const pendingCount = (Array.isArray(state.admin.orders)
-      ? state.admin.orders
-      : []
-    ).filter(o => String(o.status || "").toUpperCase() === "PENDING").length;
-
+    ).filter(o => String(o.status || "").toUpperCase() === "PENDING" && orderMatchesAdminPoQuery(o));
+    const pendingCount = (state.admin.orders || []).filter(o => String(o.status || "").toUpperCase() === "PENDING").length;
     const duplicatePoMap = getDuplicatePoOrderMap();
     const summary = calculateDashboardSummary(approvedOrders);
     state.admin.dashboardAnalyticsData = { orders: approvedOrders, summary, from, to, pendingCount };
@@ -17946,52 +18098,49 @@ async function openAdminDashboard(mode = "SUMMARY", force = false, reloadOrders 
     if (mode === "PENDING") {
       adminDashboardSheet.innerHTML = `
         <div class="admin-sheet-topbar">
-          <button class="app-back-btn" type="button"
-            onclick="backToAdminMainMenu()">
-            <span class="app-back-btn-icon" aria-hidden="true">‹</span>
-            <span>${t("back", "กลับ")}</span>
-          </button>
+          <button class="app-back-btn" type="button" onclick="backToAdminMainMenu()"><span class="app-back-btn-icon">‹</span><span>${t("back", "กลับ")}</span></button>
           <h3 id="adminDashboardSheetTitle">${t("pendingOrders", "ออเดอร์รออนุมัติ")}</h3>
+          <button type="button" class="btn btn-outline" onclick="openAdminDashboard('PENDING',true,true)">${t("refresh", "รีเฟรช")}</button>
         </div>
-
         ${renderAdminOrderPoSearch()}
-
-        ${
-          pendingOrders.length
-            ? pendingOrders.map(o => `
-                <div class="card admin-card"
-                  role="button"
-                  tabindex="0"
-                  onclick="openAdminOrder(${toInlineJsStringLiteral(o.orderId)})"
-                  onkeydown="handleKeyboardActivation(event, this)">
-                  <div class="name" title="${escAttr(o.orderId || "")}">${esc(formatOrderIdForDisplay(o.orderId))}</div>
-                  <div class="stock">PO: ${esc(o.poNumber || "-")}</div>
-                  ${renderDuplicatePoBadge(o, duplicatePoMap)}
-                  <div class="admin-card-meta">
-                    <span class="status-badge compact status-pending">${esc(getAdminOrderStatusLabel(o.status))}</span>
-                    <span>${t("total", "ยอดรวม")} ฿${Number(o.total || 0).toLocaleString("th-TH")}</span>
-                  </div>
-                  ${renderPartnerOrderSourceBadge(o, { compact: true })}
-                  <div class="price">฿${Number(o.total || 0).toLocaleString("th-TH")}</div>
-                  <div class="stock">
-                    ${t("date", "วันที่")}: ${esc(formatThaiDate(getOrderDateValue(o)))}
-                  </div>
-                </div>
-              `).join("")
-            : renderEmptyStateLottie(t("noPendingOrders", "ยังไม่มีออเดอร์รออนุมัติ"), "", {
-                className: "pending-orders-empty-state",
-                size: 118
-              })
-        }
-      `;
+        <p role="status">${adminViewReadLabel(readInfo)}</p>
+        ${pendingOrders.length ? pendingOrders.map(o => `
+          <div class="card admin-card" role="button" tabindex="0" onclick="openAdminOrder(${toInlineJsStringLiteral(o.orderId)})" onkeydown="handleKeyboardActivation(event, this)">
+            <div class="name" title="${escAttr(o.orderId || "")}">${esc(formatOrderIdForDisplay(o.orderId))}</div>
+            <div class="stock">PO: ${esc(o.poNumber || "-")}</div>${renderDuplicatePoBadge(o, duplicatePoMap)}
+            <div class="admin-card-meta"><span class="status-badge compact status-pending">${esc(getAdminOrderStatusLabel(o.status))}</span><span>${t("total", "ยอดรวม")} ฿${Number(o.total || 0).toLocaleString("th-TH")}</span></div>
+            ${renderPartnerOrderSourceBadge(o, { compact: true })}
+            <div class="price">฿${Number(o.total || 0).toLocaleString("th-TH")}</div>
+            <div class="stock">${t("date", "วันที่")}: ${esc(formatThaiDate(getOrderDateValue(o)))}</div>
+          </div>`).join("") : renderEmptyStateLottie(t("noPendingOrders", "ยังไม่มีออเดอร์รออนุมัติ"), "", { className: "pending-orders-empty-state", size: 118 })}`;
       return;
-    }   
-
+    }
     adminDashboardSheet.innerHTML = renderDashboardAView(approvedOrders, summary, from, to, pendingCount, readInfo);
+    };
+    if (cachedDashboard) renderLoadedDashboard({ ...cachedDashboard, refreshing: reloadOrders || Date.now() - cachedDashboard.loadedAt >= ADMIN_VIEW_FRESH_MS });
+    const readInfo = await loadDashboardOrders({ forceRefresh: reloadOrders, onRetry: () => {
+      if (!stillActive()) return;
+      const message = document.getElementById("dashboardLoadMessage");
+      if (message) message.textContent = "การเชื่อมต่อล่าช้า กำลังลองโหลดให้อีกครั้ง...";
+    }});
+    if (!stillActive() || !adminViewReadCurrent(readInfo)) return;
+    const paint = info => preserveAdminReadUi(adminDashboardSheet, () => renderLoadedDashboard(info));
+    paint(readInfo);
+    followAdminViewRefresh(readInfo, stillActive, paint, err => {
+      const snapshot = adminViewSnapshot("orders");
+      if (snapshot && isDashboardReadTransient(err)) paint({ ...snapshot, stale: true, refreshing: false });
+      else if (adminViewAuthFailure(err)) exitAdmin();
+      else adminDashboardSheet.innerHTML = `<div class="da-load-error"><button type="button" onclick="backToAdminMainMenu()">กลับ</button><p role="alert">โหลดข้อมูลออเดอร์ไม่สำเร็จ</p><button type="button" onclick="openAdminDashboard('${mode === 'PENDING' ? 'PENDING' : 'SUMMARY'}',true,true)">ลองใหม่</button></div>`;
+    });
   } catch (err) {
     if (!stillActive()) return;
     console.warn("dashboard order read failed", err);
-    if (isAuthError(err.message) || /not authenticated|session|token/i.test(String(err.message || ""))) {
+    const snapshot = adminViewSnapshot("orders");
+    if (snapshot && isDashboardReadTransient(err) && renderLoadedDashboard) {
+      preserveAdminReadUi(adminDashboardSheet, () => renderLoadedDashboard({...snapshot, stale:true, refreshing:false}));
+      return;
+    }
+    if (adminViewAuthFailure(err) || /not authenticated|session|token/i.test(String(err.message || ""))) {
       showToast(t("sessionExpiredLoginAgain", "Session หมดอายุ กรุณา login ใหม่"), "warning");
       exitAdmin(); return;
     }
@@ -18048,6 +18197,7 @@ function resetAdminRootAfterSheetClose() {
 }
 
 function closeStockTimelineToAdminMenu() {
+  if (stockHistoryView) stockHistoryView.scrollTop = adminStockSheet.scrollTop;
   state.admin.ui.activeSheet = null;
   closeOverlay(adminStockSheet);
   adminStockSheet.classList.remove("stock-menu-return-side");
@@ -18198,6 +18348,7 @@ function renderAdminMenuInStockSheet() {
 }
 
 function closeStockTimelineSheet() {
+  if (stockHistoryView) stockHistoryView.scrollTop = adminStockSheet.scrollTop;
   if (state.admin.ui.activeSheet === "stockTimelineReturnToMenu") {
     closeStockTimelineToAdminMenu();
     return;
@@ -18940,7 +19091,7 @@ function renderPoDetailItem(order,item,index,view) {
 function renderPoDetailView(view) {
   const order=view.order,totals=poDetailTotals(order),status=String(order.status || '').toUpperCase();
   const note=String(order.note || order.adminNote || order.message || '').trim();
-  return `<div class="po-view">${renderPoDetailHeader(order)}${renderAdminOrderSummary(order)}<div class="po-section-heading"><h4>${t('itemList','รายการสินค้า')}</h4><span>${totals.count} รายการ</span></div>${status==='APPROVED' ? `<div id="poFulfillmentNotice" class="po-fulfillment-notice" role="status" aria-live="polite">${renderPoFulfillmentNotice(view)}</div>` : ''}<div class="po-items">${totals.items.length ? totals.items.map((item,i)=>renderPoDetailItem(order,item,i,view)).join('') : '<div class="po-empty">ไม่มีรายการสินค้าในออเดอร์นี้</div>'}</div>${note ? `<div class="po-note"><h4>${t('note','หมายเหตุ')}</h4><p>${esc(note)}</p></div>` : ''}<div class="po-final-total"><div><span>ยอดรวมทั้งหมด</span><small>${totals.count} รายการ · ${poDetailQty(totals.qty)} ชิ้น</small></div><strong>${poDetailMoney(totals.total)}</strong></div>${status==='PENDING' ? `<div class="po-decision"><button type="button" class="po-reject" onclick="handleReject()">${t('reject','ปฏิเสธ')}</button><button type="button" class="po-approve" onclick="handleApprove()">${t('approve','อนุมัติ')}</button></div>` : ''}</div>`;
+return `<div class="po-view">${renderPoDetailHeader(order)}${view.readInfo ? `<p role="status">${esc(adminViewReadLabel(view.readInfo))}</p>` : ''}${renderAdminOrderSummary(order)}<div class="po-section-heading"><h4>${t('itemList','รายการสินค้า')}</h4><span>${totals.count} รายการ</span></div>${status==='APPROVED' ? `<div id="poFulfillmentNotice" class="po-fulfillment-notice" role="status" aria-live="polite">${renderPoFulfillmentNotice(view)}</div>` : ''}<div class="po-items">${totals.items.length ? totals.items.map((item,i)=>renderPoDetailItem(order,item,i,view)).join('') : '<div class="po-empty">ไม่มีรายการสินค้าในออเดอร์นี้</div>'}</div>${note ? `<div class="po-note"><h4>${t('note','หมายเหตุ')}</h4><p>${esc(note)}</p></div>` : ''}<div class="po-final-total"><div><span>ยอดรวมทั้งหมด</span><small>${totals.count} รายการ · ${poDetailQty(totals.qty)} ชิ้น</small></div><strong>${poDetailMoney(totals.total)}</strong></div>${status==='PENDING' ? `<div class="po-decision"><button type="button" class="po-reject" onclick="handleReject()">${t('reject','ปฏิเสธ')}</button><button type="button" class="po-approve" onclick="handleApprove()">${t('approve','อนุมัติ')}</button></div>` : ''}</div>`;
 }
 function renderPoDetailLoading(id) {
   return `<div class="po-view">${renderPoDetailHeader(null,true)}<div class="po-load-state" role="status" aria-live="polite"><span class="po-spinner" aria-hidden="true"></span><div><strong>กำลังเปิดสรุปออเดอร์ / PO</strong><p>${esc(formatOrderIdForDisplay(id))}</p></div></div><div class="po-skeleton po-skeleton-hero" aria-hidden="true"></div><div class="po-skeleton" aria-hidden="true"></div><div class="po-skeleton" aria-hidden="true"></div></div>`;
@@ -19126,6 +19277,7 @@ function renderStockHistoryResults(resetLimit = true) {
   document.getElementById('stockHistoryCards').innerHTML = events.length ? events.slice(0,view.limit).map(renderStockHistoryCard).join('') : `<div class="sh-empty">${dashboardAIcon('search')}<strong>ไม่พบประวัติสต๊อก</strong><span>${view.logs.length ? 'ลองเปลี่ยนวันที่ รหัสสินค้า หรือประเภทงาน' : 'ยังไม่มีรายการเคลื่อนไหวสต๊อก'}</span></div>`;
   const foot = document.getElementById('stockHistoryFoot');
   foot.innerHTML = `${summary.unknownQty ? `<p>ไม่ทราบจำนวน ${summary.unknownQty} รายการ จึงไม่นำมารวมยอดเพิ่ม/ลด</p>` : ''}<span>รวม ${summary.count} รายการเคลื่อนไหวตามตัวกรอง${events.length !== summary.count ? ` • ${events.length} เหตุการณ์` : ''}</span>${events.length > view.limit ? `<button type="button" class="sh-more" onclick="loadMoreStockHistory()">แสดงเพิ่ม (${events.length-view.limit} เหตุการณ์)</button>` : ''}<button type="button" class="sh-refresh" onclick="refreshStockHistory()">${dashboardAIcon('refresh')} โหลดข้อมูลล่าสุด</button>`;
+  if (view.readInfo) foot.insertAdjacentHTML("afterbegin", `<p role="status">${esc(adminViewReadLabel(view.readInfo))}</p>`);
 }
 function updateStockHistorySearch(value) {
   if (!canRenderStockHistory()) return;
@@ -19185,38 +19337,69 @@ async function openStockTimeline(force = false, options = {}) {
   allowOpenStockTimeline = false;
   adminStockSheet.classList.remove('stock-menu-return-side');
   const token = state.admin.token, seq = ++stockHistoryLoadSeq;
-  const stillActive = () => stockHistoryLoadSeq === seq && state.admin.token === token && adminStockSheet.classList.contains('show') && !!adminStockSheet.querySelector('.sh-view');
+  const stillActive = () => stockHistoryLoadSeq === seq && state.admin.token === token && adminStockSheet.classList.contains('show');
   const returnToAdminMenu = options.returnToAdminMenu === true;
   const backAction = returnToAdminMenu ? 'closeStockTimelineToAdminMenu()' : 'closeStockTimelineSheet()';
+  const focusProductId = normalizeProductId(options.focusProductId || '');
+  const previous = stockHistoryView?.token === token && stockHistoryView.focusProductId === focusProductId ? stockHistoryView : null;
+  const cached = adminViewSnapshot("stockLogs");
   closeOverlay(adminDashboardSheet);
-  stockHistoryView = null;
-  adminStockSheet.innerHTML = `<div class="sh-view">${renderStockHistoryHeader(backAction)}<div class="sh-loading" role="status"><div class="sh-loading-card"></div><div class="sh-loading-card"></div><p>กำลังโหลดประวัติสต๊อก...</p></div></div>`;
   openOverlay(adminStockSheet);
-  try {
-    const logs = await fetchStockLogs();
-    if (!stillActive()) return;
-    if (!Array.isArray(logs)) throw new Error('รูปแบบข้อมูลประวัติสต๊อกไม่ถูกต้อง');
-    const view = { token,logs,orders:Array.isArray(state.admin.orders)?state.admin.orders:[],returnToAdminMenu,backAction,
-      focusProductId:normalizeProductId(options.focusProductId || ''),filters:{query:'',from:'',to:'',type:'',...(options.filters || {})},limit:60 };
-    stockHistoryView = view;
-    adminStockSheet.innerHTML = renderStockHistoryShell(view);
-    renderStockHistoryResults();
-    // Optional order prices must not hold the history list behind another network request.
-    if (logs.some(log=>String(log.type).toUpperCase()==='OUT' && (log.orderId || log.ref)) && !view.orders.length) {
-      void fetchOrders().then(orders=>{
-        if (!stillActive() || stockHistoryView !== view) return;
-        view.orders = orders; state.admin.orders = orders;
-        // Enrich prices without closing details, changing search input or moving the scroll position.
-        renderStockHistoryPreservingDetails();
-      }).catch(err=>console.warn('stock history: order details unavailable',err?.code || err?.message));
+  const paint = info => {
+    if (!stillActive() || !adminViewReadCurrent(info)) return;
+    adminStockSheet.dataset.readLoadedAt = String(info.loadedAt);
+    adminStockSheet.dataset.readEpoch = String(info.epoch);
+    if (!stockHistoryView || stockHistoryView.loadSeq !== seq) {
+      stockHistoryView = { token, loadSeq: seq, logs: info.rows, orders: adminViewSnapshot("orders")?.rows || [],
+        readInfo: info, returnToAdminMenu, backAction, focusProductId,
+        filters: {query:'',from:'',to:'',type:'',...(options.filters || previous?.filters || {})}, limit: previous?.limit || 60 };
+      adminStockSheet.innerHTML = renderStockHistoryShell(stockHistoryView);
+      renderStockHistoryResults(false);
+      adminStockSheet.scrollTop = previous?.scrollTop || 0;
+    } else {
+      stockHistoryView.logs = info.rows;
+      stockHistoryView.readInfo = info;
+      renderStockHistoryPreservingDetails();
     }
-  } catch(err) {
-    if (!stillActive()) return;
-    if (isAuthError(err.message)) { exitAdmin(); return; }
-    console.warn('stock history load failed',err);
-    const retryOptions = {returnToAdminMenu,focusProductId:normalizeProductId(options.focusProductId || ''),filters:options.filters || {}};
-    adminStockSheet.innerHTML = `<div class="sh-view">${renderStockHistoryHeader(backAction)}<div class="sh-empty"><strong>ยังโหลดประวัติสต๊อกไม่ได้</strong><span>กรุณาลองโหลดข้อมูลอีกครั้ง</span><button type="button" onclick="openStockTimeline(true,JSON.parse(${toInlineJsStringLiteral(JSON.stringify(retryOptions))}))">ลองใหม่</button></div></div>`;
+  };
+  if (cached) paint({...cached, refreshing: force || Date.now() - cached.loadedAt >= ADMIN_VIEW_FRESH_MS});
+  else {
+    stockHistoryView = null;
+    adminStockSheet.innerHTML = `<div class="sh-view">${renderStockHistoryHeader(backAction)}<div class="sh-loading" role="status"><div class="sh-loading-card"></div><p>กำลังโหลดประวัติสต๊อก...</p></div></div>`;
   }
+  const fail = err => {
+    if (!stillActive()) return;
+    if (adminViewAuthFailure(err)) { exitAdmin(); return; }
+    const snapshot = adminViewSnapshot("stockLogs");
+    if (snapshot && isDashboardReadTransient(err)) { paint({...snapshot, stale:true, refreshing:false}); return; }
+    const retryOptions = {returnToAdminMenu,focusProductId,filters:stockHistoryView?.filters || options.filters || {}};
+    adminStockSheet.innerHTML = `<div class="sh-view">${renderStockHistoryHeader(backAction)}<div class="sh-empty"><strong>ยังโหลดประวัติสต๊อกไม่ได้</strong><button type="button" onclick="openStockTimeline(true,JSON.parse(${toInlineJsStringLiteral(JSON.stringify(retryOptions))}))">ลองใหม่</button></div></div>`;
+  };
+  try {
+    const info = await loadAdminViewRead("stockLogs", async () => {
+      const logs = await fetchStockLogs();
+      if (!Array.isArray(logs)) throw new Error("Invalid stock history data");
+      return logs;
+    }, {forceRefresh:force});
+    if (!stillActive() || !adminViewReadCurrent(info)) return;
+    paint(info);
+    followAdminViewRefresh(info, stillActive, paint, fail);
+    const view = stockHistoryView;
+    if (view.logs.some(log => String(log.type).toUpperCase() === 'OUT' && (log.orderId || log.ref))) {
+      const ordersInfo = await loadDashboardOrders().catch(err => {
+        console.warn('stock history: order details unavailable', err?.code || 'READ_FAILED');
+        return null;
+      });
+      if (!ordersInfo) return;
+      const enrich = next => {
+        if (!stillActive() || stockHistoryView !== view || !adminViewReadCurrent(next)) return;
+        view.orders = next.rows; state.admin.orders = next.rows;
+        renderStockHistoryPreservingDetails();
+      };
+      enrich(ordersInfo);
+      followAdminViewRefresh(ordersInfo, () => stillActive() && stockHistoryView === view, enrich, () => {});
+    }
+  } catch (err) { fail(err); }
 }
 
 function isCurrentAdminOrderView(view) {
@@ -19229,7 +19412,7 @@ function captureAdminOrderOrigin() {
 function updatePoFulfillmentParts(view) {
   if (!isCurrentAdminOrderView(view)) return;
   const notice=document.getElementById('poFulfillmentNotice');
-  if (notice) notice.innerHTML=renderPoFulfillmentNotice(view);
+  if (notice) notice.innerHTML=renderPoFulfillmentNotice(view) + (view.fulfillmentReadInfo ? '<p role="status">' + esc(adminViewReadLabel(view.fulfillmentReadInfo)) + '</p>' : '');
   adminOrderSheet.querySelectorAll('[data-po-fulfillment-index]').forEach(element=>{
     const item=view.order.items[Number(element.dataset.poFulfillmentIndex)];
     if (!item) return;
@@ -19237,29 +19420,37 @@ function updatePoFulfillmentParts(view) {
     element.setAttribute('aria-busy',String(view.fulfillment==='loading'));
   });
 }
-async function loadAdminOrderFulfillment(view) {
+async function loadAdminOrderFulfillment(view, forceRefresh = false) {
   if (!isCurrentAdminOrderView(view) || view.pendingTask) return;
-  view.fulfillment='loading'; updatePoFulfillmentParts(view);
-  const task=(async()=>{
-    try {
-      const rows=await fetchPendingDeliveries();
-      if (!isCurrentAdminOrderView(view)) return;
-      if (!Array.isArray(rows)) throw new Error('Invalid pending delivery data');
-      view.pendingRows=rows;view.fulfillment='ready';state.admin.pendingDeliveries=rows;
-    } catch(err) {
-      if (!isCurrentAdminOrderView(view)) return;
-      if (isAuthError(err?.message || '')) {exitAdmin();return;}
-      view.fulfillment='error';view.pendingRows=null;
-      console.warn('PO detail: fulfillment unavailable',err?.code || err?.message);
-    }
+  const cached = adminViewSnapshot("pendingDeliveries");
+  const apply = info => {
+    if (!isCurrentAdminOrderView(view) || !adminViewReadCurrent(info)) return;
+    view.pendingRows = info.rows; view.fulfillment = 'ready'; view.fulfillmentReadInfo = info;
+    state.admin.pendingDeliveries = info.rows;
     updatePoFulfillmentParts(view);
+  };
+  const fail = err => {
+    if (!isCurrentAdminOrderView(view)) return;
+    if (adminViewAuthFailure(err)) { exitAdmin(); return; }
+    const snapshot = adminViewSnapshot("pendingDeliveries");
+    if (snapshot && isDashboardReadTransient(err)) { apply({...snapshot, stale:true, refreshing:false}); return; }
+    view.fulfillment = 'error'; view.pendingRows = null; updatePoFulfillmentParts(view);
+  };
+  if (cached) apply({...cached, refreshing:forceRefresh || Date.now()-cached.loadedAt >= ADMIN_VIEW_FRESH_MS});
+  else { view.fulfillment='loading'; updatePoFulfillmentParts(view); }
+  const task = (async () => {
+    try {
+      const info = await loadAdminViewRead("pendingDeliveries", fetchPendingDeliveries, {forceRefresh});
+      apply(info);
+      followAdminViewRefresh(info, () => isCurrentAdminOrderView(view), apply, fail);
+    } catch (err) { fail(err); }
   })();
-  view.pendingTask=task;
-  try {await task;} finally {if(view.pendingTask===task)view.pendingTask=null;}
+  view.pendingTask = task;
+  try { await task; } finally { if (view.pendingTask === task) view.pendingTask = null; }
 }
 function retryAdminOrderFulfillment() {
   if (!isCurrentAdminOrderView(adminOrderView) || adminOrderView.fulfillment==='loading') return;
-  return loadAdminOrderFulfillment(adminOrderView);
+  return loadAdminOrderFulfillment(adminOrderView, true);
 }
 function retryAdminOrderDetail() {
   if (!isCurrentAdminOrderView(adminOrderView) || adminOrderView.phase!=='error') return;
@@ -19280,20 +19471,31 @@ async function openAdminOrder(orderId, options = {}) {
   openOverlay(adminOrderSheet);
   [adminStockSheet,pendingDeliverySheet,adminProductActionSheet,adminDashboardSheet].forEach(closeOverlay);
   try {
-    let order=(Array.isArray(state.admin.orders)?state.admin.orders:[]).find(row=>String(row?.orderId || '').trim()===id);
-    if (!order || options.retry) {
-      const rows=await fetchOrders();
-      if (!isCurrentAdminOrderView(view)) return;
-      if (!Array.isArray(rows)) throw new Error('Invalid order data');
-      state.admin.orders=rows;order=rows.find(row=>String(row?.orderId || '').trim()===id);
-    }
-    if (!isCurrentAdminOrderView(view)) return;
-    if (!order) {const error=new Error('Order not found');error.code='ORDER_NOT_FOUND';throw error;}
-    view.order=order;view.phase='ready';
-    view.fulfillment=String(order.status || '').toUpperCase()==='APPROVED'?'loading':'not-needed';
-    state.admin.selectedOrder=order;state.admin.pendingDeliveryOrder=order;
-    adminOrderSheet.innerHTML=renderPoDetailView(view);
-    if (view.fulfillment==='loading') void loadAdminOrderFulfillment(view);
+    const paintOrder = info => {
+      if (!isCurrentAdminOrderView(view) || !adminViewReadCurrent(info)) return;
+      const order = info.rows.find(row => String(row?.orderId || '').trim() === id);
+      if (!order) { const error = new Error('Order not found'); error.code='ORDER_NOT_FOUND'; throw error; }
+      const wasReady = view.phase === 'ready';
+      state.admin.orders = info.rows;
+      view.order = order; view.phase = 'ready'; view.readInfo = info;
+      view.fulfillment = String(order.status || '').toUpperCase() === 'APPROVED' ? (view.pendingRows ? 'ready' : 'loading') : 'not-needed';
+      state.admin.selectedOrder = order; state.admin.pendingDeliveryOrder = order;
+      if (wasReady) preserveAdminReadUi(adminOrderSheet, () => {adminOrderSheet.innerHTML=renderPoDetailView(view);});
+      else adminOrderSheet.innerHTML=renderPoDetailView(view);
+      if (view.fulfillment !== 'not-needed') void loadAdminOrderFulfillment(view);
+    };
+    const info = await loadDashboardOrders({forceRefresh:options.retry === true});
+    if (!isCurrentAdminOrderView(view) || !adminViewReadCurrent(info)) return;
+    paintOrder(info);
+    followAdminViewRefresh(info, () => isCurrentAdminOrderView(view), paintOrder, err => {
+      if (adminViewAuthFailure(err)) {exitAdmin();return;}
+      if (isDashboardReadTransient(err)) {
+        view.readInfo={...info, stale:true, refreshing:false};
+        preserveAdminReadUi(adminOrderSheet, () => {adminOrderSheet.innerHTML=renderPoDetailView(view);});
+      } else {
+        view.phase='error';adminOrderSheet.innerHTML=renderPoDetailError(view,err?.code==='ORDER_NOT_FOUND');
+      }
+    });
   } catch(err) {
     if (!isCurrentAdminOrderView(view)) return;
     if (isAuthError(err?.message || '')) {exitAdmin();return;}
@@ -19304,6 +19506,19 @@ async function openAdminOrder(orderId, options = {}) {
     if (adminOrderView===view) setApprovedOrderCardOpening(id,false);
   }
 }
+function refreshAdminReadOrigin(sheet) {
+  const key = sheet === adminDashboardSheet ? "orders" : sheet === adminStockSheet ? "stockLogs" : sheet === pendingDeliverySheet ? "pendingDeliveries" : "";
+  if (!key) return;
+  const cached = adminViewSnapshot(key);
+  if (cached && Date.now() - cached.loadedAt < ADMIN_VIEW_FRESH_MS &&
+      cached.loadedAt === Number(sheet.dataset.readLoadedAt) && cached.epoch === Number(sheet.dataset.readEpoch)) return;
+  if (sheet === adminDashboardSheet) void openAdminDashboard(state.admin.dashboardMode || "SUMMARY", true);
+  else if (sheet === adminStockSheet) {
+    const view = stockHistoryView;
+    allowOpenStockTimeline = true;
+    void openStockTimeline(false, {returnToAdminMenu:view?.returnToAdminMenu, focusProductId:view?.focusProductId, filters:view?.filters});
+  } else openPendingDeliverySheet({...state.admin.pendingDeliveryFocus});
+}
 function closeAdminOrderSheet() {
   const view=adminOrderView,origin=view?.origin;
   adminOrderView=null;adminOrderViewSeq++;
@@ -19313,6 +19528,7 @@ function closeAdminOrderSheet() {
   if (origin?.sheet && view.token===state.admin.token) {
     // Keep the exact source DOM, including filters, expanded cards and scroll position.
     openOverlay(origin.sheet);closeOverlay(adminOrderSheet);
+    refreshAdminReadOrigin(origin.sheet);
     const seq=adminOrderViewSeq;
     setTimeout(()=>{
       if(adminOrderViewSeq!==seq || !origin.sheet.classList.contains('show'))return;
@@ -25977,68 +26193,44 @@ function renderDeliveryNoteSheet() {
 }
 
 function openPendingDeliverySheet(options = {}) {
+  if (!ensureAdminUiContext()) return;
+  const token = state.admin.token, seq = ++pendingDeliveryViewSeq;
+  const current = () => seq === pendingDeliveryViewSeq && token === state.admin.token && pendingDeliverySheet.classList.contains("show");
   const focusProductId = normalizeProductId(options.productId || "");
   const focusOrderId = String(options.orderId || "").trim();
-  state.admin.pendingDeliveryFocus = focusProductId || focusOrderId
-    ? {
-        productId: focusProductId,
-        orderId: focusOrderId
-      }
-    : null;
+  state.admin.pendingDeliveryFocus = focusProductId || focusOrderId ? {productId:focusProductId, orderId:focusOrderId} : null;
   pendingDeliverySheet.innerHTML = `
     <div class="admin-sheet-topbar">
-      <button
-        class="app-back-btn"
-        type="button"
-        onclick="backToAdminMenuFromPendingDelivery()">
-        <span class="app-back-btn-icon" aria-hidden="true">‹</span>
-        <span>${t("back", "กลับ")}</span>
-      </button>
-
-      <h3 id="pendingDeliverySheetTitle">
-        <span class="dashboard-title-main">
-          ${t("pendingDeliveryTitle", "ค้างส่ง")}
-        </span>
-      </h3>
-    </div>
-
-    <div id="pendingDeliveryList">
-      <div class="card">
-        ${renderLottieLoading(t("loading", "กำลังโหลด..."))}
-      </div>
-    </div>
-  `;
-
+      <button class="app-back-btn" type="button" onclick="backToAdminMenuFromPendingDelivery()"><span class="app-back-btn-icon">‹</span><span>${t("back", "กลับ")}</span></button>
+      <h3 id="pendingDeliverySheetTitle"><span class="dashboard-title-main">${t("pendingDeliveryTitle", "ค้างส่ง")}</span></h3>
+      <button type="button" class="btn btn-outline" aria-label="โหลดข้อมูลค้างส่งล่าสุด" onclick="refreshPendingDeliveryView()">${dashboardAIcon("refresh")}</button>
+    </div><p id="pendingDeliveryReadStatus" role="status"></p>
+    <div id="pendingDeliveryList"><div class="card">${renderLottieLoading(t("loading", "กำลังโหลด..."))}</div></div>`;
   openOverlay(pendingDeliverySheet);
-
- fetchPendingDeliveries()
-   .then(list => {
-
-     state.admin.pendingDeliveries =
-       list;
-
-     renderPendingDeliveries(
-       list
-     );
-
-   })
-   .catch(err => {
-     console.error(err);
-
-     const container =
-       document.getElementById(
-         "pendingDeliveryList"
-       );
-
-     if (container) {
-       container.innerHTML = `
-         <div class="card">
-           ${t("loadFailed", "โหลดข้อมูลไม่สำเร็จ")}
-         </div>
-       `;
-     }
-   }); 
-} 
+  const apply = info => {
+    if (!current() || !adminViewReadCurrent(info)) return;
+    pendingDeliverySheet.dataset.readLoadedAt = String(info.loadedAt);
+    pendingDeliverySheet.dataset.readEpoch = String(info.epoch);
+    state.admin.pendingDeliveries = info.rows;
+    preserveAdminReadUi(pendingDeliverySheet, () => renderPendingDeliveries(info.rows));
+    document.getElementById("pendingDeliveryReadStatus").textContent = adminViewReadLabel(info);
+  };
+  const fail = err => {
+    if (!current()) return;
+    if (adminViewAuthFailure(err)) { exitAdmin(); return; }
+    const snapshot = adminViewSnapshot("pendingDeliveries");
+    if (snapshot && isDashboardReadTransient(err)) { apply({...snapshot, stale:true, refreshing:false}); return; }
+    document.getElementById("pendingDeliveryReadStatus").textContent = "";
+    document.getElementById("pendingDeliveryList").innerHTML = '<p role="alert">โหลดข้อมูลไม่สำเร็จ</p><button type="button" onclick="refreshPendingDeliveryView()">ลองใหม่</button>';
+  };
+  const cached = adminViewSnapshot("pendingDeliveries");
+  if (cached) apply({...cached, refreshing:options.forceRefresh || Date.now()-cached.loadedAt >= ADMIN_VIEW_FRESH_MS});
+  void loadAdminViewRead("pendingDeliveries", fetchPendingDeliveries, {forceRefresh:options.forceRefresh === true})
+    .then(info => {apply(info); followAdminViewRefresh(info, current, apply, fail);}).catch(fail);
+}
+function refreshPendingDeliveryView() {
+  return openPendingDeliverySheet({...state.admin.pendingDeliveryFocus, forceRefresh:true});
+}
 
 function buildPendingDeliveryPoSummary(entries) {
   const safeEntries = Array.isArray(entries) ? entries : [];
@@ -33436,7 +33628,7 @@ function setPartnerAdminStatusFilter(value) {
 }
 
 function refreshPartners() {
-  fetchPartners();
+  fetchPartners({ forceRefresh: true });
 }
 
 function updateNewPartnerField(field, value) {
@@ -33702,6 +33894,7 @@ function backToPartnerList() {
   partnerState.editDraft = null;
   partnerState.editError = "";
   renderPartnerAdminSheet();
+  void fetchPartners();
 }
 
 function openPartnerEdit() {
@@ -34014,6 +34207,7 @@ function renderPartnerAdminSheet() {
 
           <div class="admin-detail-card partner-admin-panel">
             <div class="admin-detail-title">${t("existingPartners", "คู่ค้าที่มีอยู่")}</div>
+            ${partnerState.readInfo && !partnerState.loading && !partnerState.error ? `<p role="status">${esc(adminViewReadLabel(partnerState.readInfo))}</p>` : ''}
             <div class="bulk-product-picker-controls">
               <input
                 id="partnerAdminSearch"
@@ -34051,54 +34245,19 @@ function renderPartnerAdminSheet() {
 
 async function fetchPartners(options = {}) {
   if (!ensureAdminSessionForPartnerAdmin()) return;
-  const shouldRender = options.render !== false;
-  const partnerState = state.admin.partners;
-  partnerState.loading = true;
+  const partnerState = state.admin.partners, token = state.admin.token, seq = ++adminPartnerListSeq.partners;
+  const current = () => state.admin.token === token && seq === adminPartnerListSeq.partners;
+  const form = new URLSearchParams({action:"listPartners", token});
+  if (String(partnerState.q || "").trim()) form.set("q", partnerState.q.trim());
+  if (partnerState.status && partnerState.status !== "all") form.set("status", partnerState.status);
   partnerState.error = "";
-  if (shouldRender) {
-    renderPartnerAdminSheet();
-  }
-
-  try {
-    const form = new URLSearchParams();
-    form.append("action", "listPartners");
-    form.append("token", state.admin.token);
-    if (String(partnerState.q || "").trim()) {
-      form.append("q", partnerState.q.trim());
-    }
-    if (partnerState.status && partnerState.status !== "all") {
-      form.append("status", partnerState.status);
-    }
-
-    const json = await fetchJsonWithTimeout(API_URL, {
-      method: "POST",
-      body: form
-    }, 30000);
-
-    if (json?.success !== true) {
-      if (isAuthError(json?.error)) {
-        showToast(t("sessionExpiredLoginAgain", "เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง"), "warning");
-        exitAdmin({ silent: true });
-        return;
-      }
-      throw new Error(json?.error || json?.message || t("partnerLoadDeployError", "ยังไม่สามารถโหลดคู่ค้าได้ กรุณาตรวจสอบการ Deploy Apps Script"));
-    }
-
-    partnerState.items = Array.isArray(json.data?.partners)
-      ? json.data.partners
-      : [];
-    partnerState.total = Number(json.data?.total || partnerState.items.length || 0);
-  } catch (err) {
-    console.error(err);
-    partnerState.items = [];
-    partnerState.total = 0;
-    partnerState.error = t("partnerLoadDeployError", "ยังไม่สามารถโหลดคู่ค้าได้ กรุณาตรวจสอบการ Deploy Apps Script");
-  } finally {
-    partnerState.loading = false;
-    if (shouldRender) {
-      renderPartnerAdminSheet();
-    }
-  }
+  await loadAdminListView(form, {
+    forceRefresh: options.forceRefresh === true, current,
+    loading: value => {partnerState.loading = value;},
+    render: () => {if (options.render !== false && adminPartnersSheet.classList.contains("show") && partnerState.view === "list") preserveAdminReadUi(adminPartnersSheet, renderPartnerAdminSheet);},
+    apply: (data, info) => {partnerState.items = Array.isArray(data?.partners) ? data.partners : []; partnerState.total = Number(data?.total || partnerState.items.length); partnerState.readInfo = info; partnerState.error = "";},
+    fail: err => {partnerState.items = []; partnerState.total = 0; partnerState.error = getUserFacingError(err, "partnerLoadDeployError", "โหลดคู่ค้าไม่สำเร็จ");}
+  });
 }
 
 async function fetchPartnerSnapshotForDetail(partnerId) {
@@ -34380,7 +34539,7 @@ function setPartnerLinkPartnerFilter(value) {
 
 function refreshPartnerLinks() {
   state.admin.partnerCatalog.linkOffset = 0;
-  loadPartnerLinks();
+  loadPartnerLinks({ forceRefresh: true });
 }
 
 function backToPartnerLinkList() {
@@ -34390,6 +34549,7 @@ function backToPartnerLinkList() {
   partnerState.linkError = "";
   partnerState.linkStatusMessage = "";
   renderPartnerCatalogSheet();
+  void loadPartnerLinks();
 }
 
 function getPartnerCatalogSelectedSkus() {
@@ -34666,6 +34826,7 @@ function renderPartnerCatalogSheet() {
     </div>
 
     ${renderPartnerCatalogTabs()}
+    ${partnerState.view === "links" && partnerState.linkReadInfo && !partnerState.linkLoading && !partnerState.linkError ? `<p role="status">${esc(adminViewReadLabel(partnerState.linkReadInfo))}</p>` : ''}
 
     ${partnerState.view === "linkDetail"
       ? renderPartnerLinkDetail()
@@ -34897,63 +35058,22 @@ function renderPartnerCatalogTabs() {
   `;
 }
 
-async function loadPartnerLinks() {
+async function loadPartnerLinks(options = {}) {
   if (!ensureAdminSessionForPartnerCatalog()) return;
-
-  const partnerState = state.admin.partnerCatalog;
-  partnerState.linkLoading = true;
-  partnerState.linkError = "";
-  partnerState.linkStatusMessage = "";
-  partnerState.view = "links";
-  partnerState.linkDetail = null;
-  renderPartnerCatalogSheet();
-
-  try {
-    const form = new URLSearchParams();
-    form.append("action", "listPartnerLinks");
-    form.append("token", state.admin.token);
-    form.append("limit", String(partnerState.linkLimit || 50));
-    form.append("offset", String(partnerState.linkOffset || 0));
-    if (partnerState.linkStatus && partnerState.linkStatus !== "all") {
-      form.append("status", partnerState.linkStatus);
-    }
-    if (String(partnerState.linkPartnerId || "").trim()) {
-      form.append("partnerId", partnerState.linkPartnerId.trim());
-    }
-    if (String(partnerState.linkQ || "").trim()) {
-      form.append("q", partnerState.linkQ.trim());
-    }
-
-    const json = await fetchJsonWithTimeout(API_URL, {
-      method: "POST",
-      body: form
-    }, 30000);
-
-    if (json?.success !== true) {
-      if (isAuthError(json?.error)) {
-        showToast(t("sessionExpiredLoginAgain", "เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง"), "warning");
-        exitAdmin({ silent: true });
-        return;
-      }
-      throw new Error(json?.error || json?.message || t("loadPartnerLinksFailed", "โหลดลิงก์คู่ค้าไม่สำเร็จ"));
-    }
-
-    partnerState.links = Array.isArray(json.data?.links)
-      ? json.data.links
-      : [];
-    partnerState.linkTotal = Number(json.data?.total || 0);
-    partnerState.linkLimit = Number(json.data?.limit || partnerState.linkLimit || 50);
-    partnerState.linkOffset = Number(json.data?.offset || 0);
-    partnerState.linkError = "";
-  } catch (err) {
-    console.error(err);
-    partnerState.links = [];
-    partnerState.linkTotal = 0;
-    partnerState.linkError = getUserFacingError(err, "loadPartnerLinksFailed", "โหลดลิงก์คู่ค้าไม่สำเร็จ");
-  } finally {
-    partnerState.linkLoading = false;
-    renderPartnerCatalogSheet();
-  }
+  const partnerState = state.admin.partnerCatalog, token = state.admin.token, seq = ++adminPartnerListSeq.links;
+  const current = () => token === state.admin.token && seq === adminPartnerListSeq.links;
+  partnerState.linkError = ""; partnerState.linkStatusMessage = ""; partnerState.view = "links"; partnerState.linkDetail = null;
+  const form = new URLSearchParams({action:"listPartnerLinks",token,limit:String(partnerState.linkLimit || 50),offset:String(partnerState.linkOffset || 0)});
+  if (partnerState.linkStatus && partnerState.linkStatus !== "all") form.set("status",partnerState.linkStatus);
+  if (String(partnerState.linkPartnerId || "").trim()) form.set("partnerId",partnerState.linkPartnerId.trim());
+  if (String(partnerState.linkQ || "").trim()) form.set("q",partnerState.linkQ.trim());
+  await loadAdminListView(form, {
+    forceRefresh: options.forceRefresh === true, current,
+    loading: value => {partnerState.linkLoading = value;},
+    render: () => {if (adminPartnerCatalogSheet.classList.contains("show") && partnerState.view === "links") preserveAdminReadUi(adminPartnerCatalogSheet, renderPartnerCatalogSheet);},
+    apply: (data,info) => {partnerState.links = Array.isArray(data?.links)?data.links:[];partnerState.linkTotal=Number(data?.total || 0);partnerState.linkLimit=Number(data?.limit || partnerState.linkLimit || 50);partnerState.linkOffset=Number(data?.offset || 0);partnerState.linkReadInfo=info;partnerState.linkError="";},
+    fail: err => {partnerState.links=[];partnerState.linkTotal=0;partnerState.linkError=getUserFacingError(err,"loadPartnerLinksFailed","โหลดลิงก์คู่ค้าไม่สำเร็จ");}
+  });
 }
 
 async function openPartnerLinkDetail(linkId) {
@@ -35363,7 +35483,7 @@ function setPartnerRequestPartnerFilter(value) {
 
 function refreshPartnerRequests() {
   state.admin.partnerRequests.offset = 0;
-  loadPartnerRequests();
+  loadPartnerRequests({ forceRefresh: true });
 }
 
 function backToPartnerRequestList() {
@@ -35374,6 +35494,7 @@ function backToPartnerRequestList() {
   state.admin.partnerRequests.convertResult = null;
   state.admin.partnerRequests.convertError = "";
   renderPartnerRequestsSheet();
+  void loadPartnerRequests();
 }
 
 function formatPartnerRequestMoney(value) {
@@ -35750,61 +35871,22 @@ async function convertPartnerRequestToOrderFromAdmin(requestId) {
   }
 }
 
-async function loadPartnerRequests() {
+async function loadPartnerRequests(options = {}) {
   if (!ensureAdminSessionForPartnerRequests()) return;
-
-  const requestState = state.admin.partnerRequests;
-  requestState.loading = true;
-  requestState.error = "";
-  requestState.view = "list";
-  renderPartnerRequestsSheet();
-
-  try {
-    const form = new URLSearchParams();
-    form.append("action", "listPartnerRequests");
-    form.append("token", state.admin.token);
-    form.append("limit", String(requestState.limit || 50));
-    form.append("offset", String(requestState.offset || 0));
-    if (requestState.status && requestState.status !== "all") {
-      form.append("status", requestState.status);
-    }
-    if (String(requestState.partnerId || "").trim()) {
-      form.append("partnerId", requestState.partnerId.trim());
-    }
-    if (String(requestState.q || "").trim()) {
-      form.append("q", requestState.q.trim());
-    }
-
-    const json = await fetchJsonWithTimeout(API_URL, {
-      method: "POST",
-      body: form
-    }, 30000);
-
-    if (json?.success !== true) {
-      if (isAuthError(json?.error)) {
-        showToast(t("sessionExpiredLoginAgain", "เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง"), "warning");
-        exitAdmin({ silent: true });
-        return;
-      }
-      throw new Error(json?.error || json?.message || t("loadPartnerRequestsFailed", "โหลดคำขอคู่ค้าไม่สำเร็จ"));
-    }
-
-    requestState.requests = Array.isArray(json.data?.requests)
-      ? json.data.requests
-      : [];
-    requestState.total = Number(json.data?.total || 0);
-    requestState.limit = Number(json.data?.limit || requestState.limit || 50);
-    requestState.offset = Number(json.data?.offset || 0);
-    requestState.error = "";
-  } catch (err) {
-    console.error(err);
-    requestState.requests = [];
-    requestState.total = 0;
-    requestState.error = getUserFacingError(err, "loadPartnerRequestsFailed", "โหลดคำขอคู่ค้าไม่สำเร็จ");
-  } finally {
-    requestState.loading = false;
-    renderPartnerRequestsSheet();
-  }
+  const requestState=state.admin.partnerRequests, token=state.admin.token, seq=++adminPartnerListSeq.requests;
+  const current=()=>token===state.admin.token && seq===adminPartnerListSeq.requests;
+  requestState.error="";requestState.view="list";
+  const form=new URLSearchParams({action:"listPartnerRequests",token,limit:String(requestState.limit || 50),offset:String(requestState.offset || 0)});
+  if(requestState.status && requestState.status!=="all")form.set("status",requestState.status);
+  if(String(requestState.partnerId || "").trim())form.set("partnerId",requestState.partnerId.trim());
+  if(String(requestState.q || "").trim())form.set("q",requestState.q.trim());
+  await loadAdminListView(form, {
+    forceRefresh: options.forceRefresh === true, current,
+    loading: value=>{requestState.loading=value;},
+    render: ()=>{if(adminPartnerRequestsSheet.classList.contains("show") && requestState.view==="list")preserveAdminReadUi(adminPartnerRequestsSheet,renderPartnerRequestsSheet);},
+    apply: (data,info)=>{requestState.requests=Array.isArray(data?.requests)?data.requests:[];requestState.total=Number(data?.total || 0);requestState.limit=Number(data?.limit || requestState.limit || 50);requestState.offset=Number(data?.offset || 0);requestState.readInfo=info;requestState.error="";},
+    fail: err=>{requestState.requests=[];requestState.total=0;requestState.error=getUserFacingError(err,"loadPartnerRequestsFailed","โหลดคำขอคู่ค้าไม่สำเร็จ");}
+  });
 }
 
 async function openPartnerRequestDetail(requestId) {
@@ -36131,6 +36213,7 @@ function renderPartnerRequestsSheet() {
         ? renderPartnerRequestDetail()
         : `
           ${renderPartnerRequestsFilters()}
+          ${requestState.readInfo && !requestState.loading && !requestState.error ? `<p role="status">${esc(adminViewReadLabel(requestState.readInfo))}</p>` : ''}
           ${renderPartnerRequestsList()}
         `
     }
@@ -36906,6 +36989,7 @@ function clearAdminSession(){
   stockHistoryView = null;
   stockHistoryLoadSeq++;
   resetAdminOrdersRead();
+  clearAdminDisplaySnapshots();
   adminDashboardLoadSeq++;
   state.admin.dashboardAnalyticsData = null;
   try {
