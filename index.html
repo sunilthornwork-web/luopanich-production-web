@@ -10968,7 +10968,7 @@ function supersededReadError() {
   return error;
 }
 
-const LUOPANICH_FRONTEND_BUILD = "20261001-document-context-v1";
+const LUOPANICH_FRONTEND_BUILD = "20261001-billing-create-recovery-v1";
 let brandingBootstrapApplied = false;
 const luopanichRequestHistory = [];
 function recordLuopanichRequest(entry) {
@@ -13831,7 +13831,7 @@ function beginAdminViewWrite(action, method) {
       "stockIn", "batchStockIn", "stockAdjust", "stockInV2", "batchStockInV2", "stockAdjustV2", "createOrder", "approveOrder", "rejectOrder",
       "createPendingDelivery", "closePendingDelivery", "fulfillPendingDelivery", "createPartner", "updatePartner",
       "createPartnerLink", "updatePartnerLinkStatus", "updatePartnerRequestStatus", "convertPartnerRequestToOrder",
-      "createBillingDocumentDraft", "updateBillingDocumentDraft", "finalizeBillingDocument", "updateBrandSettings"].includes(action);
+      "createBillingDocumentDraft", "createBillingDocumentDraftV2", "updateBillingDocumentDraft", "finalizeBillingDocument", "updateBrandSettings"].includes(action);
   if (!changesData) return () => {};
   adminViewWrites++;
   resetAdminViewReads();
@@ -22367,9 +22367,38 @@ function buildBillingRecipientParams(draft) {
   return params;
 }
 
+async function getBillingCreateRequest(orderIds, session, current) {
+  const ids = orderIds.map(id => String(id || "").trim()).sort();
+  if (!session.user || !ids.length || ids.some(id => !id) || new Set(ids).size !== ids.length || ids.length > 200) {
+    throw new Error("Invalid billing request context");
+  }
+  if (!navigator.locks?.request || !crypto.randomUUID) {
+    throw new Error("ไม่สามารถป้องกันร่างซ้ำในเบราว์เซอร์นี้ กรุณาใช้ Chrome รุ่นปัจจุบัน");
+  }
+  const key = "luopanich:billing-create:v2:" + JSON.stringify([API_URL, session.user, ids]);
+  // Reserve durably before sending. Reuse across retries, resets, reloads and same-origin tabs.
+  return navigator.locks.request(key, () => {
+    if (!current()) throw supersededReadError();
+    let requestId;
+    try {
+      requestId = localStorage.getItem(key);
+      if (requestId === null) {
+        requestId = "bd2:" + crypto.randomUUID();
+        localStorage.setItem(key, requestId);
+      }
+      if (!/^bd2:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(requestId) || localStorage.getItem(key) !== requestId) {
+        throw new Error("Invalid reservation");
+      }
+    } catch (_) {
+      throw new Error("เก็บรหัสป้องกันร่างซ้ำไม่ได้ ยังไม่ได้ส่งคำสั่ง กรุณาอย่าล้างข้อมูลเบราว์เซอร์และแจ้งผู้ดูแล");
+    }
+    return requestId;
+  });
+}
+
 async function createBillingDocumentDraftForBillingNote() {
   const billingState = getBillingNoteState();
-  const { current } = captureAdminDocumentContext("billingNote");
+  const { session, current } = captureAdminDocumentContext("billingNote");
   if (!current()) return;
   if (getBillingNoteActiveDocument(billingState) || billingState.isCreatingDraft) return;
   const orderIds = getBillingNoteSelectedOrderIds();
@@ -22383,18 +22412,23 @@ async function createBillingDocumentDraftForBillingNote() {
   renderBillingNoteSheet();
 
   try {
-    const json = await callBillingDocumentAction("createBillingDocumentDraft", {
-      orderIds: JSON.stringify(orderIds)
+    const requestId = await getBillingCreateRequest(orderIds, session, current);
+    if (!current()) return;
+    const json = await callBillingDocumentAction("createBillingDocumentDraftV2", {
+      orderIds: JSON.stringify(orderIds), billingCreateRequestId: requestId
     });
     if (!current()) return;
     const doc = json?.data?.billingDocument;
-    if (!doc) throw new Error("Billing document response missing");
+    if (!doc || json?.data?.billingCreateRequestId !== requestId || doc.billingDocumentId !== "BILL-" + requestId.slice(4)) {
+      throw new Error("Billing document response mismatch");
+    }
     applyBillingDocumentToState(doc);
-    showToast(t("billingDocumentDraftCreated", "สร้างร่างใบวางบิลแล้ว"), "success");
+    showToast(json.data.idempotent ? "พบใบวางบิลเดิมแล้ว ไม่ได้สร้างซ้ำ" : t("billingDocumentDraftCreated", "สร้างร่างใบวางบิลแล้ว"), "success");
   } catch (err) {
     if (!current()) return;
     console.error("create billing document draft failed:", err);
     billingState.draftError = getBillingDocumentUserFacingError(err, "billingDocumentDraftCreateFailed", "สร้างร่างใบวางบิลไม่สำเร็จ");
+    billingState.draftError += " หากคำตอบหาย ให้เลือก PO ชุดเดิมแล้วกดสร้างร่างอีกครั้ง ระบบจะใช้รหัสเดิมตรวจผล ห้ามล้างข้อมูลเบราว์เซอร์หรือสลับเครื่องเพื่อส่งใหม่";
     showToast(billingState.draftError, "error");
   } finally {
     if (!current()) return;
