@@ -608,6 +608,8 @@ body[data-theme="cute"] .shop-subtitle{
   background: var(--warning);
   box-shadow: 0 0 0 4px rgba(255,159,10,.16);
 }
+.header-task-layer[data-state="CANCELLED"] .header-task-dot,
+.header-task-layer[data-state="RECONCILED"] .header-task-dot,
 .header-task-layer[data-state="SUCCESS"] .header-task-dot{
   background: var(--success);
   box-shadow: 0 0 0 4px rgba(52,199,89,.16);
@@ -4530,6 +4532,8 @@ textarea {
   box-shadow: 0 0 0 4px rgba(255,159,10,.16);
 }
 
+.background-task-indicator[data-state="CANCELLED"] .background-task-dot,
+.background-task-indicator[data-state="RECONCILED"] .background-task-dot,
 .background-task-indicator[data-state="SUCCESS"] .background-task-dot {
   background: var(--success);
   box-shadow: 0 0 0 4px rgba(52,199,89,.16);
@@ -6365,6 +6369,7 @@ textarea.input{
  <div id="adminBrandingSettingsSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="adminBrandingSettingsSheetTitle" tabindex="-1"></div>
  <div id="adminOrderSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="adminOrderSheetTitle" tabindex="-1"></div>
  <div id="adminStockSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="adminStockSheetTitle" tabindex="-1"></div>
+ <div id="stockRecoverySheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="stockRecoverySheetTitle" tabindex="-1"></div>
  <div id="pendingDeliverySheet"
       class="sheet"
       role="dialog"
@@ -6422,6 +6427,7 @@ textarea.input{
 </script>
 <script src="assets/vendor/xlsx/xlsx.full.min.js"></script>
 <script src="github-bridge.js?v=20261001-stock-confirm-v1"></script>
+<script src="stock-journal.js?v=20261001-stock-recovery-v1"></script>
 <script>
 /* ================= STEP 2: ประกาศ backdrop (UPGRADED) ================= */
 const backdrop = document.getElementById("globalBackdrop");
@@ -9276,6 +9282,8 @@ function localizedUiError(key, fallback = "", values = null) {
 }
 
 function getWave2DisplayError(error, fallbackKey = "unexpectedError", fallback = "เกิดข้อผิดพลาด") {
+  if (error?.code === "STOCK_JOURNAL_PENDING") return "สินค้านี้มีรายการเดิมรอยืนยัน ยังไม่ได้ส่งรายการใหม่ กรุณาตรวจผลเดิมก่อน";
+  if (String(error?.code || "").startsWith("STOCK_JOURNAL_")) return "เก็บข้อมูลกู้คืนรายการไม่ได้ จึงยังไม่ส่งบันทึก กรุณาตรวจพื้นที่จัดเก็บของเบราว์เซอร์";
   if (error?.serverCode === "STOCK_CONFLICT") return "สต๊อกเปลี่ยนระหว่างที่เปิดหน้านี้ กรุณาโหลดข้อมูลล่าสุด แล้วเปิดสินค้าและตรวจยอดอีกครั้งก่อนบันทึก";
   if (error?.serverCode === "STOCK_BASELINE_REQUIRED") return "หน้าเว็บรุ่นนี้ยังส่งข้อมูลตรวจสต๊อกไม่ครบ กรุณาโหลดหน้าเว็บใหม่ก่อนบันทึก";
   const message = String(error?.message || error || "").trim();
@@ -10483,6 +10491,8 @@ const BACKGROUND_TASK_STATES = Object.freeze({
   SENDING: "SENDING",
   CONFIRMING: "CONFIRMING",
   SUCCESS: "SUCCESS",
+  CANCELLED: "CANCELLED",
+  RECONCILED: "RECONCILED",
   FAILED: "FAILED",
   UNCONFIRMED: "UNCONFIRMED"
 });
@@ -10536,6 +10546,7 @@ function hasActiveBackgroundTask(identity) {
 function registerBackgroundTask(options = {}) {
   const task = {
     id: createBackgroundTaskId(),
+    stockOperationId: String(options.stockOperationId || ""),
     identity: String(options.identity || "").trim(),
     productIds: Array.isArray(options.productIds)
       ? options.productIds.map(id => String(id || "").trim()).filter(Boolean)
@@ -10624,6 +10635,8 @@ function removeBackgroundTask(id) {
 
 function getBackgroundTaskStatusText(task) {
   const taskState = String(task?.state || "");
+  if (taskState === BACKGROUND_TASK_STATES.CANCELLED) return "ยกเลิกแล้ว";
+  if (taskState === BACKGROUND_TASK_STATES.RECONCILED) return "ผู้ดูแลตรวจยอดและปิดรายการแล้ว";
   if (taskState === BACKGROUND_TASK_STATES.UNCONFIRMED) return t("stockResultUnknown", "ยังยืนยันผลสต๊อกไม่ได้ อย่าบันทึกซ้ำ");
   if (taskState === BACKGROUND_TASK_STATES.CONFIRMING) {
     return t("backgroundTaskConfirming", "กำลังตรวจสอบผลการบันทึก...");
@@ -10665,6 +10678,12 @@ function getBackgroundTaskSummary(tasks) {
       label: t("backgroundTaskTapDismiss", "ตรวจสอบและปิดรายการที่ไม่สำเร็จ")
     };
   }
+  if (tasks.some(task=>task.state === BACKGROUND_TASK_STATES.CANCELLED)) {
+    return {state:BACKGROUND_TASK_STATES.CANCELLED,title:"ยกเลิกรายการที่ยังไม่เริ่มแล้ว",label:""};
+  }
+  if (tasks.some(task=>task.state === BACKGROUND_TASK_STATES.RECONCILED)) {
+    return {state:BACKGROUND_TASK_STATES.RECONCILED,title:"ผู้ดูแลตรวจยอดและปิดรายการแล้ว",label:""};
+  }
   return {
     state: BACKGROUND_TASK_STATES.SUCCESS,
     title: formatUiText("backgroundTaskMultipleSuccess", { count: tasks.length }, "ดำเนินการสำเร็จ {count} รายการ"),
@@ -10698,6 +10717,8 @@ function getBackgroundTaskHeaderSummary(tasks = getBackgroundTasks()) {
       dismissId: ""
     };
   }
+  const reconciled = tasks.find(task=>task.state === BACKGROUND_TASK_STATES.RECONCILED);
+  if (reconciled) return {active:true,state:reconciled.state,text:"ผู้ดูแลตรวจยอดแล้ว",dismissId:reconciled.id};
   if (successCount) {
     return {
       active: true,
@@ -10706,6 +10727,8 @@ function getBackgroundTaskHeaderSummary(tasks = getBackgroundTasks()) {
       dismissId: ""
     };
   }
+  const cancelled = tasks.find(task=>task.state === BACKGROUND_TASK_STATES.CANCELLED);
+  if (cancelled) return {active:true,state:cancelled.state,text:"ยกเลิกแล้ว",dismissId:cancelled.id};
   return {
     active: false,
     state: BACKGROUND_TASK_STATES.SENDING,
@@ -10914,7 +10937,7 @@ async function fetchJsonWithTimeout(input, init = {}, ms = 30000, onResponse = n
   const finishViewWrite = beginAdminViewWrite(action, init.method);
   const changesProducts = String(init.method || "GET").toUpperCase() === "POST" &&
     ["addProduct", "updateProduct", "deleteProduct", "bulkAddProducts", "bulkUpdateProducts",
-      "bulkUpsertProductMaster", "stockIn", "batchStockIn", "stockAdjust", "approveOrder",
+      "bulkUpsertProductMaster", "stockIn", "batchStockIn", "stockAdjust", "stockInV2", "batchStockInV2", "stockAdjustV2", "approveOrder",
       "fulfillPendingDelivery", "closePendingDelivery"].includes(action);
   if (changesProducts) {
     pendingProductWrites++;
@@ -10945,7 +10968,7 @@ function supersededReadError() {
   return error;
 }
 
-const LUOPANICH_FRONTEND_BUILD = "20261001-stock-confirm-v1";
+const LUOPANICH_FRONTEND_BUILD = "20261001-stock-review-v2-candidate";
 let brandingBootstrapApplied = false;
 const luopanichRequestHistory = [];
 function recordLuopanichRequest(entry) {
@@ -11381,7 +11404,7 @@ function buildBrandingSettingsPatch(draft) {
 function isAmbiguousBrandingSaveFailure(err) {
   if (err?.serverRejected === true) return false;
   const code = String(err?.code || "").trim();
-  if (["RESPONSE_MISMATCH", "INVALID_JSON_RESPONSE", "NETWORK_ERROR", "REQUEST_ROUTING_ERROR", "APPS_SCRIPT_RESPONSE_404"].includes(code)) return true;
+  if (["STOCK_RESULT_UNCONFIRMED", "RESPONSE_MISMATCH", "INVALID_JSON_RESPONSE", "NETWORK_ERROR", "REQUEST_ROUTING_ERROR", "APPS_SCRIPT_RESPONSE_404"].includes(code)) return true;
   const name = String(err?.name || "").trim();
   const message = String(err?.message || err || "").trim();
   if (code === "REQUEST_TIMEOUT" || name === "AbortError") return true;
@@ -13000,19 +13023,26 @@ function createStockMutationRequestId(prefix, productId) {
 }
 
 function createSingleStockRequestId(productId) {
-  return createStockMutationRequestId("stockIn", productId);
+  return createStockRecoveryRequestId();
 }
 
 function createStockAdjustRequestId(productId) {
-  return createStockMutationRequestId("stockAdjust", productId);
+  return createStockRecoveryRequestId();
 }
 
 function createBatchStockRequestId() {
-  return createStockMutationRequestId("batchStockIn", "batch");
+  return createStockRecoveryRequestId();
+}
+
+function createStockRecoveryRequestId() {
+  const bytes = new Uint8Array(16);
+  window.crypto.getRandomValues(bytes);
+  return "sr2:" + Array.from(bytes,byte=>byte.toString(16).padStart(2,"0")).join("");
 }
 
 function isAmbiguousStockMutationFailure(err) {
   if (err?.serverRejected === true) return false;
+  if (err?.code === "STOCK_RESULT_UNCONFIRMED") return true;
   if ([408, 429, 500, 502, 503, 504].includes(Number(err?.httpStatus))) return true;
   const code = String(err?.code || "").trim();
   if (["RESPONSE_MISMATCH", "INVALID_JSON_RESPONSE", "NETWORK_ERROR", "REQUEST_ROUTING_ERROR", "APPS_SCRIPT_RESPONSE_404"].includes(code)) return true;
@@ -13089,7 +13119,7 @@ async function adminStockIn(productId, qty, reason, stockRequestId = ""){
   }
   form.append("token", state.admin.token); // ✅ สำคัญที่สุด
 
-  return await postFormAction(form);
+  return await sendJournaledStockMutation(form);
 }
 
 async function checkStockInRequestStatus(productId, qty, stockRequestId) {
@@ -13126,7 +13156,7 @@ async function adminBatchStockIn(items, reason, batchStockRequestId = "") {
   }
   form.append("token", state.admin.token);
 
-  return await postFormAction(form, { timeout: 45000 });
+  return await sendJournaledStockMutation(form, { timeout: 45000 });
 }
 
 async function checkBatchStockInRequestStatus(items, batchStockRequestId) {
@@ -13166,7 +13196,7 @@ async function adminStockAdjust(productId, newQty, reason, stockAdjustRequestId 
   if (stockAdjustRequestId) form.append("stockAdjustRequestId", stockAdjustRequestId);
   form.append("token", state.admin.token); // ✅ สำคัญที่สุด
 
-  return await postFormAction(form);
+  return await sendJournaledStockMutation(form);
 }
 
 async function checkStockAdjustRequestStatus(productId, newQty, stockAdjustRequestId) {
@@ -13182,10 +13212,136 @@ async function checkStockAdjustRequestStatus(productId, newQty, stockAdjustReque
     status.productId === productId && status.newQty === newQty && status.after === newQty && status.referenceCount === 1);
 }
 
+let stockJournalInstance = null;
+let stockRecoveryRun = null;
+
+function stockJournalStore() {
+  if (!stockJournalInstance) {
+    if (!window.LuopanichStockJournal) throw Object.assign(new Error("Journal unavailable"), {code:"STOCK_JOURNAL_UNAVAILABLE",serverRejected:true});
+    stockJournalInstance = window.LuopanichStockJournal.create({indexedDB:window.indexedDB});
+  }
+  return stockJournalInstance;
+}
+
+function stockJournalScope(session) {
+  if (!session.user || !session.token) throw Object.assign(new Error("Not authenticated"), {serverRejected:true});
+  // The username is supplied by a verified login/profile response, never by saved login hints.
+  return JSON.stringify([API_URL, session.user]);
+}
+
+function stockJournalEntry(form) {
+  const actions = {
+    stockIn:"stockIn", stockAdjust:"stockAdjust", batchStockIn:"batchStockIn",
+    checkStockInRequestStatus:"stockIn", checkStockAdjustRequestStatus:"stockAdjust", checkBatchStockInRequestStatus:"batchStockIn"
+  };
+  const action = actions[form.get("action")];
+  const id = form.get(action === "batchStockIn" ? "batchStockRequestId" : action === "stockAdjust" ? "stockAdjustRequestId" : "stockRequestId");
+  const items = action === "batchStockIn" ? JSON.parse(form.get("items")) :
+    [{productId:form.get("productId"),qty:Number(form.get(action === "stockAdjust" ? "newQty" : "qty"))}];
+  return {action,id,items};
+}
+
+function stockJournalResponseMatches(entry, response) {
+  if (response?.success !== true || !response.data) return false;
+  const data = response.data;
+  if (entry.action === "batchStockIn") return data.batchStockRequestId === entry.id && data.status === "PASS" &&
+    Array.isArray(data.items) && data.items.length === entry.items.length &&
+    new Set(data.items.map(item=>item.productId)).size === entry.items.length &&
+    entry.items.every(expected=>data.items.some(item=>item.productId === expected.productId && item.qty === expected.qty &&
+      Number.isSafeInteger(item.before) && Number.isSafeInteger(item.after) && item.after-item.before === expected.qty));
+  const expected = entry.items[0];
+  if (data.productId !== expected.productId || !Number.isSafeInteger(data.after)) return false;
+  if (entry.action === "stockAdjust") return data.stockAdjustRequestId === entry.id && data.after === expected.qty;
+  return data.stockRequestId === entry.id && data.qty === expected.qty && Number.isSafeInteger(data.before) && data.after-data.before === expected.qty;
+}
+
+async function sendJournaledStockMutation(form, options = {}) {
+  const session = captureAdminSession();
+  if (!session.isCurrent() || session.token !== form.get("token")) throw supersededReadError();
+  const scope = stockJournalScope(session), entry = stockJournalEntry(form), store = stockJournalStore();
+  try { await store.reserve(scope, entry); }
+  catch (error) {
+    if (error.code === "STOCK_JOURNAL_PENDING" && session.isCurrent()) void restoreStockJournal();
+    throw error;
+  }
+  if (!session.isCurrent()) {
+    // No request has been sent: this intent can be removed without guessing the server outcome.
+    await store.settle(scope, entry.id);
+    throw supersededReadError();
+  }
+  try {
+    if (isStockRecoveryV2(entry)) form.set("action", entry.action + "V2");
+    const response = await postFormAction(form, options);
+    if (!stockJournalResponseMatches(entry,response)) throw Object.assign(new Error("Invalid stock acknowledgement"), {code:"INVALID_JSON_RESPONSE"});
+    if (!session.isCurrent()) throw supersededReadError();
+    await store.settle(scope, entry.id);
+    return response;
+  } catch (error) {
+    const rejectedBeforeWrite = error?.serverRejected === true &&
+      (["STOCK_CONFLICT","STOCK_BASELINE_REQUIRED"].includes(error.serverCode) || isDefinitiveSessionRejection(error));
+    if (rejectedBeforeWrite && session.isCurrent()) { await store.settle(scope,entry.id); throw error; }
+    // Unknown server errors can include rollback failure. Retain the intent for read-only recovery.
+    throw Object.assign(new Error("Stock result remains unconfirmed"), {code:"STOCK_RESULT_UNCONFIRMED"});
+  }
+}
+
+function clearStockRecoveryUi() {
+  stockRecoveryRun = null;
+  clearStockRecoveryPanel();
+  const ids = new Set(getBackgroundTasks().filter(task=>task.stockOperationId).map(task=>task.id));
+  ids.forEach(id=>{clearBackgroundTaskDismissTimer(id);stockConfirmationRetries.delete(id);});
+  state.backgroundTasks = getBackgroundTasks().filter(task=>!ids.has(task.id));
+}
+
+function restoreStockJournal() {
+  const session = captureAdminSession();
+  if (!session.isCurrent() || state.mode !== "admin") return Promise.resolve();
+  if (stockRecoveryRun?.token === session.token) return stockRecoveryRun.promise;
+  const run = {token:session.token,promise:null};
+  stockRecoveryRun = run;
+  run.promise = (async()=>{
+    try {
+      const entries = await stockJournalStore().list(stockJournalScope(session));
+      if (!session.isCurrent()) return;
+      const checks = [];
+      for (const entry of entries) {
+        if (getBackgroundTasks().some(task=>task.stockOperationId === entry.id)) continue;
+        const task = registerBackgroundTask({stockOperationId:entry.id,identity:`recoveredStock:${entry.id}`,
+          productIds:entry.items.map(item=>item.productId),label:t("stockRecovery", "รายการสต๊อกที่รอยืนยัน"),
+          state:BACKGROUND_TASK_STATES.UNCONFIRMED,message:t("stockResultUnknown", "ยังยืนยันผลสต๊อกไม่ได้ อย่าบันทึกซ้ำ")});
+        const read = () => entry.action === "batchStockIn" ? checkBatchStockInRequestStatus(entry.items,entry.id) :
+          entry.action === "stockIn" ? checkStockInRequestStatus(entry.items[0].productId,entry.items[0].qty,entry.id) :
+          checkStockAdjustRequestStatus(entry.items[0].productId,entry.items[0].qty,entry.id);
+        const check = () => confirmStockTask(task,session,read,async()=>{
+          completeBackgroundTask(task.id,t("stockRecovered", "ตรวจพบว่าบันทึกสต๊อกแล้ว"));
+          if (session.isCurrent()) showToast(t("stockRecovered", "ตรวจพบว่าบันทึกสต๊อกแล้ว"),"success");
+          await refreshAfterConfirmedStockWrite(session);
+        });
+        stockConfirmationRetries.set(task.id,check);
+        checks.push(check);
+      }
+      // Bound startup traffic. Remaining entries keep their manual read-only confirmation button.
+      for (const check of checks.slice(0,3)) { if (!session.isCurrent()) break; await check(); }
+    } catch (error) {
+      if (session.isCurrent()) showToast(getWave2DisplayError(error),"warning");
+    } finally { if (stockRecoveryRun === run) stockRecoveryRun = null; }
+  })();
+  return run.promise;
+}
+
 async function readStockMutationConfirmation(form, matches) {
   const allowed = ["checkStockInRequestStatus", "checkStockAdjustRequestStatus", "checkBatchStockInRequestStatus"];
   if (!allowed.includes(form.get("action"))) throw new Error("Stock confirmation must be read-only");
   const session = captureAdminSession();
+  if (form.get("token") !== session.token) throw supersededReadError();
+  const operation = stockJournalEntry(form);
+  if (isStockRecoveryV2(operation)) {
+    const result = await requestStockRecoveryStatus(operation, session, "inspect");
+    if (result.state === "COMMITTED") return {success:true,data:result};
+    if (result.state === "CANCELLED") throw Object.assign(new Error("Stock operation cancelled"), {code:"STOCK_OPERATION_CANCELLED"});
+    if (result.state === "RECONCILED") throw Object.assign(new Error("Stock operation manually reconciled"), {code:"STOCK_OPERATION_RECONCILED"});
+    throw Object.assign(new Error("Stock result remains unconfirmed"), {code:"STOCK_RESULT_UNCONFIRMED"});
+  }
   const deadline = Date.now() + 45000;
   // Poll only the audit reader, never the original mutation. NOT_FOUND is not proof of failure.
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -13196,7 +13352,12 @@ async function readStockMutationConfirmation(form, matches) {
         timeout: Math.min(15000, deadline - Date.now()), retryReads: false, isCurrent: session.isCurrent
       });
       if (!session.isCurrent()) throw supersededReadError();
-      if (response?.success === true && response.data && matches(response.data)) return response;
+      if (response?.success === true && response.data && matches(response.data)) {
+        const entry = stockJournalEntry(form);
+        await stockJournalStore().settle(stockJournalScope(session), entry.id);
+        if (!session.isCurrent()) throw supersededReadError();
+        return response;
+      }
     } catch (error) {
       if (!session.isCurrent() || error?.code === "READ_SUPERSEDED") throw supersededReadError();
       if (!isAmbiguousStockMutationFailure(error)) throw error;
@@ -13216,6 +13377,19 @@ async function confirmStockTask(task, session, readStatus, onSuccess) {
   try {
     await readStatus();
   } catch (error) {
+    if (!session.isCurrent()) return;
+    if (error?.code === "STOCK_OPERATION_CANCELLED") {
+      stockConfirmationRetries.delete(task.id);
+      cancelStockRecoveryTask(task.id);
+      await refreshAfterConfirmedStockWrite(session,"CANCELLED");
+      return;
+    }
+    if (error?.code === "STOCK_OPERATION_RECONCILED") {
+      reconcileStockRecoveryTask(task.id);
+      showToast("ผู้ดูแลตรวจยอดและปิดรายการแล้ว","success");
+      await refreshAfterConfirmedStockWrite(session,"RECONCILED");
+      return;
+    }
     const message = t("stockResultUnknown", "ยังยืนยันผลสต๊อกไม่ได้ อย่าบันทึกซ้ำ");
     clearBackgroundTaskDismissTimer(task.id);
     stockConfirmationRetries.set(task.id, () => confirmStockTask(task, session, readStatus, onSuccess));
@@ -13231,6 +13405,175 @@ function retryStockTaskConfirmation(id) {
   if (findBackgroundTask(id)?.state !== BACKGROUND_TASK_STATES.UNCONFIRMED) return;
   const retry = stockConfirmationRetries.get(id);
   if (retry) void retry();
+}
+
+const stockRecoveryResults = new Map();
+const stockRecoveryRequests = new Map();
+const stockRecoveryPanelJobs = new Map();
+let stockRecoveryRenderEpoch = 0;
+
+function isStockRecoveryV2(entry) {
+  return /^sr2:[a-f0-9]{32}$/.test(entry.id);
+}
+
+function cancelStockRecoveryTask(id) {
+  stockConfirmationRetries.delete(id);
+  updateBackgroundTask(id,{state:BACKGROUND_TASK_STATES.CANCELLED,message:"ยกเลิกรายการที่ยังไม่เริ่มแล้ว"});
+  scheduleBackgroundTaskSuccessDismiss(id);
+}
+
+function stockRecoveryResponseMatches(entry, response) {
+  const data = response?.data;
+  if (data?.state === "RECONCILED") {
+    const review = data.review, balances = review?.verifiedBalances;
+    if (review?.resolution !== "ACCEPT_VERIFIED_BALANCES" ||
+        typeof review.reviewedBy !== "string" || !/^[^\s@]+@[^\s@]+$/.test(review.reviewedBy) ||
+        typeof review.reviewedAt !== "string" || !Number.isFinite(Date.parse(review.reviewedAt)) ||
+        typeof review.evidenceRef !== "string" || review.evidenceRef.trim().length < 5 ||
+        !Array.isArray(balances) || balances.length !== entry.items.length ||
+        new Set(balances.map(item=>item?.productId)).size !== entry.items.length ||
+        !entry.items.every(item=>balances.some(balance=>balance?.productId === item.productId && Number.isSafeInteger(balance.stock) && balance.stock >= 0))) return false;
+  }
+  return response?.success === true && data?.protocol === 2 && data.id === entry.id && data.action === entry.action &&
+    ["NOT_STARTED","REVIEW_REQUIRED","COMMITTED","CANCELLED","RECONCILED"].includes(data.state) &&
+    Array.isArray(data.items) && data.items.length === entry.items.length &&
+    new Set(data.items.map(item=>item?.productId)).size === entry.items.length &&
+    entry.items.every(expected=>data.items.some(item=>item?.productId === expected.productId && item.qty === expected.qty));
+}
+
+function reconcileStockRecoveryTask(id) {
+  stockConfirmationRetries.delete(id);
+  updateBackgroundTask(id,{state:BACKGROUND_TASK_STATES.RECONCILED,message:"ผู้ดูแลตรวจยอดและปิดรายการแล้ว"});
+  scheduleBackgroundTaskSuccessDismiss(id);
+}
+
+async function requestStockRecoveryStatus(entry, session, mode) {
+  if (!session.isCurrent()) throw supersededReadError();
+  if (!isStockRecoveryV2(entry) || !["inspect","cancelIfUnstarted"].includes(mode)) throw new Error("Unsupported stock recovery request");
+  const existing = stockRecoveryRequests.get(entry.id);
+  if (existing?.session.isCurrent()) {
+    if (mode === "inspect" || existing.mode === mode) return existing.promise;
+    try { await existing.promise; } catch (_) {}
+    return requestStockRecoveryStatus(entry, session, mode);
+  }
+  const run = {session,mode,promise:null};
+  stockRecoveryRequests.set(entry.id,run);
+  run.promise = (async()=>{
+    try {
+      const form = new URLSearchParams({action:"resolveStockMutationV2",stockAction:entry.action,mode,token:session.token});
+      const idKey = entry.action === "batchStockIn" ? "batchStockRequestId" : entry.action === "stockAdjust" ? "stockAdjustRequestId" : "stockRequestId";
+      form.set(idKey,entry.id);
+      if (entry.action === "batchStockIn") form.set("items",JSON.stringify(entry.items));
+      else {
+        form.set("productId",entry.items[0].productId);
+        form.set(entry.action === "stockAdjust" ? "newQty" : "qty",String(entry.items[0].qty));
+      }
+      const response = await postFormAction(form,{timeout:15000,retryReads:false,isCurrent:session.isCurrent});
+      if (!session.isCurrent()) throw supersededReadError();
+      if (!stockRecoveryResponseMatches(entry,response)) throw Object.assign(new Error("Invalid recovery response"),{code:"RESPONSE_MISMATCH"});
+      const result = response.data;
+      if (["COMMITTED","CANCELLED","RECONCILED"].includes(result.state)) {
+        await stockJournalStore().settle(stockJournalScope(session),entry.id);
+        if (!session.isCurrent()) throw supersededReadError();
+      }
+      stockRecoveryResults.set(entry.id,result.state);
+      return result;
+    } finally {
+      if (stockRecoveryRequests.get(entry.id) === run) stockRecoveryRequests.delete(entry.id);
+      if (session.isCurrent()) void renderStockRecoverySheet();
+    }
+  })();
+  return run.promise;
+}
+
+function clearStockRecoveryPanel() {
+  stockRecoveryRenderEpoch++;
+  stockRecoveryResults.clear();
+  stockRecoveryRequests.clear();
+  stockRecoveryPanelJobs.clear();
+  const sheet = document.getElementById("stockRecoverySheet");
+  if (sheet) { closeOverlay(sheet); sheet.replaceChildren(); }
+}
+
+function openStockRecoverySheet() {
+  if (!captureAdminSession().isCurrent() || state.mode !== "admin") return;
+  const sheet = document.getElementById("stockRecoverySheet");
+  sheet.innerHTML = '<h3 id="stockRecoverySheetTitle">รายการสต๊อกค้าง</h3><p role="status">กำลังอ่านรายการในเครื่อง...</p>';
+  openOverlay(sheet);
+  void renderStockRecoverySheet();
+}
+
+async function renderStockRecoverySheet() {
+  const sheet = document.getElementById("stockRecoverySheet");
+  if (!sheet?.classList.contains("show")) return;
+  const epoch = ++stockRecoveryRenderEpoch, session = captureAdminSession();
+  if (!session.isCurrent()) return;
+  const close = '<button class="btn btn-secondary" type="button" onclick="closeOverlay(document.getElementById(\'stockRecoverySheet\'))">ปิด</button>';
+  try {
+    const entries = await stockJournalStore().list(stockJournalScope(session));
+    if (!session.isCurrent() || epoch !== stockRecoveryRenderEpoch || !sheet.classList.contains("show")) return;
+    const labels = {NOT_STARTED:"ยังไม่เริ่มบันทึก",REVIEW_REQUIRED:"เริ่มทำรายการแล้ว ต้องตรวจสอบผล",COMMITTED:"บันทึกแล้ว",CANCELLED:"ยกเลิกแล้ว",RECONCILED:"ผู้ดูแลตรวจยอดและปิดรายการแล้ว"};
+    sheet.innerHTML = `<h3 id="stockRecoverySheetTitle">รายการสต๊อกค้าง</h3>${close}
+      <div role="status">${entries.length ? `${entries.length} รายการ` : "ไม่มีรายการค้างในบัญชีนี้บนเครื่องนี้"}</div>
+      ${entries.map(entry=>{
+        const status = stockRecoveryResults.get(entry.id), v2 = isStockRecoveryV2(entry);
+        const busy = stockRecoveryPanelJobs.has(entry.id) || stockRecoveryRequests.has(entry.id) ||
+          getBackgroundTasks().some(task=>task.stockOperationId === entry.id && isBackgroundTaskActive(task));
+        const actions = {stockIn:"รับสินค้าเข้า",stockAdjust:"ปรับยอดคงเหลือ",batchStockIn:"รับเข้าหลายรายการ"};
+        return `<section style="padding:16px 0;border-bottom:1px solid #ccc;overflow-wrap:anywhere">
+          <h4 style="font-size:16px;margin:0 0 8px">${esc(actions[entry.action])}</h4>
+          <div>${entry.items.map(item=>`${esc(item.productId)}: ${item.qty}`).join(" / ")}</div>
+          <small>${esc(entry.id)}</small>
+          <p>${esc(busy ? "กำลังตรวจสอบรายการ" : labels[status] || (v2 ? "ยังไม่ทราบผล" : "รายการรุ่นเดิม: ตรวจผลได้ แต่ยกเลิกจากหน้านี้ไม่ได้"))}</p>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <button class="btn btn-secondary" type="button" ${busy ? "disabled" : ""} onclick="handleStockRecoveryAction(${toInlineJsStringLiteral(entry.id)},false)">ตรวจผล</button>
+            ${v2 && status === "NOT_STARTED" ? `<button class="btn btn-secondary" type="button" ${busy ? "disabled" : ""} onclick="handleStockRecoveryAction(${toInlineJsStringLiteral(entry.id)},true)">ยกเลิกรายการที่ยังไม่เริ่ม</button>` : ""}
+          </div>
+        </section>`;
+      }).join("")}`;
+  } catch (error) {
+    if (session.isCurrent() && epoch === stockRecoveryRenderEpoch) sheet.innerHTML = `<h3 id="stockRecoverySheetTitle">รายการสต๊อกค้าง</h3>${close}<p role="alert">${esc(getWave2DisplayError(error))}</p>`;
+  }
+}
+
+async function handleStockRecoveryAction(id, cancel) {
+  const session = captureAdminSession();
+  if (!session.isCurrent() || stockRecoveryPanelJobs.has(id)) return;
+  const job = {};
+  stockRecoveryPanelJobs.set(id,job);
+  try {
+    const entry = (await stockJournalStore().list(stockJournalScope(session))).find(row=>row.id === id);
+    if (!session.isCurrent() || !entry) return;
+    if (getBackgroundTasks().some(task=>task.stockOperationId === id && isBackgroundTaskActive(task))) return;
+    if (cancel && (!isStockRecoveryV2(entry) || stockRecoveryResults.get(id) !== "NOT_STARTED")) return;
+    if (cancel && !window.confirm("ยกเลิกรายการนี้เฉพาะเมื่อเซิร์ฟเวอร์ยังไม่เริ่มบันทึก? การยกเลิกนี้ไม่ย้อนยอดสต๊อก และจะป้องกันคำสั่งเดิมกลับมาบันทึกภายหลัง")) return;
+    if (!session.isCurrent()) return;
+    void renderStockRecoverySheet();
+    let result;
+    if (isStockRecoveryV2(entry)) result = await requestStockRecoveryStatus(entry,session,cancel ? "cancelIfUnstarted" : "inspect");
+    else {
+      if (entry.action === "stockIn") await checkStockInRequestStatus(entry.items[0].productId,entry.items[0].qty,entry.id);
+      else if (entry.action === "stockAdjust") await checkStockAdjustRequestStatus(entry.items[0].productId,entry.items[0].qty,entry.id);
+      else await checkBatchStockInRequestStatus(entry.items,entry.id);
+      result = {state:"COMMITTED"};
+    }
+    if (!session.isCurrent()) return;
+    if (["COMMITTED","CANCELLED","RECONCILED"].includes(result.state)) {
+      for (const task of getBackgroundTasks().filter(task=>task.stockOperationId === id)) {
+        stockConfirmationRetries.delete(task.id);
+        if (result.state === "COMMITTED") completeBackgroundTask(task.id,"ตรวจพบว่าบันทึกแล้ว");
+        else if (result.state === "RECONCILED") reconcileStockRecoveryTask(task.id);
+        else cancelStockRecoveryTask(task.id);
+      }
+      showToast(result.state === "COMMITTED" ? "ตรวจพบว่าบันทึกแล้ว" : result.state === "RECONCILED" ? "ผู้ดูแลตรวจยอดและปิดรายการแล้ว" : "ยกเลิกรายการที่ยังไม่เริ่มแล้ว","success");
+      await refreshAfterConfirmedStockWrite(session,result.state);
+    }
+  } catch (error) {
+    if (session.isCurrent()) showToast(getWave2DisplayError(error),"warning");
+  } finally {
+    if (stockRecoveryPanelJobs.get(id) === job) stockRecoveryPanelJobs.delete(id);
+    if (session.isCurrent()) void renderStockRecoverySheet();
+  }
 }
 
   
@@ -13474,7 +13817,7 @@ function adminViewSnapshot(key) {
 function beginAdminViewWrite(action, method) {
   const changesData = String(method || "GET").toUpperCase() === "POST" &&
     ["addProduct", "updateProduct", "deleteProduct", "bulkAddProducts", "bulkUpdateProducts", "bulkUpsertProductMaster",
-      "stockIn", "batchStockIn", "stockAdjust", "createOrder", "approveOrder", "rejectOrder",
+      "stockIn", "batchStockIn", "stockAdjust", "stockInV2", "batchStockInV2", "stockAdjustV2", "createOrder", "approveOrder", "rejectOrder",
       "createPendingDelivery", "closePendingDelivery", "fulfillPendingDelivery", "createPartner", "updatePartner",
       "createPartnerLink", "updatePartnerLinkStatus", "updatePartnerRequestStatus", "convertPartnerRequestToOrder",
       "createBillingDocumentDraft", "updateBillingDocumentDraft", "finalizeBillingDocument", "updateBrandSettings"].includes(action);
@@ -15984,9 +16327,11 @@ function cancelAdminLoginAttempt() {
 }
 function captureAdminSession() {
   const token = String(state.admin?.token || "");
+  const user = String(state.admin?.user || "");
   const epoch = adminSessionEpoch;
   return {
     token,
+    user,
     isCurrent: () => !!token && state.admin.loggedIn &&
       state.admin.token === token && adminSessionEpoch === epoch && !isAdminSessionExpired()
   };
@@ -16045,6 +16390,7 @@ async function enterAdmin() {
         return false;
       }
       state.mode = "admin";
+      void restoreStockJournal();
       state.search = "";
       state.pagination.page = 1;
       state.viewerSearchOpen = false;
@@ -17622,6 +17968,7 @@ async function handleAdminLogin(btn){
 
     // A delayed validation of the previous session must never overwrite this login.
     cancelAdminEntry({ preserveLogin: true });
+    clearStockRecoveryUi();
     adminSessionEpoch++;
     loginEpoch = adminSessionEpoch;
     loginNavigation = adminEntryNavigationSeq;
@@ -20529,7 +20876,7 @@ function validateBatchStockInItems() {
     }
 
     return {
-      productId,
+      productId: String(item.product.productId || "").trim(),
       qty,
       before: item.stock,
       after: item.stock + qty,
@@ -20927,9 +21274,11 @@ function editBatchStockIn() {
   renderBatchStockInSheet();
 }
 
-async function refreshAfterConfirmedStockWrite(session) {
+async function refreshAfterConfirmedStockWrite(session, outcome = "COMMITTED") {
   if (!session.isCurrent() || state.mode !== "admin") return;
   try {
+    resetAdminViewReads();
+    resetAdminOrdersRead();
     invalidateProductRefresh();
     await refreshProducts({ throwOnError: true });
     if (!session.isCurrent() || state.mode !== "admin") return;
@@ -20937,7 +21286,9 @@ async function refreshAfterConfirmedStockWrite(session) {
   } catch (err) {
     console.warn("Confirmed stock write; refresh delayed", err?.code || err?.message);
     if (session.isCurrent() && state.mode === "admin") {
-      showToast(t("savedStockRefreshDelayed", "บันทึกสต๊อกแล้ว แต่โหลดข้อมูลล่าสุดไม่สำเร็จ กรุณากดโหลดใหม่"), "warning");
+      showToast(outcome === "CANCELLED" ? "ยกเลิกรายการแล้ว แต่โหลดข้อมูลล่าสุดไม่สำเร็จ" :
+        outcome === "RECONCILED" ? "ผู้ดูแลตรวจยอดและปิดรายการแล้ว แต่โหลดข้อมูลล่าสุดไม่สำเร็จ" :
+        t("savedStockRefreshDelayed", "บันทึกสต๊อกแล้ว แต่โหลดข้อมูลล่าสุดไม่สำเร็จ กรุณากดโหลดใหม่"), "warning");
     }
   }
 }
@@ -20968,6 +21319,7 @@ async function submitBatchStockIn() {
   const batchStockRequestId = createBatchStockRequestId();
   const task = registerBackgroundTask({
     identity: `batchStockIn:${batchStockRequestId}`,
+    stockOperationId: batchStockRequestId,
     productIds: payload.map(item => item.productId),
     label: t("receiveStock", "รับสินค้าเข้า"),
     state: BACKGROUND_TASK_STATES.SENDING,
@@ -21055,6 +21407,7 @@ async function submitStockIn(){
   const stockRequestId = createSingleStockRequestId(productId);
   const task = registerBackgroundTask({
     identity: taskIdentity,
+    stockOperationId: stockRequestId,
     label: t("receiveStock", "รับสินค้าเข้า"),
     state: BACKGROUND_TASK_STATES.SENDING,
     message: t("stockInBackgroundSending", "กำลังบันทึกรับสินค้าเข้า...")
@@ -21148,6 +21501,7 @@ async function submitStockAdjust(){
   const stockAdjustRequestId = createStockAdjustRequestId(productId);
   const task = registerBackgroundTask({
     identity: `stockAdjust:${productId}`,
+    stockOperationId: stockAdjustRequestId,
     productIds: [productId],
     label: t("setStockBalance", "ปรับยอดคงเหลือ"),
     state: BACKGROUND_TASK_STATES.SENDING,
@@ -27347,6 +27701,9 @@ function openMainMenu(triggerEl){
                 <button class="btn btn-secondary"
                   onclick="openStockTimelineInsideAdminMenu();">
                   ${t("stockTimeline", "ไทม์ไลน์สต๊อก")}
+                </button>
+                <button class="btn btn-secondary" onclick="closeMainMenu(); openStockRecoverySheet();">
+                  รายการสต๊อกค้าง
                 </button>
               </div>
 
@@ -37018,6 +37375,7 @@ function loadAdminSession() {
 
 // ================= STEP A7: SINGLE LOGOUT SOURCE OF TRUTH =================
 function clearAdminSession(){
+  clearStockRecoveryUi();
   cancelAdminLoginAttempt();
   if (adminEntryPromise) safeHideLoading();
   adminEntryPromise = null;
