@@ -10968,7 +10968,7 @@ function supersededReadError() {
   return error;
 }
 
-const LUOPANICH_FRONTEND_BUILD = "20261001-billing-create-recovery-v1";
+const LUOPANICH_FRONTEND_BUILD = "20261002-billing-export-context-v1";
 let brandingBootstrapApplied = false;
 const luopanichRequestHistory = [];
 function recordLuopanichRequest(entry) {
@@ -23875,10 +23875,12 @@ async function captureBillingNoteExportPage(pageNode) {
 }
 
 function prepareBillingNoteImageExport() {
+  const billingState = getBillingNoteState();
+  const { current } = captureAdminDocumentContext("billingNote");
+  if (!current() || billingState.imageExportLoading) return;
   const data = getValidatedBillingNoteData();
   if (!data) return;
 
-  const billingState = getBillingNoteState();
   revokeBillingNoteImageExportUrls(billingState);
   billingState.imageExportLoading = true;
   billingState.imageExportError = "";
@@ -23909,23 +23911,29 @@ function prepareBillingNoteImageExport() {
 
   frame.onload = () => {
     window.setTimeout(async () => {
+      const exportPages = [];
+      let published = false;
       try {
+        if (!current()) return;
         const doc = frame.contentDocument || frame.contentWindow?.document;
         const pages = doc ? Array.from(doc.querySelectorAll(".billing-note-print-page")) : [];
         if (!pages.length) throw new Error(t("billingNoteImageExportFailed", "ไม่สามารถส่งออกใบวางบิลเป็นรูปภาพได้"));
 
         await ensureSarabunFontsReady(doc);
+        if (!current()) return;
 
         try {
           await applyBillingNoteLogoDataUrl(doc);
         } catch (err) {
           console.warn("billing note logo data URL unavailable:", err);
         }
+        if (!current()) return;
 
         const imageUrls = collectBillingNoteExportImageUrls(doc);
         if (imageUrls.length) {
           try {
             const proxyResponse = await fetchDeliveryNoteImageDataUrls(imageUrls);
+            if (!current()) return;
             applyBillingNoteImageDataUrls(doc, proxyResponse?.results || []);
           } catch (err) {
             console.warn("billing note image proxy unavailable:", err);
@@ -23933,11 +23941,14 @@ function prepareBillingNoteImageExport() {
           }
         }
 
+        if (!current()) return;
         await waitForBillingNoteExportImages(doc);
+        if (!current()) return;
         const baseName = getBillingNoteImageExportBaseName(data);
-        const exportPages = [];
         for (const [index, pageNode] of pages.entries()) {
+          if (!current()) return;
           const blob = await captureBillingNoteExportPage(pageNode);
+          if (!current()) return;
           if (!blob) throw new Error(t("billingNoteImageExportFailed", "ไม่สามารถส่งออกใบวางบิลเป็นรูปภาพได้"));
           exportPages.push({
             pageNumber: index + 1,
@@ -23948,15 +23959,21 @@ function prepareBillingNoteImageExport() {
 
         revokeBillingNoteImageExportUrls(billingState);
         billingState.imageExportPages = exportPages;
+        published = true;
         billingState.imageExportError = "";
         showToast(formatUiText("billingNoteImageExportDone", { count: exportPages.length }, "ส่งออกรูปภาพใบวางบิลสำเร็จ {count} หน้า"), "success");
       } catch (err) {
+        if (!current()) return;
         console.error("billing note image export failed:", err);
         billingState.imageExportError = getUserFacingError(err, "billingNoteImageExportFailed", "ไม่สามารถส่งออกใบวางบิลเป็นรูปภาพได้");
       } finally {
-        billingState.imageExportLoading = false;
+        // Keep only URLs published to the current document; release partial exports.
+        if (!published) exportPages.forEach(page => URL.revokeObjectURL(page.objectUrl));
         cleanup();
-        renderBillingNoteSheet();
+        if (current()) {
+          billingState.imageExportLoading = false;
+          renderBillingNoteSheet();
+        }
       }
     }, 120);
   };
