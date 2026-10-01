@@ -10968,7 +10968,7 @@ function supersededReadError() {
   return error;
 }
 
-const LUOPANICH_FRONTEND_BUILD = "20261002-billing-export-context-v1";
+const LUOPANICH_FRONTEND_BUILD = "20261002-delivery-export-context-v1";
 let brandingBootstrapApplied = false;
 const luopanichRequestHistory = [];
 function recordLuopanichRequest(entry) {
@@ -24685,10 +24685,12 @@ function formatDeliveryNoteShortDate(value) {
   return `${date.getDate()}/${date.getMonth() + 1}`;
 }
 
-function renderDeliveryNotePrintImage(imageUrl, altText) {
+function renderDeliveryNotePrintImage(imageUrl, altText, imageExportMode = false) {
   const cleanImageUrl = String(imageUrl || "").trim();
   if (!cleanImageUrl) return "-";
-  return `<img class="delivery-note-thumb" src="${escAttr(cleanImageUrl)}" alt="${escAttr(altText || "")}" onerror="this.replaceWith(document.createTextNode('-'));">`;
+  // Keep failed export images available for proxy recovery and completeness checks.
+  const errorHandler = imageExportMode ? "" : ` onerror="this.replaceWith(document.createTextNode('-'));"`;
+  return `<img class="delivery-note-thumb" src="${escAttr(cleanImageUrl)}" alt="${escAttr(altText || "")}"${errorHandler}>`;
 }
 
 function getDeliveryNoteLogoUrl() {
@@ -24718,7 +24720,7 @@ function buildDeliveryNotePrintHtml(data, options = {}) {
     const displayRows = buildDeliveryNoteDisplayRows(order.items);
     const itemRows = displayRows.map((item, index) => `
       <div class="delivery-note-source-row delivery-note-print-row">
-        <div class="thumb-col"><span class="delivery-note-row-badge">${index + 1}</span>${renderDeliveryNotePrintImage(item.imageUrl, item.name || item.productId)}</div>
+        <div class="thumb-col"><span class="delivery-note-row-badge">${index + 1}</span>${renderDeliveryNotePrintImage(item.imageUrl, item.name || item.productId, imageExportMode)}</div>
         <div>${esc(item.displayText || "-")}</div>
         <div>${esc(item.name || "-")}</div>
         <div class="num">${esc(item.deliveryQty)}</div>
@@ -25778,11 +25780,14 @@ async function captureDeliveryNoteExportPage(pageNode, debug) {
 }
 
 function prepareDeliveryNoteImageExport() {
+  const context = captureAdminDocumentContext("deliveryNote");
+  const noteState = getDeliveryNoteState();
+  if (!context.current() || noteState.imageExportLoading) return;
   const data = getValidatedDeliveryNoteData();
   if (!data) return;
 
-  const noteState = getDeliveryNoteState();
   const sessionId = Number(noteState.imageExportSessionId || 0) + 1;
+  const current = () => context.current() && isDeliveryNoteImageExportSessionActive(noteState, sessionId);
   noteState.imageExportSessionId = sessionId;
   noteState.imageExportLoading = true;
   resetDeliveryNoteImageExportState(noteState, "preparing");
@@ -25817,8 +25822,10 @@ function prepareDeliveryNoteImageExport() {
 
   frame.onload = () => {
     window.setTimeout(async () => {
+      const exportedPages = [];
+      let published = false;
       try {
-        if (!isDeliveryNoteImageExportSessionActive(noteState, sessionId)) return;
+        if (!current()) return;
         const doc = frame.contentDocument || frame.contentWindow?.document;
         const pages = doc
           ? Array.from(doc.querySelectorAll(".delivery-note-print-page"))
@@ -25829,6 +25836,7 @@ function prepareDeliveryNoteImageExport() {
         }
 
         await ensureSarabunFontsReady(doc);
+        if (!current()) return;
 
         let imageWarning = false;
         const debug = createDeliveryNoteImageExportDebug(sessionId);
@@ -25848,6 +25856,7 @@ function prepareDeliveryNoteImageExport() {
           debug.proxyAttempted = true;
           try {
             const proxyResponse = await fetchDeliveryNoteImageDataUrls(imageUrls);
+            if (!current()) return;
             const proxyResults = Array.isArray(proxyResponse?.results) ? proxyResponse.results : [];
             debug.backendOk = proxyResponse?.ok !== false;
             debug.proxySuccessCount = proxyResults.filter(result => !!result?.ok).length;
@@ -25869,6 +25878,7 @@ function prepareDeliveryNoteImageExport() {
             imageWarning = debug.proxyFailureCount > 0 ||
               appliedCount < imageUrls.length;
           } catch (err) {
+            if (!current()) return;
             console.warn("delivery note image proxy unavailable:", err);
             debug.backendError = String(err?.message || err || "").slice(0, 160);
             debug.actionUnavailable = isDeliveryNoteProxyActionUnavailable(err);
@@ -25885,7 +25895,7 @@ function prepareDeliveryNoteImageExport() {
           }
         }
 
-        if (!isDeliveryNoteImageExportSessionActive(noteState, sessionId)) return;
+        if (!current()) return;
         setDeliveryNoteImageExportPhase(noteState, "decoding");
         updateDeliveryNoteImageExportProgress(noteState, {
           step: "loading",
@@ -25896,6 +25906,7 @@ function prepareDeliveryNoteImageExport() {
         renderDeliveryNoteSheet();
         prepareDeliveryNoteExportImageNodes(doc);
         const imageWaitSummary = await waitForDeliveryNoteExportImages(doc);
+        if (!current()) return;
         debug.imageWaitFailedCount = Number(imageWaitSummary.failedCount || 0);
         debug.dataUrlRenderedCount = Number(imageWaitSummary.renderedDataUrlCount || 0);
         debug.dataUrlNaturalSizeFailCount = Number(imageWaitSummary.dataUrlNaturalSizeFailCount || 0);
@@ -25903,6 +25914,7 @@ function prepareDeliveryNoteImageExport() {
           ? imageWaitSummary.failureReasons.slice(0, 3)
           : [];
         await waitForDeliveryNotePreCaptureRepaint();
+        if (!current()) return;
         debug.preCaptureRepaintWaited = true;
         imageWarning = imageWarning || hasDeliveryNoteExportImageWarning(doc);
         debug.paperLayout = measureDeliveryNotePaperLayout(doc);
@@ -25914,13 +25926,12 @@ function prepareDeliveryNoteImageExport() {
         });
         renderDeliveryNoteSheet();
 
-        if (!isDeliveryNoteImageExportSessionActive(noteState, sessionId)) return;
+        if (!current()) return;
         setDeliveryNoteImageExportPhase(noteState, "capturing");
         const baseName = getDeliveryNoteImageExportBaseName(data);
-        const exportedPages = [];
 
         for (const [index, pageNode] of pages.entries()) {
-          if (!isDeliveryNoteImageExportSessionActive(noteState, sessionId)) return;
+          if (!current()) return;
           updateDeliveryNoteImageExportProgress(noteState, {
             step: "capturing",
             capturePage: index + 1,
@@ -25928,6 +25939,7 @@ function prepareDeliveryNoteImageExport() {
           });
           renderDeliveryNoteSheet();
           const blob = await captureDeliveryNoteExportPage(pageNode, debug);
+          if (!current()) return;
 
           if (!blob) {
             throw new Error(t("deliveryNoteImageExportFailed", "ไม่สามารถส่งออกเป็นรูปภาพได้"));
@@ -25941,12 +25953,7 @@ function prepareDeliveryNoteImageExport() {
           });
         }
 
-        if (!isDeliveryNoteImageExportSessionActive(noteState, sessionId)) {
-          exportedPages.forEach(page => {
-            if (page?.objectUrl) URL.revokeObjectURL(page.objectUrl);
-          });
-          return;
-        }
+        if (!current()) return;
         const finalProductImageStatus = applyDeliveryNoteFinalProductImageStatus(debug, doc);
         debug.exportPageCount = exportedPages.length;
         debug.validExportPageCount = exportedPages
@@ -25954,6 +25961,7 @@ function prepareDeliveryNoteImageExport() {
           .length;
         debug.pngImageSafe = isDeliveryNoteProductImagesSafeForPng(debug, sessionId);
         noteState.imageExportPages = exportedPages;
+        published = true;
         noteState.imageExportReady = exportedPages.length > 0;
         setDeliveryNoteImageExportPhase(noteState, noteState.imageExportReady ? "ready" : "failed");
         updateDeliveryNoteImageExportProgress(noteState, {
@@ -26005,7 +26013,7 @@ function prepareDeliveryNoteImageExport() {
         }
       } catch (err) {
         console.error("delivery note image export prepare failed:", err);
-        if (!isDeliveryNoteImageExportSessionActive(noteState, sessionId)) return;
+        if (!current()) return;
         revokeDeliveryNoteImageExportUrls(noteState);
         noteState.imageExportError = [
           getUserFacingError(err, "deliveryNoteImageExportFailed", "ไม่สามารถส่งออกเป็นรูปภาพได้"),
@@ -26018,11 +26026,14 @@ function prepareDeliveryNoteImageExport() {
         noteState.imageExportDebug = getDeliveryNoteCurrentImageExportDebug(noteState) ||
           createDeliveryNoteImageExportDebug(sessionId);
       } finally {
-        if (isDeliveryNoteImageExportSessionActive(noteState, sessionId)) {
-          noteState.imageExportLoading = false;
-        }
+        if (!published) exportedPages.forEach(page => {
+          if (page?.objectUrl) URL.revokeObjectURL(page.objectUrl);
+        });
         cleanup();
-        renderDeliveryNoteSheet();
+        if (current()) {
+          noteState.imageExportLoading = false;
+          renderDeliveryNoteSheet();
+        }
       }
     }, 250);
   };
