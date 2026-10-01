@@ -1,11 +1,25 @@
 (() => {
   'use strict';
   const BUILD = '20260930-github-bridge-v1';
-  const actions = ['products','getBrandSettings','adminLogin','adminSessionProfile','adminProducts','orders','stockLogs','adminLogout','checkStockInRequestStatus','checkStockAdjustRequestStatus','checkBatchStockInRequestStatus'];
+  const actions = ['products','getBrandSettings','adminLogin','adminSessionProfile','adminProducts','orders','stockLogs','adminLogout','checkStockInRequestStatus','checkStockAdjustRequestStatus','checkBatchStockInRequestStatus','resolveStockMutationV2'];
   const fail = code => Object.assign(new Error(code),{code});
   function validFields(action, fields) {
     if (!fields || typeof fields !== 'object' || Array.isArray(fields)) return false;
     const keys = Object.keys(fields).sort().join(',');
+    if (action === 'resolveStockMutationV2') {
+      if (fields.mode !== 'inspect' || !['stockIn','stockAdjust','batchStockIn'].includes(fields.stockAction)) return false;
+      const batch = fields.stockAction === 'batchStockIn', adjust = fields.stockAction === 'stockAdjust';
+      const idKey = batch ? 'batchStockRequestId' : adjust ? 'stockAdjustRequestId' : 'stockRequestId';
+      if (typeof fields[idKey] !== 'string' || !/^sr2:[a-f0-9]{32}$/.test(fields[idKey]) ||
+          typeof fields.token !== 'string' || !fields.token.trim()) return false;
+      const legacy = {...fields}; delete legacy.mode; delete legacy.stockAction;
+      const statusAction = batch ? 'checkBatchStockInRequestStatus' : adjust ? 'checkStockAdjustRequestStatus' : 'checkStockInRequestStatus';
+      if (!validFields(statusAction,legacy)) return false;
+      const items = batch ? JSON.parse(fields.items) : [{productId:fields.productId,qty:Number(adjust ? fields.newQty : fields.qty)}];
+      return items.every(item => item.productId === item.productId.trim()) &&
+        new Set(items.map(item => item.productId.toUpperCase())).size === items.length &&
+        JSON.stringify(items).length <= 40000;
+    }
     if (['checkStockInRequestStatus','checkStockAdjustRequestStatus','checkBatchStockInRequestStatus'].includes(action)) {
       if (typeof fields.token !== 'string' || fields.token.length > 512) return false;
       const batch = action === 'checkBatchStockInRequestStatus';
@@ -146,7 +160,8 @@
     }finally{clearTimeout(timer);}
   }
   window.LuopanichBridge=Object.freeze({
-    enabled,allows:action=>enabled()&&actions.includes(action),prepareLogin,
+    enabled,allows:(action,fields)=>enabled()&&actions.includes(action)&&
+      (action!=='resolveStockMutationV2'||validFields(action,fields)),prepareLogin,
     nextId:()=> 'lpbridge-'+Client.randomHex(16),
     public:(action,id,timeout)=>request(action,action==='products'?{includeBrandSettings:'1'}:{},id,timeout),
     post:(form,id,timeout)=>{
