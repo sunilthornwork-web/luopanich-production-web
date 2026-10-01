@@ -1,11 +1,13 @@
 (() => {
   'use strict';
   const BUILD = '20260930-github-bridge-v1';
-  const actions = ['products','getBrandSettings','adminLogin','adminSessionProfile','adminProducts','orders','stockLogs','adminLogout','checkStockInRequestStatus','checkStockAdjustRequestStatus','checkBatchStockInRequestStatus','resolveStockMutationV2'];
+  const actions = ['products','getBrandSettings','adminLogin','adminSessionProfile','adminProducts','orders','stockLogs','adminLogout','checkStockInRequestStatus','checkStockAdjustRequestStatus','checkBatchStockInRequestStatus','resolveStockMutationV2','pendingDeliveries'];
   const fail = code => Object.assign(new Error(code),{code});
   function validFields(action, fields) {
     if (!fields || typeof fields !== 'object' || Array.isArray(fields)) return false;
     const keys = Object.keys(fields).sort().join(',');
+    if (action === 'pendingDeliveries') return keys === 'token' &&
+      typeof fields.token === 'string' && fields.token.trim().length > 0 && fields.token.length <= 512;
     if (action === 'resolveStockMutationV2') {
       if (fields.mode !== 'inspect' || !['stockIn','stockAdjust','batchStockIn'].includes(fields.stockAction)) return false;
       const batch = fields.stockAction === 'batchStockIn', adjust = fields.stockAction === 'stockAdjust';

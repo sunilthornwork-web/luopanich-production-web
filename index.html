@@ -6426,7 +6426,7 @@ textarea.input{
 }());
 </script>
 <script src="assets/vendor/xlsx/xlsx.full.min.js"></script>
-<script src="github-bridge.js?v=20261001-stock-inspect-bridge-v1"></script>
+<script src="github-bridge.js?v=20261001-pending-read-bridge-v1"></script>
 <script src="stock-journal.js?v=20261001-stock-recovery-v1"></script>
 <script>
 /* ================= STEP 2: ประกาศ backdrop (UPGRADED) ================= */
@@ -10968,7 +10968,7 @@ function supersededReadError() {
   return error;
 }
 
-const LUOPANICH_FRONTEND_BUILD = "20261001-stock-inspect-bridge-v1";
+const LUOPANICH_FRONTEND_BUILD = "20261001-pending-read-bridge-v1";
 let brandingBootstrapApplied = false;
 const luopanichRequestHistory = [];
 function recordLuopanichRequest(entry) {
@@ -11169,7 +11169,7 @@ function luopanichServerError(json, requestId) {
 function luopanichTransportBridge(action, form = null) {
   const stockInspection = action === "resolveStockMutationV2" && form?.get("mode") === "inspect";
   if (window.LUOPANICH_CONFIG?.READ_TRANSPORT !== "IFRAME_RPC_V1" ||
-      (!stockInspection && !["products", "getBrandSettings", "adminLogin", "adminSessionProfile", "adminProducts", "orders", "adminLogout", "stockLogs", "checkStockInRequestStatus", "checkStockAdjustRequestStatus", "checkBatchStockInRequestStatus"].includes(action))) return null;
+      (!stockInspection && !["products", "getBrandSettings", "adminLogin", "adminSessionProfile", "adminProducts", "orders", "adminLogout", "stockLogs", "pendingDeliveries", "checkStockInRequestStatus", "checkStockAdjustRequestStatus", "checkBatchStockInRequestStatus"].includes(action))) return null;
   if (!window.LuopanichBridge) {
     const error = new Error("โหลดส่วนเชื่อมต่อไม่สำเร็จ กรุณาโหลดหน้าเว็บใหม่");
     error.code = "BRIDGE_CLIENT_MISSING";
@@ -11255,7 +11255,7 @@ async function postFormAction(form, {
   invalidateAdminOrdersRead(action);
   const bridge = luopanichTransportBridge(action, form);
   // Automatic retries are restricted to these reads. Login and every mutation run once.
-  const readOnly = ["orders", "adminProducts", "adminSessionProfile", "stockLogs", "checkStockInRequestStatus", "checkStockAdjustRequestStatus", "checkBatchStockInRequestStatus"].includes(action);
+  const readOnly = ["orders", "adminProducts", "adminSessionProfile", "stockLogs", "pendingDeliveries", "checkStockInRequestStatus", "checkStockAdjustRequestStatus", "checkBatchStockInRequestStatus"].includes(action);
   const maxAttempts = readOnly && retryReads ? 2 : 1;
   const deadline = Date.now() + (readOnly ? Math.min(65000, timeout * maxAttempts + 2500) : timeout);
   const requestToken = String(form.get("token") || "");
@@ -12412,12 +12412,15 @@ async function fetchPendingDeliveries() {
   if (!state.admin?.token) {
     throw new Error("Missing admin token");
   }
+  const session = captureAdminSession();
+  if (!session.isCurrent()) throw supersededReadError();
 
   const form = new URLSearchParams();
   form.append("action", "pendingDeliveries");
-  form.append("token", state.admin.token);
+  form.append("token", session.token);
 
-  const res = await postFormAction(form);
+  const res = await postFormAction(form, {timeout:30000,retryReads:false,isCurrent:session.isCurrent});
+  if (!session.isCurrent()) throw supersededReadError();
 
   if (!res?.success) {
     throw new Error(
