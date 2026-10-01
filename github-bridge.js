@@ -1,7 +1,7 @@
 (() => {
   'use strict';
   const BUILD = '20260930-github-bridge-v1';
-  const actions = ['products','getBrandSettings','adminLogin','adminSessionProfile','adminProducts','orders','adminLogout'];
+  const actions = ['products','getBrandSettings','adminLogin','adminSessionProfile','adminProducts','orders','stockLogs','adminLogout'];
   const fail = code => Object.assign(new Error(code),{code});
   function validFields(action, fields) {
     if (!fields || typeof fields !== 'object' || Array.isArray(fields)) return false;
@@ -12,7 +12,7 @@
       (!Object.prototype.hasOwnProperty.call(fields,'includeProducts') || fields.includeProducts === '1') &&
       typeof fields.username === 'string' && fields.username.length > 0 && fields.username.length <= 128 &&
       typeof fields.password === 'string' && fields.password.length > 0 && fields.password.length <= 128;
-    if (!['adminSessionProfile','adminProducts','orders','adminLogout'].includes(action)) return false;
+    if (!['adminSessionProfile','adminProducts','orders','stockLogs','adminLogout'].includes(action)) return false;
     return (keys === 'token' || (action === 'adminSessionProfile' && keys === 'includeProducts,token' && fields.includeProducts === '1')) &&
       typeof fields.token === 'string' && fields.token.length <= 512;
   }

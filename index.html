@@ -6421,7 +6421,7 @@ textarea.input{
 }());
 </script>
 <script src="assets/vendor/xlsx/xlsx.full.min.js"></script>
-<script src="github-bridge.js"></script>
+<script src="github-bridge.js?v=20261001-stock-guard-v1"></script>
 <script>
 /* ================= STEP 2: ประกาศ backdrop (UPGRADED) ================= */
 const backdrop = document.getElementById("globalBackdrop");
@@ -9140,6 +9140,7 @@ function syncProductEditDraftFromForm() {
     price: document.getElementById("editPrice")?.value || "",
     costPrice: document.getElementById("editCostPrice")?.value || "",
     stock: document.getElementById("editStock")?.value || "",
+    expectedStock: adminProductEditSheet.dataset.expectedStock || "",
     displayExtraQty: document.getElementById("editDisplayExtraQty")?.value || "",
     status: document.getElementById("editStatus")?.value || state.selectedProduct?.status || "ready",
     note: document.getElementById("editNote")?.value || "",
@@ -9275,6 +9276,8 @@ function localizedUiError(key, fallback = "", values = null) {
 }
 
 function getWave2DisplayError(error, fallbackKey = "unexpectedError", fallback = "เกิดข้อผิดพลาด") {
+  if (error?.serverCode === "STOCK_CONFLICT") return "สต๊อกเปลี่ยนระหว่างที่เปิดหน้านี้ กรุณาโหลดข้อมูลล่าสุด แล้วเปิดสินค้าและตรวจยอดอีกครั้งก่อนบันทึก";
+  if (error?.serverCode === "STOCK_BASELINE_REQUIRED") return "หน้าเว็บรุ่นนี้ยังส่งข้อมูลตรวจสต๊อกไม่ครบ กรุณาโหลดหน้าเว็บใหม่ก่อนบันทึก";
   const message = String(error?.message || error || "").trim();
   if (error?.isLocalizedUiError && message) return message;
 
@@ -10927,7 +10930,7 @@ function supersededReadError() {
   return error;
 }
 
-const LUOPANICH_FRONTEND_BUILD = "20260930-navigation-cache-v1";
+const LUOPANICH_FRONTEND_BUILD = "20261001-stock-guard-v1";
 let brandingBootstrapApplied = false;
 const luopanichRequestHistory = [];
 function recordLuopanichRequest(entry) {
@@ -11121,12 +11124,13 @@ function luopanichServerError(json, requestId) {
   error.requestId = requestId;
   const serverCodes = { "Invalid token": "INVALID_TOKEN", "Session expired": "SESSION_EXPIRED", "Missing token": "MISSING_TOKEN", "Forbidden": "FORBIDDEN", "Unauthorized": "UNAUTHORIZED" };
   error.serverCode = routing ? (["MISSING_ACTION", "POST_REQUIRED"].includes(json.code) ? json.code : "MISSING_ACTION") : serverCodes[message] || "APPLICATION_ERROR";
+  if (["STOCK_CONFLICT", "STOCK_BASELINE_REQUIRED"].includes(json.code)) error.serverCode = json.code;
   return error;
 }
 
 function luopanichTransportBridge(action) {
   if (window.LUOPANICH_CONFIG?.READ_TRANSPORT !== "IFRAME_RPC_V1" ||
-      !["products", "getBrandSettings", "adminLogin", "adminSessionProfile", "adminProducts", "orders", "adminLogout"].includes(action)) return null;
+      !["products", "getBrandSettings", "adminLogin", "adminSessionProfile", "adminProducts", "orders", "adminLogout", "stockLogs"].includes(action)) return null;
   if (!window.LuopanichBridge) {
     const error = new Error("โหลดส่วนเชื่อมต่อไม่สำเร็จ กรุณาโหลดหน้าเว็บใหม่");
     error.code = "BRIDGE_CLIENT_MISSING";
@@ -11212,7 +11216,7 @@ async function postFormAction(form, {
   invalidateAdminOrdersRead(action);
   const bridge = luopanichTransportBridge(action);
   // Automatic retries are restricted to these reads. Login and every mutation run once.
-  const readOnly = ["orders", "adminProducts", "adminSessionProfile"].includes(action);
+  const readOnly = ["orders", "adminProducts", "adminSessionProfile", "stockLogs"].includes(action);
   const maxAttempts = readOnly && retryReads ? 2 : 1;
   const deadline = Date.now() + (readOnly ? Math.min(65000, timeout * maxAttempts + 2500) : timeout);
   const requestToken = String(form.get("token") || "");
@@ -13120,7 +13124,7 @@ async function checkBatchStockInRequestStatus(items, batchStockRequestId) {
 }
 
 
-async function adminStockAdjust(productId, newQty, reason, stockAdjustRequestId = ""){
+async function adminStockAdjust(productId, newQty, reason, stockAdjustRequestId = "", expectedStock = ""){
   if (!state.admin.token) {
     throw new Error("Not authenticated");
   }
@@ -13129,6 +13133,7 @@ async function adminStockAdjust(productId, newQty, reason, stockAdjustRequestId 
   form.append("action", "stockAdjust");
   form.append("productId", productId);
   form.append("newQty", newQty);
+  form.append("expectedStock", expectedStock);
   form.append("reason", reason || "");
   if (stockAdjustRequestId) form.append("stockAdjustRequestId", stockAdjustRequestId);
   form.append("token", state.admin.token); // ✅ สำคัญที่สุด
@@ -21086,10 +21091,12 @@ async function submitStockAdjust(){
   const reasonInput = document.getElementById("stockReason");
 
   const newQty = Number(qtyInput.value);
+  const expectedStock = adminStockActionSheet.dataset.expectedStock || "";
   const reason = reasonInput.value.trim();
 
   // 🔍 validate
-  if (!Number.isInteger(newQty) || newQty < 0) {
+  if (!qtyInput.value.trim() || !Number.isSafeInteger(newQty) || newQty < 0 ||
+      !expectedStock.trim() || !Number.isSafeInteger(Number(expectedStock)) || Number(expectedStock) < 0) {
     showToast(t("invalidQty", "จำนวนไม่ถูกต้อง"), "warning");
     qtyInput.focus();
     return;
@@ -21144,7 +21151,7 @@ async function submitStockAdjust(){
 
   (async () => {
     try {
-      const response = await adminStockAdjust(productId, newQty, reason, stockAdjustRequestId);
+      const response = await adminStockAdjust(productId, newQty, reason, stockAdjustRequestId, expectedStock);
       const result = response?.data || {};
       if (result.stockAdjustRequestId !== stockAdjustRequestId ||
           result.productId !== productId || Number(result.after) !== newQty) {
@@ -21195,6 +21202,7 @@ function openStockAction(p){
 
   state.selectedProduct = p;
   const stockQty = Number(p.stock) || 0;
+  adminStockActionSheet.dataset.expectedStock = String(p.stock ?? "");
   const statusKey = getResolvedProductStatus(p);
   const statusBadgeClass = stockQty <= 0
     ? "status-rejected"
@@ -28282,6 +28290,9 @@ function openProductEdit(p, options = {}){
     state.products.find(x => x.productId === p?.productId) || p;
   const preserveDraft = options?.preserveDraft === true;
   const draft = preserveDraft ? (state.admin.productEditDraft || {}) : {};
+  adminProductEditSheet.dataset.expectedStock = String(
+    preserveDraft ? (draft.expectedStock ?? "") : (latestProduct.stock ?? "")
+  );
 
   state.selectedProduct = latestProduct;
   if (!preserveDraft) {
@@ -28770,6 +28781,7 @@ async function submitProductEdit(){
   const rawCostPrice = document.getElementById("editCostPrice").value.trim();
   const costPrice = rawCostPrice === "" ? null : Number(rawCostPrice);
   const stock  = Number(document.getElementById("editStock").value);
+  const expectedStock = adminProductEditSheet.dataset.expectedStock || "";
   const displayExtraQty = normalizeDisplayExtraQty(
     document.getElementById("editDisplayExtraQty")?.value
   );
@@ -28803,7 +28815,11 @@ async function submitProductEdit(){
    !Number.isInteger(price) ||
    costPrice === null ||
    !Number.isInteger(costPrice) ||
-   !Number.isInteger(stock) ||
+   !document.getElementById("editStock").value.trim() ||
+   !Number.isSafeInteger(stock) ||
+   !expectedStock.trim() ||
+   !Number.isSafeInteger(Number(expectedStock)) ||
+   Number(expectedStock) < 0 ||
    price < 0 ||
    costPrice < 0 || 
    stock < 0
@@ -28880,6 +28896,7 @@ async function submitProductEdit(){
     form.append("price", price);
     form.append("costPrice", costPrice);
     form.append("stock", stock);
+    form.append("expectedStock", expectedStock);
     form.append("displayExtraQty", displayExtraQty);
     form.append("status", status);
     form.append("image", imageUrl);
