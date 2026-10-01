@@ -10968,7 +10968,7 @@ function supersededReadError() {
   return error;
 }
 
-const LUOPANICH_FRONTEND_BUILD = "20261001-product-read-epoch-v1";
+const LUOPANICH_FRONTEND_BUILD = "20261001-document-context-v1";
 let brandingBootstrapApplied = false;
 const luopanichRequestHistory = [];
 function recordLuopanichRequest(entry) {
@@ -13800,6 +13800,7 @@ function resetAdminViewReads() {
 }
 function clearAdminDisplaySnapshots() {
   resetAdminViewReads();
+  resetAdminDocumentStates();
   state.admin.pendingDeliveries = [];
   if (state.admin.partners) Object.assign(state.admin.partners, {items:[], total:0, readInfo:null, selectedPartnerSnapshot:null});
   if (state.admin.partnerCatalog) Object.assign(state.admin.partnerCatalog, {links:[], linkTotal:0, linkReadInfo:null, linkDetail:null});
@@ -21728,6 +21729,38 @@ async function refreshProductsWithFeedback({
   }
 }
 
+function resetAdminDocumentStates() {
+  if (state.admin.billingNote) revokeBillingNoteImageExportUrls(state.admin.billingNote);
+  if (state.admin.deliveryNote) {
+    state.admin.deliveryNote.imageExportSessionId = Number(state.admin.deliveryNote.imageExportSessionId || 0) + 1;
+    revokeDeliveryNoteImageExportUrls(state.admin.deliveryNote);
+  }
+  state.admin.billingNote = null;
+  state.admin.deliveryNote = null;
+  adminBillingNoteSheet.innerHTML = "";
+  adminDeliveryNoteSheet.innerHTML = "";
+  if (deliveryNoteImageWarningPopupRoot) deliveryNoteImageWarningPopupRoot.innerHTML = "";
+}
+
+function captureAdminDocumentContext(kind) {
+  const session = captureAdminSession();
+  const note = kind === "billingNote" ? getBillingNoteState() : getDeliveryNoteState();
+  const epoch = Number(note.requestEpoch || 0);
+  return { session, current: () => session.isCurrent() &&
+    state.admin[kind] === note && Number(note.requestEpoch || 0) === epoch };
+}
+
+async function loadAdminDocumentOrders(current) {
+  if (!current()) throw supersededReadError();
+  const info = await loadDashboardOrders();
+  // Document selection must await revalidation instead of silently building from stale orders.
+  const latest = info.refresh ? await info.refresh : info;
+  if (!current() || !adminViewReadCurrent(latest)) throw supersededReadError();
+  if (latest.stale) throw new Error("Order data is stale; please refresh before building a document");
+  state.admin.orders = latest.rows;
+  return latest.rows;
+}
+
 function getBillingNoteState() {
   if (!state.admin.billingNote) {
     state.admin.billingNote = {};
@@ -21804,6 +21837,7 @@ function getBillingNoteActiveDocument(billingState = getBillingNoteState()) {
 }
 
 function resetBillingNoteDocumentState(billingState = getBillingNoteState()) {
+  billingState.requestEpoch = Number(billingState.requestEpoch || 0) + 1;
   Object.assign(billingState, {
     billingDocumentId: "",
     billingDocumentStatus: "",
@@ -21897,6 +21931,7 @@ function isBillingDocumentFinalized(billingState = getBillingNoteState()) {
 
 function resetBillingNoteBuilderState() {
   const billingState = getBillingNoteState();
+  billingState.requestEpoch = Number(billingState.requestEpoch || 0) + 1;
   revokeBillingNoteImageExportUrls(billingState);
   Object.assign(billingState, {
     poInput: "",
@@ -21904,6 +21939,7 @@ function resetBillingNoteBuilderState() {
     selectedItems: {},
     itemQty: {},
     poSelectorError: "",
+    poSelectorLoading: false,
     billingDocumentId: "",
     billingDocumentStatus: "",
     billingDocument: null,
@@ -22001,14 +22037,8 @@ function getBillingNotePoGroups() {
 
 async function ensureBillingNotePoSelectorOrders() {
   const billingState = getBillingNoteState();
-  if (Array.isArray(state.admin.orders) && state.admin.orders.length > 0) {
-    billingState.poSelectorLoadAttempted = true;
-    billingState.poSelectorError = "";
-    if (adminBillingNoteSheet?.classList?.contains("show")) {
-      syncBillingNotePoSelectorRegion();
-    }
-    return;
-  }
+  const { current } = captureAdminDocumentContext("billingNote");
+  if (!current()) return;
   if (billingState.poSelectorLoading) return;
 
   billingState.poSelectorLoading = true;
@@ -22017,12 +22047,13 @@ async function ensureBillingNotePoSelectorOrders() {
   syncBillingNotePoSelectorRegion();
 
   try {
-    const orders = await fetchOrders();
-    state.admin.orders = Array.isArray(orders) ? orders : [];
+    await loadAdminDocumentOrders(current);
   } catch (err) {
+    if (!current()) return;
     console.error("billing note PO selector load failed:", err);
     billingState.poSelectorError = getUserFacingError(err, "deliveryNotePickerLoadError", "ไม่สามารถโหลดออเดอร์ได้");
   } finally {
+    if (!current()) return;
     billingState.poSelectorLoading = false;
     syncBillingNotePoSelectorRegion();
   }
@@ -22313,13 +22344,17 @@ async function callBillingDocumentAction(action, params = {}) {
     exitAdmin();
     return null;
   }
+  const { session, current } = captureAdminDocumentContext("billingNote");
+  if (!current()) throw supersededReadError();
   const form = new URLSearchParams();
   form.append("action", action);
-  form.append("token", state.admin.token);
+  form.append("token", session.token);
   Object.keys(params || {}).forEach(key => {
     form.append(key, params[key] == null ? "" : String(params[key]));
   });
-  return await postFormAction(form, { timeout: 30000 });
+  const response = await postFormAction(form, { timeout: 30000, retryReads: false, isCurrent: current });
+  if (!current()) throw supersededReadError();
+  return response;
 }
 
 function buildBillingRecipientParams(draft) {
@@ -22334,6 +22369,8 @@ function buildBillingRecipientParams(draft) {
 
 async function createBillingDocumentDraftForBillingNote() {
   const billingState = getBillingNoteState();
+  const { current } = captureAdminDocumentContext("billingNote");
+  if (!current()) return;
   if (getBillingNoteActiveDocument(billingState) || billingState.isCreatingDraft) return;
   const orderIds = getBillingNoteSelectedOrderIds();
   if (!orderIds.length) {
@@ -22349,15 +22386,18 @@ async function createBillingDocumentDraftForBillingNote() {
     const json = await callBillingDocumentAction("createBillingDocumentDraft", {
       orderIds: JSON.stringify(orderIds)
     });
+    if (!current()) return;
     const doc = json?.data?.billingDocument;
     if (!doc) throw new Error("Billing document response missing");
     applyBillingDocumentToState(doc);
     showToast(t("billingDocumentDraftCreated", "สร้างร่างใบวางบิลแล้ว"), "success");
   } catch (err) {
+    if (!current()) return;
     console.error("create billing document draft failed:", err);
     billingState.draftError = getBillingDocumentUserFacingError(err, "billingDocumentDraftCreateFailed", "สร้างร่างใบวางบิลไม่สำเร็จ");
     showToast(billingState.draftError, "error");
   } finally {
+    if (!current()) return;
     billingState.isCreatingDraft = false;
     renderBillingNoteSheet();
   }
@@ -22365,6 +22405,8 @@ async function createBillingDocumentDraftForBillingNote() {
 
 async function reloadCurrentBillingDocument() {
   const billingState = getBillingNoteState();
+  const { current } = captureAdminDocumentContext("billingNote");
+  if (!current()) return;
   const billingDocumentId = String(billingState.billingDocumentId || "").trim();
   if (!billingDocumentId || billingState.isLoadingDraft) return;
 
@@ -22374,15 +22416,18 @@ async function reloadCurrentBillingDocument() {
 
   try {
     const json = await callBillingDocumentAction("getBillingDocument", { billingDocumentId });
+    if (!current()) return;
     const doc = json?.data?.billingDocument;
     if (!json?.data?.found || !doc) throw new Error("Billing document not found");
     applyBillingDocumentToState(doc);
     showToast(t("billingDocumentReloaded", "โหลดร่างใบวางบิลอีกครั้งแล้ว"), "success");
   } catch (err) {
+    if (!current()) return;
     console.error("reload billing document failed:", err);
     billingState.draftError = getBillingDocumentUserFacingError(err, "billingDocumentLoadFailed", "โหลดข้อมูลใบวางบิลไม่สำเร็จ");
     showToast(billingState.draftError, "error");
   } finally {
+    if (!current()) return;
     billingState.isLoadingDraft = false;
     renderBillingNoteSheet();
   }
@@ -22390,6 +22435,8 @@ async function reloadCurrentBillingDocument() {
 
 async function saveBillingDocumentDraft() {
   const billingState = getBillingNoteState();
+  const { current } = captureAdminDocumentContext("billingNote");
+  if (!current()) return;
   if (!getBillingNoteActiveDocument(billingState) || isBillingDocumentFinalized(billingState) || billingState.isSavingDraft) return;
   const draft = buildBillingRecipientParams(billingState.recipientDraft || {});
   const validationError = getBillingRecipientValidationError(draft);
@@ -22407,15 +22454,18 @@ async function saveBillingDocumentDraft() {
       "updateBillingDocumentDraft",
       Object.assign({ billingDocumentId: billingState.billingDocumentId }, draft)
     );
+    if (!current()) return;
     const doc = json?.data?.billingDocument;
     if (!doc) throw new Error("Billing document response missing");
     applyBillingDocumentToState(doc);
     showToast(t("billingDocumentDraftSaved", "บันทึกร่างใบวางบิลแล้ว"), "success");
   } catch (err) {
+    if (!current()) return;
     console.error("save billing document draft failed:", err);
     billingState.draftError = getBillingDocumentUserFacingError(err, "billingDocumentDraftSaveFailed", "บันทึกร่างใบวางบิลไม่สำเร็จ");
     showToast(billingState.draftError, "error");
   } finally {
+    if (!current()) return;
     billingState.isSavingDraft = false;
     renderBillingNoteSheet();
   }
@@ -22423,6 +22473,8 @@ async function saveBillingDocumentDraft() {
 
 async function finalizeBillingDocumentFromBillingNote() {
   const billingState = getBillingNoteState();
+  const { current } = captureAdminDocumentContext("billingNote");
+  if (!current()) return;
   if (!getBillingNoteActiveDocument(billingState) || isBillingDocumentFinalized(billingState) || billingState.isFinalizing) return;
   const validationError = getBillingRecipientValidationError(billingState.recipientDraft || {});
   if (validationError) {
@@ -22445,17 +22497,20 @@ async function finalizeBillingDocumentFromBillingNote() {
     const json = await callBillingDocumentAction("finalizeBillingDocument", {
       billingDocumentId: billingState.billingDocumentId
     });
+    if (!current()) return;
     const doc = json?.data?.billingDocument;
     if (!doc) throw new Error("Billing document response missing");
     applyBillingDocumentToState(doc);
     showToast(t("billingDocumentFinalized", "ออกใบวางบิลแล้ว"), "success");
   } catch (err) {
+    if (!current()) return;
     if (!isExpectedBillingDocumentFinalizeRejection(err)) {
       console.error("finalize billing document failed:", err);
     }
     billingState.draftError = getBillingDocumentUserFacingError(err, "billingDocumentFinalizeFailed", "ออกใบวางบิลไม่สำเร็จ");
     showToast(billingState.draftError, "error");
   } finally {
+    if (!current()) return;
     billingState.isFinalizing = false;
     renderBillingNoteSheet();
   }
@@ -22757,6 +22812,9 @@ async function searchBillingNotePo() {
   }
 
   const billingState = getBillingNoteState();
+  const context = captureAdminDocumentContext("billingNote");
+  const searchSeq = billingState.searchSeq = Number(billingState.searchSeq || 0) + 1;
+  const current = () => context.current() && billingState.searchSeq === searchSeq;
   if (getBillingNoteActiveDocument(billingState)) {
     showToast(t("billingDocumentStartOverRequired", "กรุณาเริ่มใหม่ก่อนเปลี่ยน PO"), "warning");
     return;
@@ -22779,10 +22837,8 @@ async function searchBillingNotePo() {
   }
 
   try {
-    if (!Array.isArray(state.admin.orders) || state.admin.orders.length === 0) {
-      const orders = await fetchOrders();
-      state.admin.orders = Array.isArray(orders) ? orders : [];
-    }
+    await loadAdminDocumentOrders(current);
+    if (!current()) return;
 
     const requestedPoKeys = new Set(poList.map(normalizePoNumberForCompare));
     const matchedOrders = (Array.isArray(state.admin.orders) ? state.admin.orders : [])
@@ -22808,10 +22864,12 @@ async function searchBillingNotePo() {
       });
     });
   } catch (err) {
+    if (!current()) return;
     console.error("billing note PO search failed:", err);
     billingState.matchedOrders = [];
     billingState.error = getUserFacingError(err, "loadDataFailed", "โหลดข้อมูลไม่สำเร็จ");
   } finally {
+    if (!current()) return;
     billingState.isBuilding = false;
     renderBillingNoteSheet();
   }
@@ -24053,7 +24111,8 @@ function parseDeliveryNotePoInput(value) {
 
 async function ensureDeliveryNotePickerOrders() {
   const noteState = getDeliveryNoteState();
-  if (Array.isArray(state.admin.orders) && state.admin.orders.length) return;
+  const { current } = captureAdminDocumentContext("deliveryNote");
+  if (!current()) return;
   if (noteState.poPickerLoading) return;
 
   noteState.poPickerLoading = true;
@@ -24061,12 +24120,13 @@ async function ensureDeliveryNotePickerOrders() {
   renderDeliveryNoteSheet();
 
   try {
-    const orders = await fetchOrders();
-    state.admin.orders = Array.isArray(orders) ? orders : [];
+    await loadAdminDocumentOrders(current);
   } catch (err) {
+    if (!current()) return;
     console.error("delivery note PO picker load failed:", err);
     noteState.poPickerError = getUserFacingError(err, "deliveryNotePickerLoadError", "ไม่สามารถโหลดออเดอร์ได้");
   } finally {
+    if (!current()) return;
     noteState.poPickerLoading = false;
     renderDeliveryNoteSheet();
   }
@@ -24229,6 +24289,7 @@ function buildDeliveryNoteFromPicker() {
 
 function resetDeliveryNoteBuilderState() {
   const noteState = getDeliveryNoteState();
+  noteState.requestEpoch = Number(noteState.requestEpoch || 0) + 1;
   revokeDeliveryNoteImageExportUrls(noteState);
   Object.assign(noteState, {
     poInput: "",
@@ -24301,6 +24362,10 @@ function getDeliveryNoteQtyError(key, item) {
 
 async function prepareDeliveryNoteSearch() {
   const noteState = getDeliveryNoteState();
+  const context = captureAdminDocumentContext("deliveryNote");
+  const searchSeq = noteState.searchSeq = Number(noteState.searchSeq || 0) + 1;
+  const current = () => context.current() && noteState.searchSeq === searchSeq;
+  if (!current()) return;
   const input = document.getElementById("deliveryNotePoInput");
   noteState.poInput = String(input?.value || noteState.poInput || "");
   const poList = parseDeliveryNotePoInput(noteState.poInput);
@@ -24321,10 +24386,8 @@ async function prepareDeliveryNoteSearch() {
   }
 
   try {
-    if (!Array.isArray(state.admin.orders) || state.admin.orders.length === 0) {
-      const orders = await fetchOrders();
-      state.admin.orders = Array.isArray(orders) ? orders : [];
-    }
+    await loadAdminDocumentOrders(current);
+    if (!current()) return;
 
     const requestedPoKeys = new Set(poList.map(normalizePoNumberForCompare));
     const matchedOrders = (Array.isArray(state.admin.orders) ? state.admin.orders : [])
@@ -24351,10 +24414,12 @@ async function prepareDeliveryNoteSearch() {
       });
     });
   } catch (err) {
+    if (!current()) return;
     console.error("prepare delivery note search failed:", err);
     noteState.matchedOrders = [];
     noteState.error = getUserFacingError(err, "loadDataFailed", "โหลดข้อมูลไม่สำเร็จ");
   } finally {
+    if (!current()) return;
     noteState.isBuilding = false;
     renderDeliveryNoteSheet();
   }
