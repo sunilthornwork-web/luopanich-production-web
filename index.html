@@ -10942,7 +10942,7 @@ async function fetchJsonWithTimeout(input, init = {}, ms = 30000, onResponse = n
   if (changesProducts) {
     pendingProductWrites++;
     productSnapshotEpoch++;
-    adminProductSnapshot = null;
+    invalidateProductRefresh();
   }
   try { return await fetchWithTimeout(input, init, ms, true, onResponse); }
   finally {
@@ -10950,7 +10950,7 @@ async function fetchJsonWithTimeout(input, init = {}, ms = 30000, onResponse = n
     if (changesProducts) {
       pendingProductWrites--;
       productSnapshotEpoch++;
-      adminProductSnapshot = null;
+      invalidateProductRefresh();
     }
   }
 }
@@ -10968,7 +10968,7 @@ function supersededReadError() {
   return error;
 }
 
-const LUOPANICH_FRONTEND_BUILD = "20261001-pending-read-bridge-v1";
+const LUOPANICH_FRONTEND_BUILD = "20261001-product-read-epoch-v1";
 let brandingBootstrapApplied = false;
 const luopanichRequestHistory = [];
 function recordLuopanichRequest(entry) {
@@ -12763,12 +12763,18 @@ async function fetchProductListWithRetry(fetcher, retryDelays = PRODUCT_LOAD_RET
 }
 
 async function refreshProducts({ retry = true, throwOnError = false } = {}) {
+  if (pendingProductWrites > 0) {
+    if (throwOnError) throw supersededReadError();
+    return state.products;
+  }
   const key = productReadContextKey();
   let job = activeProductRefreshKey === key ? activeProductRefreshPromise : null;
   if (!job) {
     const requestId = ++productRefreshRequestSeq;
     const mutationEpoch = productSnapshotEpoch;
-    const current = () => requestId === productRefreshRequestSeq && productReadContextKey() === key;
+    // A product response must belong to the same completed-write generation.
+    const current = () => requestId === productRefreshRequestSeq && productReadContextKey() === key &&
+      mutationEpoch === productSnapshotEpoch && pendingProductWrites === 0;
     activeProductRefreshKey = key;
     productsLatencyDiagnosticState.refreshProducts++;
     logProductsRefreshLatencyDiagnostic();
