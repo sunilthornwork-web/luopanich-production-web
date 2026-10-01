@@ -10968,7 +10968,7 @@ function supersededReadError() {
   return error;
 }
 
-const LUOPANICH_FRONTEND_BUILD = "20261002-print-image-ready-v1";
+const LUOPANICH_FRONTEND_BUILD = "20261002-document-image-cache-v1";
 let brandingBootstrapApplied = false;
 const luopanichRequestHistory = [];
 function recordLuopanichRequest(entry) {
@@ -25670,21 +25670,111 @@ function isDeliveryNoteProxyActionUnavailable(error) {
     message.includes("deliverynoteimagedataurls");
 }
 
+const DOCUMENT_IMAGE_CACHE_TTL_MS = 120000;
+const DOCUMENT_IMAGE_CACHE_MAX_BYTES = 20 * 1024 * 1024;
+const DOCUMENT_IMAGE_CACHE_MAX_ENTRIES = 100;
+let documentImageCache = null;
+
+function clearDocumentImageCache() {
+  if (documentImageCache) {
+    documentImageCache.entries.clear();
+    documentImageCache.pending.clear();
+    documentImageCache.bytes = 0;
+  }
+  documentImageCache = null;
+}
+
+function documentImageContextKey() {
+  if (!state.admin?.token || !state.admin.loggedIn || isAdminSessionExpired()) return "";
+  return JSON.stringify([state.admin.token, adminSessionEpoch, productSnapshotEpoch]);
+}
+
+function pruneDocumentImageCache(cache) {
+  const now = Date.now();
+  for (const [url, entry] of cache.entries) {
+    if (entry.expiresAt <= now) {
+      cache.entries.delete(url);
+      cache.bytes -= entry.bytes;
+    }
+  }
+  while (cache.entries.size > DOCUMENT_IMAGE_CACHE_MAX_ENTRIES || cache.bytes > DOCUMENT_IMAGE_CACHE_MAX_BYTES) {
+    const url = cache.entries.keys().next().value;
+    cache.bytes -= cache.entries.get(url).bytes;
+    cache.entries.delete(url);
+  }
+}
+
 async function fetchDeliveryNoteImageDataUrls(urls) {
   if (!Array.isArray(urls) || !urls.length) return [];
-  if (!state.admin?.token) {
+  const startedAt = Date.now();
+  const contextKey = documentImageContextKey();
+  if (!contextKey) {
+    clearDocumentImageCache();
     throw new Error("Missing admin token");
   }
-
-  const form = new URLSearchParams();
-  form.append("action", "deliveryNoteImageDataUrls");
-  form.append("token", state.admin.token);
-  form.append("urls", JSON.stringify(urls));
-
-  const json = await postFormAction(form);
+  if (documentImageCache?.contextKey !== contextKey) {
+    clearDocumentImageCache();
+    documentImageCache = { contextKey, entries: new Map(), pending: new Map(), bytes: 0 };
+  }
+  const cache = documentImageCache;
+  const current = () => documentImageCache === cache && documentImageContextKey() === contextKey;
+  const requested = [...new Set(urls.map(url => String(url || "").trim()).filter(Boolean))];
+  pruneDocumentImageCache(cache);
+  const results = new Map();
+  requested.forEach(url => {
+    const entry = cache.entries.get(url);
+    if (!entry) return;
+    results.set(url, { url, ok: true, dataUrl: entry.dataUrl });
+    cache.entries.delete(url);
+    cache.entries.set(url, entry);
+  });
+  const missing = requested.filter(url => !results.has(url));
+  let ok = true;
+  let sharedRequest = false;
+  if (missing.length) {
+    // Share identical in-flight batches; failed images are never retained for retry.
+    const batchKey = JSON.stringify([...missing].sort());
+    let job = cache.pending.get(batchKey);
+    sharedRequest = !!job;
+    if (!job) {
+      const form = new URLSearchParams();
+      form.append("action", "deliveryNoteImageDataUrls");
+      form.append("token", state.admin.token);
+      form.append("urls", JSON.stringify(missing));
+      job = postFormAction(form);
+      cache.pending.set(batchKey, job);
+    }
+    try {
+      const json = await job;
+      if (!current()) throw supersededReadError();
+      ok = json?.ok !== false;
+      for (const result of (Array.isArray(json?.results) ? json.results : [])) {
+        const url = String(result?.url || "").trim();
+        if (!missing.includes(url)) continue;
+        results.set(url, result);
+        const dataUrl = String(result?.dataUrl || "");
+        if (!ok || !result?.ok || !/^data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/]+={0,2}$/i.test(dataUrl)) continue;
+        const bytes = 2 * (url.length + dataUrl.length);
+        if (bytes > DOCUMENT_IMAGE_CACHE_MAX_BYTES) continue;
+        const previous = cache.entries.get(url);
+        if (previous) cache.bytes -= previous.bytes;
+        cache.entries.delete(url);
+        cache.entries.set(url, { dataUrl, bytes, expiresAt: Date.now() + DOCUMENT_IMAGE_CACHE_TTL_MS });
+        cache.bytes += bytes;
+        pruneDocumentImageCache(cache);
+      }
+    } finally {
+      if (cache.pending.get(batchKey) === job) cache.pending.delete(batchKey);
+    }
+  }
+  if (!current()) throw supersededReadError();
+  console.info("[document-image-cache]", JSON.stringify({
+    requested: requested.length, cacheHits: requested.length - missing.length,
+    proxyImages: missing.length, sharedRequest, elapsedMs: Date.now() - startedAt
+  }));
   return {
-    ok: json?.ok !== false,
-    results: Array.isArray(json?.results) ? json.results : []
+    ok,
+    results: requested.map(url => results.get(url) || { url, ok: false, dataUrl: "", error: "Image proxy returned no result" })
   };
 }
 
@@ -37595,6 +37685,7 @@ function loadAdminSession() {
 
 // ================= STEP A7: SINGLE LOGOUT SOURCE OF TRUTH =================
 function clearAdminSession(){
+  clearDocumentImageCache();
   clearStockRecoveryUi();
   cancelAdminLoginAttempt();
   if (adminEntryPromise) safeHideLoading();
