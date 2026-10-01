@@ -6421,7 +6421,7 @@ textarea.input{
 }());
 </script>
 <script src="assets/vendor/xlsx/xlsx.full.min.js"></script>
-<script src="github-bridge.js?v=20261001-stock-guard-v1"></script>
+<script src="github-bridge.js?v=20261001-stock-confirm-v1"></script>
 <script>
 /* ================= STEP 2: ประกาศ backdrop (UPGRADED) ================= */
 const backdrop = document.getElementById("globalBackdrop");
@@ -10483,7 +10483,8 @@ const BACKGROUND_TASK_STATES = Object.freeze({
   SENDING: "SENDING",
   CONFIRMING: "CONFIRMING",
   SUCCESS: "SUCCESS",
-  FAILED: "FAILED"
+  FAILED: "FAILED",
+  UNCONFIRMED: "UNCONFIRMED"
 });
 const BACKGROUND_TASK_ACTIVE_STATES = new Set([
   BACKGROUND_TASK_STATES.SENDING,
@@ -10491,6 +10492,7 @@ const BACKGROUND_TASK_ACTIVE_STATES = new Set([
 ]);
 const BACKGROUND_TASK_SUCCESS_DISMISS_MS = 1800;
 const backgroundTaskDismissTimers = new Map();
+const stockConfirmationRetries = new Map();
 let backgroundTaskSeq = 0;
 
 function getBackgroundTasks() {
@@ -10580,6 +10582,7 @@ function scheduleBackgroundTaskSuccessDismiss(id) {
 }
 
 function completeBackgroundTask(id, message = "") {
+  stockConfirmationRetries.delete(id);
   const task = updateBackgroundTask(id, {
     state: BACKGROUND_TASK_STATES.SUCCESS,
     message
@@ -10600,7 +10603,7 @@ function findActiveStockMutationTaskForProduct(productId) {
   const cleanProductId = String(productId || "").trim();
   if (!cleanProductId) return null;
   return getBackgroundTasks().find(task =>
-    isBackgroundTaskActive(task) &&
+    (isBackgroundTaskActive(task) || task.state === BACKGROUND_TASK_STATES.UNCONFIRMED) &&
     (
       task.identity === `stockIn:${cleanProductId}` ||
       task.identity === `stockAdjust:${cleanProductId}` ||
@@ -10610,6 +10613,8 @@ function findActiveStockMutationTaskForProduct(productId) {
 }
 
 function removeBackgroundTask(id) {
+  if (findBackgroundTask(id)?.state === BACKGROUND_TASK_STATES.UNCONFIRMED) return;
+  stockConfirmationRetries.delete(id);
   clearBackgroundTaskDismissTimer(id);
   const tasks = getBackgroundTasks();
   const nextTasks = tasks.filter(task => task.id !== id);
@@ -10619,6 +10624,7 @@ function removeBackgroundTask(id) {
 
 function getBackgroundTaskStatusText(task) {
   const taskState = String(task?.state || "");
+  if (taskState === BACKGROUND_TASK_STATES.UNCONFIRMED) return t("stockResultUnknown", "ยังยืนยันผลสต๊อกไม่ได้ อย่าบันทึกซ้ำ");
   if (taskState === BACKGROUND_TASK_STATES.CONFIRMING) {
     return t("backgroundTaskConfirming", "กำลังตรวจสอบผลการบันทึก...");
   }
@@ -10632,6 +10638,8 @@ function getBackgroundTaskStatusText(task) {
 }
 
 function getBackgroundTaskSummary(tasks) {
+  const unknownTask = tasks.find(task => task.state === BACKGROUND_TASK_STATES.UNCONFIRMED);
+  if (unknownTask) return { state: unknownTask.state, title: unknownTask.message, label: unknownTask.label, retryId: unknownTask.id };
   const failedCount = tasks.filter(task => task.state === BACKGROUND_TASK_STATES.FAILED).length;
   const activeCount = tasks.filter(isBackgroundTaskActive).length;
   if (tasks.length === 1) {
@@ -10665,6 +10673,11 @@ function getBackgroundTaskSummary(tasks) {
 }
 
 function getBackgroundTaskHeaderSummary(tasks = getBackgroundTasks()) {
+  const unknownTask = tasks.find(task => task.state === BACKGROUND_TASK_STATES.UNCONFIRMED);
+  if (unknownTask) return {
+    active: true, state: unknownTask.state,
+    text: t("stockResultUnknownShort", "สต๊อกยังไม่ยืนยัน"), dismissId: "", retryId: unknownTask.id
+  };
   const failedCount = tasks.filter(task => task.state === BACKGROUND_TASK_STATES.FAILED).length;
   const activeCount = tasks.filter(isBackgroundTaskActive).length;
   const successCount = tasks.filter(task => task.state === BACKGROUND_TASK_STATES.SUCCESS).length;
@@ -10711,6 +10724,7 @@ function renderHeaderBackgroundTaskLayer() {
       aria-atomic="true">
       <span class="header-task-dot" aria-hidden="true"></span>
       <span class="header-task-text">${esc(summary.text || "")}</span>
+      ${summary.retryId ? `<button class="header-task-dismiss" type="button" onclick="retryStockTaskConfirmation(${toInlineJsStringLiteral(summary.retryId)})" title="${escAttr(t("checkStockResultAgain", "ตรวจผลสต๊อกอีกครั้ง"))}" aria-label="${escAttr(t("checkStockResultAgain", "ตรวจผลสต๊อกอีกครั้ง"))}">&#8635;</button>` : ""}
       ${
         summary.dismissId
           ? `<button class="header-task-dismiss" type="button" onclick="removeBackgroundTask(${toInlineJsStringLiteral(summary.dismissId)})" aria-label="${escAttr(t("close", "ปิด"))}">×</button>`
@@ -10736,6 +10750,7 @@ function updateHeaderBackgroundTaskPresentation() {
   layer.innerHTML = `
     <span class="header-task-dot" aria-hidden="true"></span>
     <span class="header-task-text">${esc(summary.text || "")}</span>
+    ${summary.retryId ? `<button class="header-task-dismiss" type="button" onclick="retryStockTaskConfirmation(${toInlineJsStringLiteral(summary.retryId)})" title="${escAttr(t("checkStockResultAgain", "ตรวจผลสต๊อกอีกครั้ง"))}" aria-label="${escAttr(t("checkStockResultAgain", "ตรวจผลสต๊อกอีกครั้ง"))}">&#8635;</button>` : ""}
     ${
       summary.dismissId
         ? `<button class="header-task-dismiss" type="button" onclick="removeBackgroundTask(${toInlineJsStringLiteral(summary.dismissId)})" aria-label="${escAttr(t("close", "ปิด"))}">×</button>`
@@ -10930,7 +10945,7 @@ function supersededReadError() {
   return error;
 }
 
-const LUOPANICH_FRONTEND_BUILD = "20261001-stock-guard-v1";
+const LUOPANICH_FRONTEND_BUILD = "20261001-stock-confirm-v1";
 let brandingBootstrapApplied = false;
 const luopanichRequestHistory = [];
 function recordLuopanichRequest(entry) {
@@ -11130,7 +11145,7 @@ function luopanichServerError(json, requestId) {
 
 function luopanichTransportBridge(action) {
   if (window.LUOPANICH_CONFIG?.READ_TRANSPORT !== "IFRAME_RPC_V1" ||
-      !["products", "getBrandSettings", "adminLogin", "adminSessionProfile", "adminProducts", "orders", "adminLogout", "stockLogs"].includes(action)) return null;
+      !["products", "getBrandSettings", "adminLogin", "adminSessionProfile", "adminProducts", "orders", "adminLogout", "stockLogs", "checkStockInRequestStatus", "checkStockAdjustRequestStatus", "checkBatchStockInRequestStatus"].includes(action)) return null;
   if (!window.LuopanichBridge) {
     const error = new Error("โหลดส่วนเชื่อมต่อไม่สำเร็จ กรุณาโหลดหน้าเว็บใหม่");
     error.code = "BRIDGE_CLIENT_MISSING";
@@ -11216,7 +11231,7 @@ async function postFormAction(form, {
   invalidateAdminOrdersRead(action);
   const bridge = luopanichTransportBridge(action);
   // Automatic retries are restricted to these reads. Login and every mutation run once.
-  const readOnly = ["orders", "adminProducts", "adminSessionProfile", "stockLogs"].includes(action);
+  const readOnly = ["orders", "adminProducts", "adminSessionProfile", "stockLogs", "checkStockInRequestStatus", "checkStockAdjustRequestStatus", "checkBatchStockInRequestStatus"].includes(action);
   const maxAttempts = readOnly && retryReads ? 2 : 1;
   const deadline = Date.now() + (readOnly ? Math.min(65000, timeout * maxAttempts + 2500) : timeout);
   const requestToken = String(form.get("token") || "");
@@ -13089,7 +13104,12 @@ async function checkStockInRequestStatus(productId, qty, stockRequestId) {
   form.append("stockRequestId", stockRequestId);
   form.append("token", state.admin.token);
 
-  return await postFormAction(form, { timeout: 10000 });
+  return readStockMutationConfirmation(form, status =>
+    status.found === true && status.applied === true &&
+    status.stockRequestId === stockRequestId && status.productId === productId &&
+    status.qty === qty && status.referenceCount === 1 &&
+    Number.isSafeInteger(status.before) && Number.isSafeInteger(status.after) &&
+    status.after - status.before === qty);
 }
 
 async function adminBatchStockIn(items, reason, batchStockRequestId = "") {
@@ -13120,7 +13140,15 @@ async function checkBatchStockInRequestStatus(items, batchStockRequestId) {
   form.append("batchStockRequestId", batchStockRequestId);
   form.append("token", state.admin.token);
 
-  return await postFormAction(form, { timeout: 10000 });
+  return readStockMutationConfirmation(form, status =>
+    status.batchStockRequestId === batchStockRequestId && status.status === "SUCCESS" &&
+    status.applied === true && status.referenceCount === items.length &&
+    status.matchedCount === items.length && status.expectedCount === items.length &&
+    status.unexpectedCount === 0 && Array.isArray(status.items) && status.items.length === items.length &&
+    new Set(status.items.map(item => item.productId)).size === items.length &&
+    items.every(expected => status.items.some(item => item.productId === expected.productId &&
+      item.qty === expected.qty && Number.isSafeInteger(item.before) && Number.isSafeInteger(item.after) &&
+      item.after - item.before === expected.qty)));
 }
 
 
@@ -13149,7 +13177,60 @@ async function checkStockAdjustRequestStatus(productId, newQty, stockAdjustReque
   form.append("newQty", newQty);
   form.append("stockAdjustRequestId", stockAdjustRequestId);
   form.append("token", state.admin.token);
-  return await postFormAction(form, { timeout: 10000 });
+  return readStockMutationConfirmation(form, status =>
+    status.found === true && status.applied === true && status.stockAdjustRequestId === stockAdjustRequestId &&
+    status.productId === productId && status.newQty === newQty && status.after === newQty && status.referenceCount === 1);
+}
+
+async function readStockMutationConfirmation(form, matches) {
+  const allowed = ["checkStockInRequestStatus", "checkStockAdjustRequestStatus", "checkBatchStockInRequestStatus"];
+  if (!allowed.includes(form.get("action"))) throw new Error("Stock confirmation must be read-only");
+  const session = captureAdminSession();
+  const deadline = Date.now() + 45000;
+  // Poll only the audit reader, never the original mutation. NOT_FOUND is not proof of failure.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (!session.isCurrent() || form.get("token") !== session.token) throw supersededReadError();
+    if (Date.now() >= deadline) break;
+    try {
+      const response = await postFormAction(form, {
+        timeout: Math.min(15000, deadline - Date.now()), retryReads: false, isCurrent: session.isCurrent
+      });
+      if (!session.isCurrent()) throw supersededReadError();
+      if (response?.success === true && response.data && matches(response.data)) return response;
+    } catch (error) {
+      if (!session.isCurrent() || error?.code === "READ_SUPERSEDED") throw supersededReadError();
+      if (!isAmbiguousStockMutationFailure(error)) throw error;
+    }
+    if (attempt < 2 && Date.now() + 1500 < deadline) await wait(1500);
+  }
+  throw Object.assign(new Error("Stock result remains unconfirmed"), { code: "STOCK_RESULT_UNCONFIRMED" });
+}
+
+async function confirmStockTask(task, session, readStatus, onSuccess) {
+  if (!session.isCurrent()) {
+    showToast(t("stockResultSessionChanged", "เปลี่ยนการเข้าสู่ระบบแล้ว กรุณาตรวจสอบผลสต๊อกก่อนทำรายการซ้ำ"), "warning");
+    return;
+  }
+  stockConfirmationRetries.delete(task.id);
+  updateBackgroundTask(task.id, { state: BACKGROUND_TASK_STATES.CONFIRMING });
+  try {
+    await readStatus();
+  } catch (error) {
+    const message = t("stockResultUnknown", "ยังยืนยันผลสต๊อกไม่ได้ อย่าบันทึกซ้ำ");
+    clearBackgroundTaskDismissTimer(task.id);
+    stockConfirmationRetries.set(task.id, () => confirmStockTask(task, session, readStatus, onSuccess));
+    updateBackgroundTask(task.id, { state: BACKGROUND_TASK_STATES.UNCONFIRMED, message });
+    if (session.isCurrent()) showToast(message, "warning");
+    return;
+  }
+  if (!session.isCurrent()) return;
+  await onSuccess();
+}
+
+function retryStockTaskConfirmation(id) {
+  if (findBackgroundTask(id)?.state !== BACKGROUND_TASK_STATES.UNCONFIRMED) return;
+  const retry = stockConfirmationRetries.get(id);
+  if (retry) void retry();
 }
 
   
@@ -20926,33 +21007,8 @@ async function submitBatchStockIn() {
           message: t("stockInBackgroundConfirming", "กำลังตรวจสอบผลการรับสินค้าเข้า...")
         });
 
-        try {
-          const statusResponse = await checkBatchStockInRequestStatus(payload, batchStockRequestId);
-          const status = statusResponse?.data || statusResponse || {};
-          if (
-            status.batchStockRequestId === batchStockRequestId &&
-            status.status === "SUCCESS" &&
-            status.applied === true &&
-            Number(status.expectedCount) === payload.length
-          ) {
-            await finishBatchStockInBackgroundSuccess();
-            return;
-          }
-
-          const partialMessage = t(
-            "batchStockInBackgroundUnconfirmed",
-            "ไม่สามารถยืนยันผลการรับสินค้าได้ครบ กรุณาตรวจสอบก่อนทำรายการซ้ำ"
-          );
-          failBackgroundTask(task.id, partialMessage);
-          showToast(partialMessage, "warning");
-        } catch (confirmErr) {
-          console.error(confirmErr);
-          failBackgroundTask(
-            task.id,
-            t("stockInBackgroundConfirmFailed", "ตรวจสอบผลการรับสินค้าเข้าไม่สำเร็จ")
-          );
-          showToast(getUserFacingError(confirmErr, "stockInError", "ไม่สามารถรับสต๊อกได้"), "error");
-        }
+        await confirmStockTask(task, session,
+          () => checkBatchStockInRequestStatus(payload, batchStockRequestId), finishBatchStockInBackgroundSuccess);
         return;
       }
 
@@ -21045,27 +21101,8 @@ async function submitStockIn(){
           message: t("stockInBackgroundConfirming", "กำลังตรวจสอบผลการรับสินค้าเข้า...")
         });
 
-        try {
-          const statusResponse = await checkStockInRequestStatus(productId, qty, stockRequestId);
-          const status = statusResponse?.data || statusResponse || {};
-          if (status.applied === true && status.stockRequestId === stockRequestId) {
-            await finishStockInBackgroundSuccess();
-            return;
-          }
-
-          failBackgroundTask(
-            task.id,
-            t("stockInBackgroundUnconfirmed", "ยังยืนยันผลการรับสินค้าเข้าไม่ได้")
-          );
-          showToast(t("stockInBackgroundUnconfirmed", "ยังยืนยันผลการรับสินค้าเข้าไม่ได้"), "warning");
-        } catch (confirmErr) {
-          console.error(confirmErr);
-          failBackgroundTask(
-            task.id,
-            t("stockInBackgroundConfirmFailed", "ตรวจสอบผลการรับสินค้าเข้าไม่สำเร็จ")
-          );
-          showToast(getUserFacingError(confirmErr, "stockInError", "ไม่สามารถรับสต๊อกได้"), "error");
-        }
+        await confirmStockTask(task, session,
+          () => checkStockInRequestStatus(productId, qty, stockRequestId), finishStockInBackgroundSuccess);
         return;
       }
 
@@ -21155,7 +21192,7 @@ async function submitStockAdjust(){
       const result = response?.data || {};
       if (result.stockAdjustRequestId !== stockAdjustRequestId ||
           result.productId !== productId || Number(result.after) !== newQty) {
-        throw new Error("Invalid stock adjust response");
+        throw Object.assign(new Error("Invalid stock adjust response"), { code: "INVALID_JSON_RESPONSE" });
       }
       finishStockAdjustBackgroundSuccess(newQty);
     } catch (err) {
@@ -21168,25 +21205,13 @@ async function submitStockAdjust(){
           state: BACKGROUND_TASK_STATES.CONFIRMING,
           message: t("stockAdjustBackgroundConfirming", "กำลังตรวจสอบผลการปรับยอด...")
         });
-        try {
-          const response = await checkStockAdjustRequestStatus(productId, newQty, stockAdjustRequestId);
-          const status = response?.data || {};
-          if (status.applied === true &&
-              status.stockAdjustRequestId === stockAdjustRequestId &&
-              status.productId === productId && Number(status.after) === newQty &&
-              Number(status.referenceCount) === 1) {
-            finishStockAdjustBackgroundSuccess(newQty);
-            return;
-          }
-          const message = t("stockAdjustBackgroundUnconfirmed", "ยังยืนยันผลการปรับยอดไม่ได้ กรุณาตรวจสอบก่อนทำรายการซ้ำ");
-          failBackgroundTask(task.id, message);
-          showToast(message, "warning");
-        } catch (confirmErr) {
-          console.error(confirmErr);
-          const message = t("stockAdjustBackgroundConfirmFailed", "ตรวจสอบผลการปรับยอดไม่สำเร็จ กรุณาตรวจสอบก่อนทำรายการซ้ำ");
-          failBackgroundTask(task.id, message);
-          showToast(message, "warning");
-        }
+        await confirmStockTask(task, session,
+          () => checkStockAdjustRequestStatus(productId, newQty, stockAdjustRequestId), async () => {
+            completeBackgroundTask(task.id, t("stockAdjustSuccess", "ปรับสต๊อกแล้ว"));
+            if (session.isCurrent()) showToast(t("stockAdjustSuccess", "ปรับสต๊อกแล้ว"), "success");
+            // An audit entry confirms the write, not the current balance after other staff edits.
+            await refreshAfterConfirmedStockWrite(session);
+          });
         return;
       }
       console.error(err);

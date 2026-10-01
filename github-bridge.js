@@ -1,11 +1,34 @@
 (() => {
   'use strict';
   const BUILD = '20260930-github-bridge-v1';
-  const actions = ['products','getBrandSettings','adminLogin','adminSessionProfile','adminProducts','orders','stockLogs','adminLogout'];
+  const actions = ['products','getBrandSettings','adminLogin','adminSessionProfile','adminProducts','orders','stockLogs','adminLogout','checkStockInRequestStatus','checkStockAdjustRequestStatus','checkBatchStockInRequestStatus'];
   const fail = code => Object.assign(new Error(code),{code});
   function validFields(action, fields) {
     if (!fields || typeof fields !== 'object' || Array.isArray(fields)) return false;
     const keys = Object.keys(fields).sort().join(',');
+    if (['checkStockInRequestStatus','checkStockAdjustRequestStatus','checkBatchStockInRequestStatus'].includes(action)) {
+      if (typeof fields.token !== 'string' || fields.token.length > 512) return false;
+      const batch = action === 'checkBatchStockInRequestStatus';
+      const adjust = action === 'checkStockAdjustRequestStatus';
+      const idKey = batch ? 'batchStockRequestId' : adjust ? 'stockAdjustRequestId' : 'stockRequestId';
+      if (typeof fields[idKey] !== 'string' || !/^[A-Za-z0-9._:-]{1,96}$/.test(fields[idKey])) return false;
+      if (batch) {
+        if (keys !== 'batchStockRequestId,items,token' || typeof fields.items !== 'string' || fields.items.length > 262144) return false;
+        try {
+          const items = JSON.parse(fields.items);
+          return Array.isArray(items) && items.length > 0 && items.length <= 2000 &&
+            items.every(item => item && Object.keys(item).sort().join(',') === 'productId,qty' &&
+              typeof item.productId === 'string' && item.productId.trim().length > 0 && item.productId.length <= 256 &&
+              Number.isSafeInteger(item.qty) && item.qty > 0) &&
+            new Set(items.map(item => item.productId)).size === items.length;
+        } catch (_) { return false; }
+      }
+      const quantity = adjust ? 'newQty' : 'qty';
+      return keys === (adjust ? 'newQty,productId,stockAdjustRequestId,token' : 'productId,qty,stockRequestId,token') &&
+        typeof fields.productId === 'string' && fields.productId.trim().length > 0 && fields.productId.length <= 256 &&
+        typeof fields[quantity] === 'string' && /^(0|[1-9][0-9]*)$/.test(fields[quantity]) &&
+        Number.isSafeInteger(Number(fields[quantity])) && Number(fields[quantity]) >= (adjust ? 0 : 1);
+    }
     if (action === 'products') return keys === '' || (keys === 'includeBrandSettings' && fields.includeBrandSettings === '1');
     if (action === 'getBrandSettings') return keys === '';
     if (action === 'adminLogin') return ['password,username','includeProducts,password,username'].includes(keys) &&
